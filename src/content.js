@@ -20,8 +20,6 @@ function init() {
     setupMessageListeners();
     setupRecorderListeners();
     setupExecutorListeners();
-
-    console.log('[AI-Autoclicker] Content script initialized');
   } catch (error) {
     console.error('[AI-Autoclicker] Initialization error:', error);
   }
@@ -85,7 +83,7 @@ function setupRecorderListeners() {
     showRecordingIndicator(true);
   });
 
-  actionRecorder.on('recording-stopped', ({ actions }) => {
+  actionRecorder.on('recording-stopped', ({ _actions }) => {
     showRecordingIndicator(false);
   });
 }
@@ -136,7 +134,7 @@ function setupExecutorListeners() {
     });
   });
 
-  actionExecutor.on('sequence-error', ({ action, error }) => {
+  actionExecutor.on('sequence-error', ({ _action, error }) => {
     sendMessageToPopup({
       type: 'aiStatus',
       status: 'ошибка',

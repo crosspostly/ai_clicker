@@ -7,8 +7,6 @@
  * Listen for extension installation
  */
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('ИИ-Автокликер установлен!');
-
   // Open options page on installation
   chrome.runtime.openOptionsPage();
 });
@@ -43,32 +41,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 /**
  * Handle recorded action
  */
-function handleActionRecorded(request) {
+function handleActionRecorded(_request) {
   // Could be extended to track statistics, sync with server, etc.
-  console.log('[Background] Action recorded:', request.data);
 }
 
 /**
  * Handle execute actions request
  */
-function handleExecuteActions(request) {
+function handleExecuteActions(_request) {
   // Could be used to execute actions from background or other tabs
-  console.log('[Background] Execute actions:', request.actions);
 }
 
 /**
  * Listen for tab changes
  */
-chrome.tabs.onActivated.addListener((activeInfo) => {
-  console.log('[Background] Tab activated:', activeInfo.tabId);
+chrome.tabs.onActivated.addListener((_activeInfo) => {
+  // Tab activated
 });
 
 /**
  * Listen for tab updates
  */
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, _tab) => {
   if (changeInfo.status === 'complete') {
-    console.log('[Background] Tab completed loading:', tab.url);
+    // Tab completed loading
   }
 });
 
