@@ -35,40 +35,43 @@ function init() {
  */
 function setupMessageListeners() {
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    try {
-      switch (request.action) {
-        case 'startRecording':
-          handleStartRecording();
-          sendResponse({ success: true });
-          break;
+    (async () => {
+      try {
+        switch (request.action) {
+          case 'startRecording':
+            handleStartRecording();
+            sendResponse({ success: true });
+            break;
 
-        case 'stopRecording':
-          handleStopRecording();
-          sendResponse({ success: true });
-          break;
+          case 'stopRecording':
+            handleStopRecording();
+            sendResponse({ success: true });
+            break;
 
-        case 'playActions':
-          handlePlayActions(request.actions, request.speed);
-          sendResponse({ success: true });
-          break;
+          case 'playActions':
+            await handlePlayActions(request.actions, request.speed);
+            sendResponse({ success: true });
+            break;
 
-        case 'startAIMode':
-          handleStartAIMode(request.instructions, request.geminiApiKey);
-          sendResponse({ success: true });
-          break;
+          case 'startAIMode':
+            await handleStartAIMode(request.instructions, request.geminiApiKey);
+            sendResponse({ success: true });
+            break;
 
-        case 'stopAIMode':
-          handleStopAIMode();
-          sendResponse({ success: true });
-          break;
+          case 'stopAIMode':
+            handleStopAIMode();
+            sendResponse({ success: true });
+            break;
 
-        default:
-          sendResponse({ success: false, error: 'Unknown action' });
+          default:
+            sendResponse({ success: false, error: 'Unknown action' });
+        }
+      } catch (error) {
+        console.error('[AI-Autoclicker] Message handler error:', error);
+        sendResponse({ success: false, error: error.message });
       }
-    } catch (error) {
-      console.error('[AI-Autoclicker] Message handler error:', error);
-      sendResponse({ success: false, error: error.message });
-    }
+    })();
+    return true; // Keep message channel open for async response
   });
 }
 

@@ -5,11 +5,12 @@
 
 import { ACTION_TYPES } from '../common/constants.js';
 
-// Gemini model priority: 2.0 Flash → 2.5 Flash → 2.5 Pro (NO 1.5!)
+// Gemini model priority: 2.0 Flash Experimental → 2.0 Flash GA → 1.5 Flash → 1.5 Pro
 const GEMINI_MODELS = [
-  'gemini-2.0-flash',      // Primary: Stable, fast, cost-effective
-  'gemini-2.5-flash',      // Fallback: Latest features
-  'gemini-2.5-pro',         // Last resort: Most capable for complex tasks
+  'gemini-2.0-flash-exp',     // Experimental (best performance)
+  'gemini-2.0-flash-001',     // GA (stable)
+  'gemini-1.5-flash',         // Fallback
+  'gemini-1.5-pro'            // Last resort
 ];
 
 export class InstructionParser {
