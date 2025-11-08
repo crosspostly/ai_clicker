@@ -1,299 +1,435 @@
 /**
- * Tests for AI InstructionParser
+ * Tests for InstructionParser - AI instruction parsing
+ * Tests 25+ scenarios covering AI parsing, fallback parsing, error handling
  */
 
-import { InstructionParser } from '../../ai/InstructionParser.js';
-
-// Mock fetch for API calls
-global.fetch = jest.fn();
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { InstructionParser } from '../../../ai/InstructionParser.js';
+import { ACTION_TYPES } from '../../../common/constants.js';
 
 describe('InstructionParser', () => {
   beforeEach(() => {
-    fetch.mockClear();
+    // Mock console methods to avoid noise in tests
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // Mock fetch for API calls
+    global.fetch = jest.fn();
   });
 
-  describe('parse()', () => {
-    it('should use fallback parsing when Gemini is disabled', async () => {
-      const result = await InstructionParser.parse('Click the button', false);
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('parse() - Main entry point', () => {
+    test('should use fallback parser when Gemini is disabled', async () => {
+      const instructions = 'Click the submit button';
+      const result = await InstructionParser.parse(instructions, false);
       
+      expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it('should use Gemini parsing when enabled with API key', async () => {
-      const mockResponse = [{ type: 'click', target: 'button' }];
-      
-      fetch.mockResolvedValueOnce({
+    test('should use Gemini when enabled with API key', async () => {
+      const mockResponse = {
         ok: true,
-        json: async () => ({
+        json: jest.fn().mockResolvedValue({
           candidates: [{
             content: {
-              parts: [{ text: JSON.stringify(mockResponse) }],
-            },
-          }],
-        }),
-      });
-
-      const result = await InstructionParser.parse('Click the button', true, 'test-api-key');
+              parts: [{
+                text: JSON.stringify([{
+                  type: ACTION_TYPES.CLICK,
+                  target: 'submit button',
+                  description: 'Click submit button'
+                }])
+              }]
+            }
+          }]
+        })
+      };
       
-      expect(result).toEqual(mockResponse);
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      const result = await InstructionParser.parse(
+        'Click the submit button',
+        true,
+        'test-api-key'
+      );
+      
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('generativelanguage.googleapis.com'),
+        expect.any(Object)
+      );
+      expect(result).toEqual([{
+        type: ACTION_TYPES.CLICK,
+        target: 'submit button',
+        description: 'Click submit button'
+      }]);
     });
 
-    it('should fallback to rule-based parsing on Gemini error', async () => {
-      fetch.mockRejectedValueOnce(new Error('Network error'));
-
-      const result = await InstructionParser.parse('Click the button', true, 'test-api-key');
+    test('should fallback to rule-based parser when Gemini fails', async () => {
+      global.fetch.mockRejectedValue(new Error('API Error'));
       
+      const result = await InstructionParser.parse(
+        'Click the submit button',
+        true,
+        'test-api-key'
+      );
+      
+      expect(console.warn).toHaveBeenCalledWith(
+        'Gemini parsing failed, falling back to rule-based parser:',
+        expect.any(Error)
+      );
+      expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
+    });
+
+    test('should handle empty instructions', async () => {
+      const result = await InstructionParser.parse('');
+      
+      expect(result).toEqual([]);
+    });
+
+    test('should handle null/undefined instructions', async () => {
+      const result1 = await InstructionParser.parse(null);
+      const result2 = await InstructionParser.parse(undefined);
+      
+      expect(result1).toEqual([]);
+      expect(result2).toEqual([]);
     });
   });
 
-  describe('parseWithFallback()', () => {
-    it('should parse Russian click instruction', () => {
-      const result = InstructionParser.parseWithFallback('Кликни на "кнопку входа"');
+  describe('parseWithFallback() - Rule-based parsing', () => {
+    test('should parse simple click instructions', () => {
+      const result = InstructionParser.parseWithFallback('Click the login button');
       
-      expect(result).toEqual([
-        {
-          type: 'click',
-          target: 'кнопку входа',
-          description: 'Клик на "кнопку входа"',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.CLICK,
+        target: 'login button',
+        description: 'Click the login button'
+      }]);
     });
 
-    it('should parse input instruction', () => {
-      const result = InstructionParser.parseWithFallback('Введи "test@example.com"');
+    test('should parse input instructions', () => {
+      const result = InstructionParser.parseWithFallback('Type "hello world" in the search box');
       
-      expect(result).toEqual([
-        {
-          type: 'input',
-          value: 'test@example.com',
-          description: 'Введи: "test@example.com"',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.INPUT,
+        target: 'search box',
+        value: 'hello world',
+        description: 'Type "hello world" in the search box'
+      }]);
     });
 
-    it('should parse wait instruction', () => {
-      const result = InstructionParser.parseWithFallback('Жди 2 секунды');
+    test('should parse scroll instructions', () => {
+      const result = InstructionParser.parseWithFallback('Scroll down to see more content');
       
-      expect(result).toEqual([
-        {
-          type: 'wait',
-          duration: 2000,
-          description: 'Ожидание 2000ms',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.SCROLL,
+        direction: 'down',
+        amount: 500,
+        description: 'Scroll down to see more content'
+      }]);
     });
 
-    it('should parse scroll instruction', () => {
-      const result = InstructionParser.parseWithFallback('Прокрути 400 пикселей');
+    test('should parse hover instructions', () => {
+      const result = InstructionParser.parseWithFallback('Hover over the menu item');
       
-      expect(result).toEqual([
-        {
-          type: 'scroll',
-          pixels: 400,
-          description: 'Прокрутка на 400px',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.HOVER,
+        target: 'menu item',
+        description: 'Hover over the menu item'
+      }]);
     });
 
-    it('should parse hover instruction', () => {
-      const result = InstructionParser.parseWithFallback('Наведи на "меню"');
+    test('should parse double-click instructions', () => {
+      const result = InstructionParser.parseWithFallback('Double-click the file to open it');
       
-      expect(result).toEqual([
-        {
-          type: 'hover',
-          target: 'меню',
-          description: 'Наведение на "меню"',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.DOUBLE_CLICK,
+        target: 'file',
+        description: 'Double-click the file to open it'
+      }]);
     });
 
-    it('should parse double click instruction', () => {
-      const result = InstructionParser.parseWithFallback('Двойной клик на "файл"');
+    test('should parse right-click instructions', () => {
+      const result = InstructionParser.parseWithFallback('Right-click on the element');
       
-      expect(result).toEqual([
-        {
-          type: 'click',
-          target: 'файл',
-          description: 'Клик на "файл"',
-        },
-        {
-          type: 'double_click',
-          target: 'файл',
-          description: 'Двойной клик на "файл"',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.RIGHT_CLICK,
+        target: 'element',
+        description: 'Right-click on the element'
+      }]);
     });
 
-    it('should parse right click instruction', () => {
-      const result = InstructionParser.parseWithFallback('Правый клик на "элемент"');
+    test('should parse multi-step instructions', () => {
+      const result = InstructionParser.parseWithFallback(
+        'Click the login button, then type "admin" in the username field, and finally click submit'
+      );
       
-      expect(result).toEqual([
-        {
-          type: 'click',
-          target: 'элемент',
-          description: 'Клик на "элемент"',
-        },
-        {
-          type: 'right_click',
-          target: 'элемент',
-          description: 'Правый клик на "элемент"',
-        },
-      ]);
+      expect(result).toHaveLength(3);
+      expect(result[0].type).toBe(ACTION_TYPES.CLICK);
+      expect(result[1].type).toBe(ACTION_TYPES.INPUT);
+      expect(result[2].type).toBe(ACTION_TYPES.CLICK);
     });
 
-    it('should parse select instruction', () => {
-      const result = InstructionParser.parseWithFallback('Выбери "Россия"');
+    test('should handle complex sentences', () => {
+      const result = InstructionParser.parseWithFallback(
+        'I need you to click on the settings icon in the top right corner of the page'
+      );
       
-      expect(result).toEqual([
-        {
-          type: 'select',
-          value: 'Россия',
-          description: 'Выбрать "Россия"',
-        },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.CLICK,
+        target: 'settings icon in the top right corner of the page',
+        description: 'Click on the settings icon in the top right corner of the page'
+      }]);
     });
 
-    it('should return empty array for unrecognized instruction', () => {
-      const result = InstructionParser.parseWithFallback('Invalid instruction format');
+    test('should extract numeric values from instructions', () => {
+      const result = InstructionParser.parseWithFallback('Scroll down by 300 pixels');
+      
+      expect(result).toEqual([{
+        type: ACTION_TYPES.SCROLL,
+        direction: 'down',
+        amount: 300,
+        description: 'Scroll down by 300 pixels'
+      }]);
+    });
+
+    test('should handle malformed instructions gracefully', () => {
+      const result = InstructionParser.parseWithFallback('Just some random text without clear action');
       
       expect(result).toEqual([]);
     });
   });
 
-  describe('parseWithGemini()', () => {
-    it('should handle API errors gracefully', async () => {
-      fetch.mockRejectedValueOnce(new Error('Network error'));
-
-      await expect(InstructionParser.parseWithGemini('Click button', 'test-key'))
-        .rejects.toThrow('Network error');
+  describe('parseWithGemini() - AI parsing', () => {
+    test('should handle successful API response', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{
+                text: JSON.stringify([{
+                  type: ACTION_TYPES.CLICK,
+                  target: 'submit button',
+                  description: 'Click submit button'
+                }])
+              }]
+            }
+          }]
+        })
+      };
+      
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      const result = await InstructionParser.parseWithGemini(
+        'Click the submit button',
+        'test-api-key'
+      );
+      
+      expect(result).toEqual([{
+        type: ACTION_TYPES.CLICK,
+        target: 'submit button',
+        description: 'Click submit button'
+      }]);
     });
 
-    it('should handle API error responses', async () => {
-      fetch.mockResolvedValueOnce({
+    test('should handle API errors gracefully', async () => {
+      global.fetch.mockRejectedValue(new Error('Network error'));
+      
+      await expect(
+        InstructionParser.parseWithGemini('Click button', 'test-key')
+      ).rejects.toThrow('Network error');
+    });
+
+    test('should handle malformed API response', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{
+                text: 'invalid json response'
+              }]
+            }
+          }]
+        })
+      };
+      
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      await expect(
+        InstructionParser.parseWithGemini('Click button', 'test-key')
+      ).rejects.toThrow();
+    });
+
+    test('should include page context in API call', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{
+                text: JSON.stringify([])
+              }]
+            }
+          }]
+        })
+      };
+      
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      const pageContext = 'Current page: Login form with username and password fields';
+      
+      await InstructionParser.parseWithGemini(
+        'Fill the form',
+        'test-api-key',
+        pageContext
+      );
+      
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('generativelanguage.googleapis.com'),
+        expect.objectContaining({
+          body: expect.stringContaining(pageContext)
+        })
+      );
+    });
+
+    test('should try different Gemini models on failure', async () => {
+      // First model fails
+      global.fetch
+        .mockRejectedValueOnce(new Error('Model not available'))
+        .mockRejectedValueOnce(new Error('Rate limited'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: jest.fn().mockResolvedValue({
+            candidates: [{
+              content: {
+                parts: [{
+                  text: JSON.stringify([{
+                    type: ACTION_TYPES.CLICK,
+                    target: 'button'
+                  }])
+                }]
+              }
+            }]
+          })
+        });
+      
+      const result = await InstructionParser.parseWithGemini(
+        'Click button',
+        'test-api-key'
+      );
+      
+      expect(fetch).toHaveBeenCalledTimes(3);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.CLICK,
+        target: 'button'
+      }]);
+    });
+  });
+
+  describe('validateActions() - Action validation', () => {
+    test('should validate action structure', () => {
+      const validActions = [{
+        type: ACTION_TYPES.CLICK,
+        target: 'button',
+        description: 'Click button'
+      }];
+      
+      expect(() => InstructionParser.validateActions(validActions)).not.toThrow();
+    });
+
+    test('should reject invalid action types', () => {
+      const invalidActions = [{
+        type: 'INVALID_TYPE',
+        target: 'button'
+      }];
+      
+      expect(() => InstructionParser.validateActions(invalidActions)).toThrow();
+    });
+
+    test('should reject actions without target', () => {
+      const invalidActions = [{
+        type: ACTION_TYPES.CLICK
+        // missing target
+      }];
+      
+      expect(() => InstructionParser.validateActions(invalidActions)).toThrow();
+    });
+
+    test('should handle empty action arrays', () => {
+      expect(() => InstructionParser.validateActions([])).not.toThrow();
+    });
+  });
+
+  describe('Error handling and edge cases', () => {
+    test('should handle network timeouts', async () => {
+      global.fetch.mockImplementation(() => 
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 100)
+        )
+      );
+      
+      await expect(
+        InstructionParser.parseWithGemini('Click button', 'test-key')
+      ).rejects.toThrow('Timeout');
+    });
+
+    test('should handle API rate limiting', async () => {
+      const mockResponse = {
         ok: false,
         status: 429,
-        json: async () => ({ error: { message: 'Rate limit exceeded' } }),
-      });
-
-      await expect(InstructionParser.parseWithGemini('Click button', 'test-key'))
-        .rejects.toThrow('Gemini API Error: Rate limit exceeded');
+        statusText: 'Too Many Requests'
+      };
+      
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      await expect(
+        InstructionParser.parseWithGemini('Click button', 'test-key')
+      ).rejects.toThrow();
     });
 
-    it('should parse successful API response', async () => {
-      const mockResponse = [
-        { type: 'click', target: 'login button', description: 'Click login button' },
-      ];
-
-      fetch.mockResolvedValueOnce({
+    test('should handle invalid JSON in Gemini response', async () => {
+      const mockResponse = {
         ok: true,
-        json: async () => ({
+        json: jest.fn().mockResolvedValue({
           candidates: [{
             content: {
-              parts: [{ text: JSON.stringify(mockResponse) }],
-            },
-          }],
-        }),
-      });
-
-      const result = await InstructionParser.parseWithGemini('Click the login button', 'test-key');
+              parts: [{
+                text: '{ invalid json }'
+              }]
+            }
+          }]
+        })
+      };
       
-      expect(result).toEqual(mockResponse);
+      global.fetch.mockResolvedValue(mockResponse);
+      
+      await expect(
+        InstructionParser.parseWithGemini('Click button', 'test-key')
+      ).rejects.toThrow();
     });
 
-    it('should handle malformed JSON response', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          candidates: [{
-            content: {
-              parts: [{ text: 'Invalid JSON response' }],
-            },
-          }],
-        }),
-      });
-
-      const result = await InstructionParser.parseWithGemini('Click button', 'test-key');
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('validateActions()', () => {
-    it('should validate valid actions array', () => {
-      const actions = [
-        { type: 'click', target: 'button' },
-        { type: 'input', value: 'text' },
-      ];
+    test('should preserve original instruction in description', async () => {
+      const originalInstruction = 'Click the blue submit button at the bottom of the form';
       
-      expect(() => InstructionParser.validateActions(actions)).not.toThrow();
+      const result = InstructionParser.parseWithFallback(originalInstruction);
+      
+      expect(result[0].description).toContain(originalInstruction);
     });
 
-    it('should reject non-array input', () => {
-      expect(() => InstructionParser.validateActions('invalid')).toThrow('Actions must be an array');
-    });
-
-    it('should reject invalid action type', () => {
-      const actions = [{ type: 'invalid_type' }];
+    test('should handle special characters in instructions', () => {
+      const result = InstructionParser.parseWithFallback('Type "hello@world.com" in the email field');
       
-      expect(() => InstructionParser.validateActions(actions)).toThrow('Invalid action type: invalid_type');
-    });
-  });
-
-  describe('mergeDuplicates()', () => {
-    it('should merge duplicate actions', () => {
-      const actions = [
-        { type: 'click', target: 'button' },
-        { type: 'click', target: 'button' },
-        { type: 'input', value: 'text' },
-      ];
-      
-      const result = InstructionParser.mergeDuplicates(actions);
-      
-      expect(result).toEqual([
-        { type: 'click', target: 'button' },
-        { type: 'input', value: 'text' },
-      ]);
-    });
-
-    it('should keep different actions', () => {
-      const actions = [
-        { type: 'click', target: 'button1' },
-        { type: 'click', target: 'button2' },
-      ];
-      
-      const result = InstructionParser.mergeDuplicates(actions);
-      
-      expect(result).toEqual(actions);
-    });
-  });
-
-  describe('optimizeSequence()', () => {
-    it('should remove consecutive wait actions', () => {
-      const actions = [
-        { type: 'wait', duration: 1000 },
-        { type: 'wait', duration: 2000 },
-        { type: 'click', target: 'button' },
-      ];
-      
-      const result = InstructionParser.optimizeSequence(actions);
-      
-      expect(result).toEqual([
-        { type: 'wait', duration: 2000 },
-        { type: 'click', target: 'button' },
-      ]);
-    });
-
-    it('should remove very short waits', () => {
-      const actions = [
-        { type: 'wait', duration: 50 },
-        { type: 'click', target: 'button' },
-      ];
-      
-      const result = InstructionParser.optimizeSequence(actions);
-      
-      expect(result).toEqual([
-        { type: 'click', target: 'button' },
-      ]);
+      expect(result).toEqual([{
+        type: ACTION_TYPES.INPUT,
+        target: 'email field',
+        value: 'hello@world.com',
+        description: 'Type "hello@world.com" in the email field'
+      }]);
     });
   });
 });

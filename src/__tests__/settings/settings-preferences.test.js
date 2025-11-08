@@ -3,6 +3,7 @@
  * Tests 101-110: Saving/loading preferences, feature toggles, config updates
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { StorageManager } from '../../common/storage.js';
 
 global.chrome = {

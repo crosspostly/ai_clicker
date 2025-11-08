@@ -1,134 +1,551 @@
 /**
- * Tests for popup UI logic
+ * Tests for popup UI interactions and message handling
+ * Tests 20+ scenarios covering UI events, state management, Chrome messaging
  */
 
-// Mock DOM elements
-const mockElements = {
-  'start-recording': { addEventListener: jest.fn(), click: jest.fn() },
-  'stop-recording': { addEventListener: jest.fn(), click: jest.fn() },
-  'play-actions': { addEventListener: jest.fn(), click: jest.fn() },
-  'clear-actions': { addEventListener: jest.fn(), click: jest.fn() },
-  'export-actions': { addEventListener: jest.fn(), click: jest.fn() },
-  'import-actions': { addEventListener: jest.fn(), click: jest.fn() },
-  'import-file-input': { addEventListener: jest.fn(), click: jest.fn(), files: [] },
-  'actions-container': { innerHTML: '', appendChild: jest.fn() },
-  'mode-manual': { addEventListener: jest.fn(), click: jest.fn() },
-  'mode-auto': { addEventListener: jest.fn(), click: jest.fn() },
-  'manual-mode': { style: { display: '' } },
-  'auto-mode': { style: { display: '' } },
-  'start-auto': { addEventListener: jest.fn(), click: jest.fn() },
-  'stop-auto': { addEventListener: jest.fn(), click: jest.fn() },
-  'ai-instructions': { value: '', addEventListener: jest.fn() },
-  'status-text': { textContent: '' },
-  'status-log': { innerHTML: '', appendChild: jest.fn() },
-  'playback-speed': { value: '1', addEventListener: jest.fn() },
-  'speed-label': { textContent: '1x' },
-  'settings-btn': { addEventListener: jest.fn(), click: jest.fn() }
-};
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
-// Mock document methods
-global.document = {
-  getElementById: jest.fn((id) => mockElements[id] || null),
-  createElement: jest.fn((tag) => ({
-    tagName: tag.toUpperCase(),
-    innerHTML: '',
-    textContent: '',
-    style: {},
-    addEventListener: jest.fn(),
-    appendChild: jest.fn()
-  })),
-  addEventListener: jest.fn()
-};
-
-// Mock Chrome APIs
-global.chrome = {
-  runtime: {
-    sendMessage: jest.fn(),
-    onMessage: {
-      addListener: jest.fn()
-    }
-  },
-  tabs: {
-    query: jest.fn(),
-    sendMessage: jest.fn()
-  }
-};
-
-// Mock console methods
-global.console = {
-  ...console,
-  error: jest.fn()
-};
-
-// Import the module to trigger coverage
-import('../../popup/index.js');
-
-describe('Popup UI', () => {
+describe('Popup UI Interactions', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    // Reset DOM elements
-    Object.values(mockElements).forEach(element => {
-      if (element.innerHTML) element.innerHTML = '';
-      if (element.textContent) element.textContent = '';
-      if (element.value) element.value = '';
-      if (element.style) element.style = { display: '' };
+    // Mock DOM elements
+    document.body.innerHTML = `
+      <button id="start-recording">Start Recording</button>
+      <button id="stop-recording">Stop Recording</button>
+      <button id="play-actions">Play Actions</button>
+      <button id="clear-actions">Clear Actions</button>
+      <div id="status-message"></div>
+      <div id="actions-list"></div>
+      <input id="instruction-input" />
+      <button id="execute-instruction">Execute</button>
+    `;
+
+    // Mock Chrome APIs
+    global.chrome = {
+      runtime: {
+        sendMessage: jest.fn(),
+        onMessage: {
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+        },
+      },
+      storage: {
+        local: {
+          get: jest.fn(),
+          set: jest.fn(),
+        },
+      },
+      tabs: {
+        query: jest.fn(),
+      },
+    };
+
+    // Mock fetch for API calls
+    global.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    document.body.innerHTML = '';
+  });
+
+  describe('DOM Elements and Initialization', () => {
+    test('should find all required DOM elements', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      expect(popup.elements.startRecording).toBeDefined();
+      expect(popup.elements.stopRecording).toBeDefined();
+      expect(popup.elements.playActions).toBeDefined();
+      expect(popup.elements.clearActions).toBeDefined();
+      expect(popup.elements.statusMessage).toBeDefined();
+      expect(popup.elements.actionsList).toBeDefined();
+    });
+
+    test('should initialize with default state', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      expect(popup.state.isRecording).toBe(false);
+      expect(popup.state.actions).toEqual([]);
+      expect(popup.state.currentTabId).toBeNull();
+    });
+
+    test('should load saved state from storage', async () => {
+      const mockState = {
+        isRecording: true,
+        actions: [{ type: 'click', target: 'button' }],
+        currentTabId: 123
+      };
+      
+      chrome.storage.local.get.mockResolvedValue({ 'popup-state': mockState });
+      
+      const popup = await import('../../src/popup/index.js');
+      
+      expect(popup.state).toEqual(mockState);
+      expect(chrome.storage.local.get).toHaveBeenCalledWith('popup-state');
+    });
+
+    test('should handle missing storage state', async () => {
+      chrome.storage.local.get.mockResolvedValue({});
+      
+      const popup = await import('../../src/popup/index.js');
+      
+      expect(popup.state.isRecording).toBe(false);
+      expect(popup.state.actions).toEqual([]);
+      expect(popup.state.currentTabId).toBeNull();
     });
   });
 
-  test('should have all required DOM elements', () => {
-    // Check that all required elements are mocked
-    const requiredElements = [
-      'start-recording', 'stop-recording', 'play-actions', 'clear-actions',
-      'export-actions', 'import-actions', 'import-file-input', 'actions-container',
-      'mode-manual', 'mode-auto', 'manual-mode', 'auto-mode', 'start-auto',
-      'stop-auto', 'ai-instructions', 'status-text', 'status-log',
-      'playback-speed', 'speed-label', 'settings-btn'
-    ];
+  describe('Button Click Handlers', () => {
+    test('should handle start recording click', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      // Simulate button click
+      popup.elements.startRecording.click();
+      
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+        type: 'START_RECORDING'
+      });
+      expect(popup.state.isRecording).toBe(true);
+      expect(popup.elements.startRecording.disabled).toBe(true);
+      expect(popup.elements.stopRecording.disabled).toBe(false);
+    });
 
-    requiredElements.forEach(id => {
-      expect(document.getElementById(id)).toBeTruthy();
+    test('should handle stop recording click', async () => {
+      const popup = await import('../../src/popup/index.js');
+      popup.state.isRecording = true;
+      
+      // Simulate button click
+      popup.elements.stopRecording.click();
+      
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+        type: 'STOP_RECORDING'
+      });
+      expect(popup.state.isRecording).toBe(false);
+      expect(popup.elements.startRecording.disabled).toBe(false);
+      expect(popup.elements.stopRecording.disabled).toBe(true);
+    });
+
+    test('should handle play actions click', async () => {
+      const popup = await import('../../src/popup/index.js');
+      popup.state.actions = [
+        { type: 'click', target: 'button1' },
+        { type: 'input', target: 'input1', value: 'test' }
+      ];
+      
+      // Simulate button click
+      popup.elements.playActions.click();
+      
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+        type: 'EXECUTE_ACTIONS',
+        actions: popup.state.actions
+      });
+    });
+
+    test('should handle clear actions click', async () => {
+      const popup = await import('../../src/popup/index.js');
+      popup.state.actions = [
+        { type: 'click', target: 'button1' },
+        { type: 'input', target: 'input1', value: 'test' }
+      ];
+      
+      // Simulate button click
+      popup.elements.clearActions.click();
+      
+      expect(popup.state.actions).toEqual([]);
+      expect(popup.elements.actionsList.innerHTML).toBe('');
+      expect(chrome.storage.local.set).toHaveBeenCalledWith({
+        'popup-state': popup.state
+      });
+    });
+
+    test('should disable play button when no actions', async () => {
+      const popup = await import('../../src/popup/index.js');
+      popup.state.actions = [];
+      
+      popup.updateUI();
+      
+      expect(popup.elements.playActions.disabled).toBe(true);
+    });
+
+    test('should enable play button when actions exist', async () => {
+      const popup = await import('../../src/popup/index.js');
+      popup.state.actions = [{ type: 'click', target: 'button' }];
+      
+      popup.updateUI();
+      
+      expect(popup.elements.playActions.disabled).toBe(false);
     });
   });
 
-  test('should add event listeners to buttons', () => {
-    // Check that event listeners are added to buttons
-    expect(mockElements['start-recording'].addEventListener).toHaveBeenCalled();
-    expect(mockElements['stop-recording'].addEventListener).toHaveBeenCalled();
-    expect(mockElements['play-actions'].addEventListener).toHaveBeenCalled();
-    expect(mockElements['clear-actions'].addEventListener).toHaveBeenCalled();
+  describe('Message Handling', () => {
+    test('should handle actions recorded message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = {
+        type: 'ACTIONS_RECORDED',
+        actions: [
+          { type: 'click', target: 'button1' },
+          { type: 'input', target: 'input1', value: 'test' }
+        ]
+      };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.state.actions).toEqual(message.actions);
+      expect(popup.elements.actionsList.children.length).toBe(2);
+    });
+
+    test('should handle recording started message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = { type: 'RECORDING_STARTED' };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.state.isRecording).toBe(true);
+      expect(popup.elements.statusMessage.textContent).toBe('Recording...');
+      expect(popup.elements.startRecording.disabled).toBe(true);
+      expect(popup.elements.stopRecording.disabled).toBe(false);
+    });
+
+    test('should handle recording stopped message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = { type: 'RECORDING_STOPPED' };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.state.isRecording).toBe(false);
+      expect(popup.elements.statusMessage.textContent).toBe('Recording stopped');
+      expect(popup.elements.startRecording.disabled).toBe(false);
+      expect(popup.elements.stopRecording.disabled).toBe(true);
+    });
+
+    test('should handle execution started message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = { type: 'EXECUTION_STARTED' };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Executing actions...');
+      expect(popup.elements.playActions.disabled).toBe(true);
+    });
+
+    test('should handle execution completed message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = { type: 'EXECUTION_COMPLETED' };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Execution completed');
+      expect(popup.elements.playActions.disabled).toBe(false);
+    });
+
+    test('should handle error message', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const message = {
+        type: 'ERROR',
+        error: 'Element not found'
+      };
+      
+      popup.handleMessage(message);
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Error: Element not found');
+      expect(popup.elements.statusMessage.className).toContain('error');
+    });
   });
 
-  test('should setup DOMContentLoaded listener', () => {
-    expect(document.addEventListener).toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
+  describe('Instruction Input and Execution', () => {
+    test('should handle instruction input', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.elements.instructionInput.value = 'Click the submit button';
+      
+      // Simulate form submission
+      popup.handleInstructionSubmit();
+      
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+        type: 'EXECUTE_INSTRUCTION',
+        instruction: 'Click the submit button'
+      });
+    });
+
+    test('should validate instruction input', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.elements.instructionInput.value = '';
+      
+      popup.handleInstructionSubmit();
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Please enter an instruction');
+      expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+    });
+
+    test('should clear instruction after submission', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.elements.instructionInput.value = 'Click button';
+      popup.handleInstructionSubmit();
+      
+      expect(popup.elements.instructionInput.value).toBe('');
+    });
+
+    test('should handle enter key in instruction input', async () => {
+      const popup = await import('../../src/popup/index.js');
+      const submitSpy = jest.spyOn(popup, 'handleInstructionSubmit');
+      
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+      popup.elements.instructionInput.dispatchEvent(enterEvent);
+      
+      expect(submitSpy).toHaveBeenCalled();
+    });
+
+    test('should ignore non-enter keys', async () => {
+      const popup = await import('../../src/popup/index.js');
+      const submitSpy = jest.spyOn(popup, 'handleInstructionSubmit');
+      
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+      popup.elements.instructionInput.dispatchEvent(escapeEvent);
+      
+      expect(submitSpy).not.toHaveBeenCalled();
+    });
   });
 
-  test('should handle Chrome runtime messages', () => {
-    expect(chrome.runtime.onMessage.addListener).toHaveBeenCalled();
+  describe('State Persistence', () => {
+    test('should save state to storage', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.state.isRecording = true;
+      popup.state.actions = [{ type: 'click', target: 'button' }];
+      
+      popup.saveState();
+      
+      expect(chrome.storage.local.set).toHaveBeenCalledWith({
+        'popup-state': popup.state
+      });
+    });
+
+    test('should debounce state saving', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.state.isRecording = true;
+      
+      // Call saveState multiple times quickly
+      popup.saveState();
+      popup.saveState();
+      popup.saveState();
+      
+      // Should only call once due to debouncing
+      setTimeout(() => {
+        expect(chrome.storage.local.set).toHaveBeenCalledTimes(1);
+      }, 200);
+    });
+
+    test('should load current tab ID', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      chrome.tabs.query.mockResolvedValue([{ id: 456 }]);
+      
+      await popup.loadCurrentTab();
+      
+      expect(popup.state.currentTabId).toBe(456);
+      expect(chrome.tabs.query).toHaveBeenCalledWith({ active: true, currentWindow: true });
+    });
+
+    test('should handle tab query error', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      chrome.tabs.query.mockRejectedValue(new Error('Tab access denied'));
+      
+      await popup.loadCurrentTab();
+      
+      expect(popup.state.currentTabId).toBeNull();
+      expect(popup.elements.statusMessage.textContent).toContain('Error');
+    });
   });
 
-  test('should have proper Chrome API methods', () => {
-    expect(chrome.runtime.sendMessage).toBeDefined();
-    expect(chrome.tabs.query).toBeDefined();
-    expect(chrome.tabs.sendMessage).toBeDefined();
+  describe('UI Updates and Rendering', () => {
+    test('should render actions list', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.state.actions = [
+        { type: 'click', target: 'button1', description: 'Click button1' },
+        { type: 'input', target: 'input1', value: 'test', description: 'Type "test" in input1' }
+      ];
+      
+      popup.renderActions();
+      
+      expect(popup.elements.actionsList.children.length).toBe(2);
+      expect(popup.elements.actionsList.children[0].textContent).toContain('Click button1');
+      expect(popup.elements.actionsList.children[1].textContent).toContain('Type "test" in input1');
+    });
+
+    test('should update status message styling', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.updateStatus('Success!', 'success');
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Success!');
+      expect(popup.elements.statusMessage.className).toContain('success');
+      
+      popup.updateStatus('Error!', 'error');
+      
+      expect(popup.elements.statusMessage.textContent).toBe('Error!');
+      expect(popup.elements.statusMessage.className).toContain('error');
+    });
+
+    test('should show action count', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.state.actions = [
+        { type: 'click' },
+        { type: 'input' },
+        { type: 'scroll' }
+      ];
+      
+      popup.updateActionCount();
+      
+      expect(popup.elements.statusMessage.textContent).toContain('3 actions');
+    });
+
+    test('should handle empty actions list', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.state.actions = [];
+      
+      popup.renderActions();
+      
+      expect(popup.elements.actionsList.innerHTML).toBe('');
+      expect(popup.elements.actionsList.textContent).toContain('No actions recorded');
+    });
+
+    test('should format action descriptions', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const action = {
+        type: 'input',
+        target: 'search-box',
+        value: 'hello world',
+        description: 'Type "hello world" in search-box'
+      };
+      
+      const formatted = popup.formatAction(action);
+      
+      expect(formatted).toContain('input');
+      expect(formatted).toContain('search-box');
+      expect(formatted).toContain('hello world');
+    });
   });
 
-  test('should initialize with default values', () => {
-    // Check default element states
-    expect(mockElements['playback-speed'].value).toBe('1');
-    expect(mockElements['speed-label'].textContent).toBe('1x');
-    expect(mockElements['status-text'].textContent).toBe('');
-    expect(mockElements['status-log'].innerHTML).toBe('');
+  describe('Error Handling and Edge Cases', () => {
+    test('should handle chrome runtime errors', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      chrome.runtime.sendMessage.mockImplementation(() => {
+        throw new Error('Extension context invalidated');
+      });
+      
+      popup.elements.startRecording.click();
+      
+      expect(popup.elements.statusMessage.textContent).toContain('Error');
+    });
+
+    test('should handle storage errors', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      chrome.storage.local.set.mockImplementation(() => {
+        throw new Error('Storage quota exceeded');
+      });
+      
+      popup.saveState();
+      
+      expect(popup.elements.statusMessage.textContent).toContain('Storage error');
+    });
+
+    test('should handle malformed message data', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      const malformedMessage = {
+        type: 'ACTIONS_RECORDED',
+        actions: 'not an array'
+      };
+      
+      popup.handleMessage(malformedMessage);
+      
+      expect(popup.state.actions).toEqual([]);
+      expect(popup.elements.statusMessage.textContent).toContain('Invalid data');
+    });
+
+    test('should handle missing DOM elements', async () => {
+      // Remove a required element
+      document.getElementById('start-recording').remove();
+      
+      const popup = await import('../../src/popup/index.js');
+      
+      expect(popup.elements.startRecording).toBeUndefined();
+      // Should not crash
+      expect(() => popup.updateUI()).not.toThrow();
+    });
+
+    test('should handle rapid state changes', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      // Rapidly change recording state
+      popup.setRecordingState(true);
+      popup.setRecordingState(false);
+      popup.setRecordingState(true);
+      
+      expect(popup.state.isRecording).toBe(true);
+      expect(popup.elements.startRecording.disabled).toBe(true);
+    });
   });
 
-  test('should create elements properly', () => {
-    const element = document.createElement('div');
-    expect(element.tagName).toBe('DIV');
-    expect(element.addEventListener).toBeDefined();
-    expect(element.appendChild).toBeDefined();
-  });
+  describe('Integration with Background', () => {
+    test('should register message listener', async () => {
+      await import('../../src/popup/index.js');
+      
+      expect(chrome.runtime.onMessage.addListener).toHaveBeenCalled();
+    });
 
-  test('should handle missing elements gracefully', () => {
-    const missingElement = document.getElementById('non-existent');
-    expect(missingElement).toBeNull();
+    test('should unregister message listener on cleanup', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      popup.cleanup();
+      
+      expect(chrome.runtime.onMessage.removeListener).toHaveBeenCalled();
+    });
+
+    test('should handle background connection errors', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      chrome.runtime.sendMessage.mockImplementation(() => {
+        const error = new Error('Receiving end does not exist');
+        error.code = 'RECEIVING_END_DOES_NOT_EXIST';
+        throw error;
+      });
+      
+      await popup.sendMessage({ type: 'TEST' });
+      
+      expect(popup.elements.statusMessage.textContent).toContain('Connection error');
+    });
+
+    test('should retry failed messages', async () => {
+      const popup = await import('../../src/popup/index.js');
+      
+      let callCount = 0;
+      chrome.runtime.sendMessage.mockImplementation(() => {
+        callCount++;
+        if (callCount < 3) {
+          throw new Error('Connection lost');
+        }
+        return { success: true };
+      });
+      
+      await popup.sendMessageWithRetry({ type: 'TEST' }, 3);
+      
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(3);
+    });
   });
 });

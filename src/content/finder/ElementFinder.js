@@ -295,8 +295,8 @@ export class ElementFinder {
   }
 
   /**
-   * Check if element is visible
-   */
+    * Check if element is visible
+    */
   isVisible(element) {
     if (!element) return false;
 
@@ -305,6 +305,24 @@ export class ElementFinder {
       window.getComputedStyle(element).display !== 'none' &&
       window.getComputedStyle(element).visibility !== 'hidden'
     );
+  }
+
+  /**
+    * Clear all cached elements
+    */
+  clearCache() {
+    this.selectorCache.clear();
+  }
+
+  /**
+    * Get cache statistics
+    */
+  getCacheStats() {
+    return {
+      size: this.selectorCache.size,
+      maxSize: this.maxCacheSize,
+      usage: `${((this.selectorCache.size / this.maxCacheSize) * 100).toFixed(1)}%`
+    };
   }
 
   /**

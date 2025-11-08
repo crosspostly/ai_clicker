@@ -2,6 +2,8 @@
  * Tests for main content script
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
 // Mock Chrome APIs
 const mockAddListener = jest.fn();
 global.chrome = {
