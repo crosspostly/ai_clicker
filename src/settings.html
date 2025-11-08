@@ -44,8 +44,8 @@
         </div>
 
         <div class="button-group">
-          <button type="button" class="btn-test" onclick="testGeminiAPI()">🧪 Тест</button>
-          <button type="button" class="btn-reset" onclick="clearGeminiKey()">🗑️ Удалить</button>
+          <button type="button" class="btn-test" id="test-gemini-btn">🧪 Тест</button>
+          <button type="button" class="btn-reset" id="clear-gemini-btn">🗑️ Удалить</button>
         </div>
 
         <div id="gemini-status" class="status-message"></div>
@@ -110,26 +110,26 @@
         <div class="info-box">
           <strong>ИИ-Автокликер v2.0.0</strong><br>
           Мощный инструмент для автоматизации веб-действий с поддержкой ИИ<br><br>
-          📚 <a href="https://github.com/yourusername/ai-autoclicker" target="_blank">GitHub</a> |
-          🐛 <a href="https://github.com/yourusername/ai-autoclicker/issues" target="_blank">Баг-репорты</a>
+          📚 <a href="https://github.com/crosspostly/ai_clicker" target="_blank" rel="noopener noreferrer">GitHub</a> |
+          🐛 <a href="https://github.com/crosspostly/ai_clicker/issues" target="_blank" rel="noopener noreferrer">Баг-репорты</a>
         </div>
       </div>
 
       <!-- Buttons -->
       <div class="button-group button-group-main">
         <button type="submit" class="btn-save">✓ Сохранить</button>
-        <button type="button" class="btn-reset" onclick="resetSettings()">↺ Сбросить</button>
+        <button type="button" class="btn-reset" id="reset-settings-btn">↺ Сбросить</button>
       </div>
 
       <div id="main-status" class="status-message"></div>
     </form>
   </div>
 
-  <script src="../common/constants.js"></script>
-  <script src="../common/logger.js"></script>
-  <script src="../common/validator.js"></script>
-  <script src="../common/storage.js"></script>
-  <script src="../common/helpers.js"></script>
+  <script src="constants.js"></script>
+  <script src="logger.js"></script>
+  <script src="validator.js"></script>
+  <script src="storage.js"></script>
+  <script src="helpers.js"></script>
   <script src="settings.js"></script>
 </body>
 </html>

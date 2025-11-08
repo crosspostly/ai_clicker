@@ -4,7 +4,7 @@
  */
 
 class Logger {
-  constructor(name = 'AI-Autoclicker', level = 'INFO') {
+  constructor(name = "AI-Autoclicker", level = "INFO") {
     this.name = name;
     this.level = level;
     this.logs = [];
@@ -31,7 +31,7 @@ class Logger {
    */
   getTimestamp() {
     const now = new Date();
-    return now.toISOString().split('T')[1].slice(0, 12);
+    return now.toISOString().split("T")[1].slice(0, 12);
   }
 
   /**
@@ -39,12 +39,12 @@ class Logger {
    */
   getConsoleStyle(level) {
     const styles = {
-      DEBUG: 'color: #888; font-weight: normal;',
-      INFO: 'color: #0066cc; font-weight: normal;',
-      WARN: 'color: #ff9900; font-weight: bold;',
-      ERROR: 'color: #cc0000; font-weight: bold;',
+      DEBUG: "color: #888; font-weight: normal;",
+      INFO: "color: #0066cc; font-weight: normal;",
+      WARN: "color: #ff9900; font-weight: bold;",
+      ERROR: "color: #cc0000; font-weight: bold;",
     };
-    return styles[level] || '';
+    return styles[level] || "";
   }
 
   /**
@@ -65,7 +65,7 @@ class Logger {
 
     // Console output
     const style = this.getConsoleStyle(level);
-    if (data !== null && typeof data === 'object') {
+    if (data !== null && typeof data === "object") {
       console.log(`%c${fullMessage}`, style, data);
     } else {
       console.log(`%c${fullMessage}`, style);
@@ -73,19 +73,19 @@ class Logger {
   }
 
   debug(message, data = null) {
-    this.log('DEBUG', message, data);
+    this.log("DEBUG", message, data);
   }
 
   info(message, data = null) {
-    this.log('INFO', message, data);
+    this.log("INFO", message, data);
   }
 
   warn(message, data = null) {
-    this.log('WARN', message, data);
+    this.log("WARN", message, data);
   }
 
   error(message, data = null) {
-    this.log('ERROR', message, data);
+    this.log("ERROR", message, data);
   }
 
   /**
@@ -94,7 +94,7 @@ class Logger {
   getLogs(level = null, limit = 100) {
     let logs = this.logs;
     if (level) {
-      logs = logs.filter(log => log.level === level);
+      logs = logs.filter((log) => log.level === level);
     }
     return logs.slice(-limit);
   }
@@ -117,15 +117,15 @@ class Logger {
    * Set log level
    */
   setLevel(level) {
-    if (['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(level)) {
+    if (["DEBUG", "INFO", "WARN", "ERROR"].includes(level)) {
       this.level = level;
     }
   }
 }
 
 // Default logger instance
-const globalLogger = new Logger('AI-Autoclicker', 'INFO');
+const globalLogger = new Logger("AI-Autoclicker", "INFO");
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { Logger, globalLogger };
 }
