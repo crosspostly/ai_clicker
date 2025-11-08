@@ -1,9 +1,16 @@
 /**
  * Unified instruction parser for both Gemini AI and fallback parsing
- * Combines duplicated logic from both sources
+ * Updated to use Gemini 2.0/2.5 Flash (Nov 2025)
  */
 
 import { ACTION_TYPES } from '../common/constants.js';
+
+// Gemini model priority: 2.0 Flash → 2.5 Flash → 2.5 Pro (NO 1.5!)
+const GEMINI_MODELS = [
+  'gemini-2.0-flash',      // Primary: Stable, fast, cost-effective
+  'gemini-2.5-flash',      // Fallback: Latest features
+  'gemini-2.5-pro'         // Last resort: Most capable for complex tasks
+];
 
 export class InstructionParser {
   /**
@@ -34,7 +41,7 @@ export class InstructionParser {
   }
 
   /**
-   * Parse using Gemini API
+   * Parse using Gemini API with automatic model fallback
    */
   static async parseWithGemini(instructions, apiKey, pageContext = '') {
     const systemPrompt = `Ты - ассистент автоматизации веб-действий. 
@@ -92,36 +99,62 @@ export class InstructionParser {
       ],
     };
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      },
-    );
+    // Try models in priority order: 2.0 → 2.5 Flash → 2.5 Pro
+    let lastError = null;
+    
+    for (const model of GEMINI_MODELS) {
+      try {
+        console.log(`[InstructionParser] Attempting model: ${model}`);
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          },
+        );
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(
-        `Gemini API Error: ${error.error?.message || response.statusText}`,
-      );
-    }
+        if (!response.ok) {
+          const error = await response.json();
+          lastError = new Error(
+            `${model}: ${error.error?.message || response.statusText}`,
+          );
+          console.warn(`[InstructionParser] ❌ ${model} failed:`, lastError.message);
+          continue; // Try next model
+        }
 
-    const data = await response.json();
-    const responseText = data.candidates[0]?.content?.parts[0]?.text || '';
+        const data = await response.json();
+        const responseText = data.candidates[0]?.content?.parts[0]?.text || '';
 
-    try {
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        console.log(`[InstructionParser] ✅ SUCCESS with model: ${model}`);
+        
+        try {
+          const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+          }
+        } catch (parseError) {
+          console.error('[InstructionParser] Failed to parse JSON response:', parseError);
+          throw new Error('Invalid JSON response from Gemini');
+        }
+        
+      } catch (error) {
+        lastError = error;
+        console.warn(`[InstructionParser] ❌ ${model} error:`, error.message);
+        // Continue to next model
       }
-    } catch (parseError) {
-      console.error('Failed to parse Gemini JSON response:', parseError);
-      throw new Error('Invalid JSON response from Gemini');
     }
+    
+    // All models failed - throw comprehensive error
+    throw new Error(
+      `Все модели Gemini не сработали. ` +
+      `Последняя ошибка: ${lastError?.message || 'Неизвестно'}. ` +
+      `Пробовали: ${GEMINI_MODELS.join(', ')}. ` +
+      `Проверьте API ключ или используйте ручной режим.`
+    );
   }
 
   /**
@@ -136,7 +169,7 @@ export class InstructionParser {
 
       // Click action
       if (lower.includes('клик') || lower.includes('нажми')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : line;
         if (text && text.trim().length > 0) {
           actions.push({
@@ -149,7 +182,7 @@ export class InstructionParser {
 
       // Input action
       if (lower.includes('введи') || lower.includes('ввод')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -162,7 +195,7 @@ export class InstructionParser {
 
       // Hover action
       if (lower.includes('наведи') || lower.includes('наведение')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -175,7 +208,7 @@ export class InstructionParser {
 
       // Double click action
       if (lower.includes('двойной клик') || lower.includes('двойное нажатие')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -188,7 +221,7 @@ export class InstructionParser {
 
       // Right click action
       if (lower.includes('правый клик') || lower.includes('контекстное меню')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -223,7 +256,7 @@ export class InstructionParser {
 
       // Select action
       if (lower.includes('выбери') || lower.includes('выбрать')) {
-        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
