@@ -3,7 +3,7 @@
  * Provides reliable element location with fallback methods
  */
 
-class ElementFinder {
+export class ElementFinder {
   constructor() {
     this.selectorCache = new Map();
     this.maxCacheSize = 500;
@@ -343,8 +343,4 @@ class ElementFinder {
 
     return path.join(' > ');
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { ElementFinder };
 }

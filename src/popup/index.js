@@ -2,6 +2,9 @@
  * Popup UI logic
  */
 
+import { StorageManager } from '../common/storage.js';
+import { Validator } from '../common/validator.js';
+
 let isRecording = false;
 let recordedActions = [];
 let isAutoMode = false;

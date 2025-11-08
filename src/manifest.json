@@ -21,27 +21,17 @@
   },
   
   "background": {
-    "service_worker": "background/index.js"
+    "service_worker": "background/index.js",
+    "type": "module"
   },
   
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": [
-        "common/constants.js",
-        "common/logger.js",
-        "common/validator.js",
-        "common/storage.js",
-        "common/helpers.js",
-        "common/events.js",
-        "ai/InstructionParser.js",
-        "content/finder/ElementFinder.js",
-        "content/recorder/ActionRecorder.js",
-        "content/executor/ActionExecutor.js",
-        "content/index.js"
-      ],
+      "js": ["content/index.js"],
       "css": ["content/content.css"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "type": "module"
     }
   ],
   

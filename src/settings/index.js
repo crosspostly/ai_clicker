@@ -1,5 +1,8 @@
 // settings.js - НОВОЕ СОДЕРЖАНИЕ
 
+import { StorageManager } from '../common/storage.js';
+import { Validator } from '../common/validator.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Загрузить текущие настройки
   await loadSettings();

@@ -2,7 +2,9 @@
  * Helper utilities and common functions
  */
 
-class Helpers {
+import { Logger } from './logger.js';
+
+export class Helpers {
   /**
    * Delay execution for specified milliseconds
    * @param {number} ms - Delay in milliseconds
@@ -288,8 +290,4 @@ class Helpers {
       )
       .join('&');
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { Helpers };
 }

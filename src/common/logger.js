@@ -3,7 +3,9 @@
  * Provides structured logging with levels and timestamps
  */
 
-class Logger {
+import { LOG_LEVELS } from './constants.js';
+
+export class Logger {
   static LEVELS = {
     DEBUG: 0,
     INFO: 1,
@@ -219,8 +221,4 @@ class Logger {
 }
 
 // Default logger instance
-const globalLogger = new Logger('AI-Autoclicker', 'INFO');
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { Logger, globalLogger };
-}
+export const globalLogger = new Logger('AI-Autoclicker', 'INFO');

@@ -3,7 +3,9 @@
  * Combines duplicated logic from both sources
  */
 
-class InstructionParser {
+import { ACTION_TYPES } from '../common/constants.js';
+
+export class InstructionParser {
   /**
    * Parse instructions using AI or fallback method
    */
@@ -313,8 +315,4 @@ class InstructionParser {
 
     return optimized;
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { InstructionParser };
 }

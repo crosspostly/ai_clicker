@@ -3,6 +3,11 @@
  * Initializes and manages all content script functionality
  */
 
+import { ElementFinder } from './finder/ElementFinder.js';
+import { ActionRecorder } from './recorder/ActionRecorder.js';
+import { ActionExecutor } from './executor/ActionExecutor.js';
+import { InstructionParser } from '../ai/InstructionParser.js';
+
 // Global instances
 let elementFinder = null;
 let actionRecorder = null;
@@ -292,13 +297,4 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
-}
-
-// Handle dynamic imports
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    actionRecorder,
-    actionExecutor,
-    elementFinder,
-  };
 }

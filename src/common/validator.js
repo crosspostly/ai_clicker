@@ -3,14 +3,14 @@
  * Provides methods to validate and sanitize user inputs
  */
 
-class ValidationError extends Error {
+export class ValidationError extends Error {
   constructor(message) {
     super(message);
     this.name = 'ValidationError';
   }
 }
 
-class Validator {
+export class Validator {
   /**
    * Validate action object according to specification
    * @param {Object} action - Action to validate
@@ -206,8 +206,4 @@ class Validator {
     }
     return true;
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { Validator, ValidationError };
 }
