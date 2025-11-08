@@ -1,0 +1,202 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'orchestrator-ai-autoclicker-v2-0-8-stages-user-plan' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run ESLint
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false
+    
+    - name: Upload coverage to Codecov
+      if: matrix.node-version == '20.x'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build extension
+      run: npm run build
+    
+    - name: Validate extension structure
+      run: |
+        echo "Checking build output..."
+        ls -la deploy/
+        echo "Validating manifest.json..."
+        node -e "JSON.parse(require('fs').readFileSync('deploy/manifest.json', 'utf8'))"
+    
+    - name: Check extension size
+      run: |
+        echo "Checking extension size..."
+        du -sh deploy/
+        SIZE=$(du -sk deploy/ | cut -f1)
+        if [ $SIZE -gt 10240 ]; then
+          echo "Extension size is too large: ${SIZE}KB (should be under 10MB)"
+          exit 1
+        fi
+        echo "Extension size is acceptable: ${SIZE}KB"
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension-build-${{ github.sha }}
+        path: deploy/
+        retention-days: 30
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run npm audit
+      run: npm audit --audit-level moderate
+    
+    - name: Check for sensitive data
+      run: |
+        echo "Checking for potential sensitive data..."
+        if grep -r "AIzaSy" src/ --exclude-dir=__tests__; then
+          echo "Warning: Found potential API keys in source code"
+          exit 1
+        fi
+        echo "No obvious sensitive data found"
+
+  validate-chrome:
+    name: Chrome Extension Validation
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: extension-build-${{ github.sha }}
+        path: deploy/
+    
+    - name: Install Chrome Extension Validator
+      run: |
+        npm install -g chrome-extension-validator
+    
+    - name: Validate extension
+      run: |
+        echo "Validating Chrome Extension..."
+        chrome-extension-validator deploy/ --json > validation-results.json
+        
+        echo "Validation results:"
+        cat validation-results.json
+        
+        # Check for critical errors
+        if jq -e '.errors | length > 0' validation-results.json; then
+          echo "Extension validation failed with errors"
+          exit 1
+        fi
+        
+        echo "Extension validation passed"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security, validate-chrome]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/orchestrator-ai-autoclicker-v2-0-8-stages-user-plan'
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: extension-build-${{ github.sha }}
+        path: deploy/
+    
+    - name: Create staging release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: staging-${{ github.sha }}
+        release_name: Staging Build ${{ github.sha }}
+        draft: false
+        prerelease: true
+        body: |
+          🚀 Staging build for AI-Autoclicker v2.0.0
+          
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref }}
+          
+          ## Changes
+          - Automated staging deployment
+          - Build artifacts attached
+          
+          ## Installation
+          1. Download `extension-build-${{ github.sha }}` artifact
+          2. Extract to directory
+          3. Load in Chrome as unpacked extension
+    
+    - name: Upload extension to staging
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./deploy/
+        asset_name: ai-autoclicker-v2.0.0-staging.zip
+        asset_content_type: application/zip
