@@ -11,36 +11,36 @@
   ],
   
   "action": {
-    "default_popup": "popup/index.html",
+    "default_popup": "popup.html",
     "default_title": "ИИ-Автокликер",
     "default_icon": {
-      "16": "common/assets/icon16.png",
-      "48": "common/assets/icon48.png",
-      "128": "common/assets/icon128.png"
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
     }
   },
   
   "background": {
-    "service_worker": "background/index.js"
+    "service_worker": "background.js"
   },
   
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": [
-        "common/constants.js",
-        "common/logger.js",
-        "common/validator.js",
-        "common/storage.js",
-        "common/helpers.js",
-        "common/events.js",
-        "ai/InstructionParser.js",
-        "content/finder/ElementFinder.js",
-        "content/recorder/ActionRecorder.js",
-        "content/executor/ActionExecutor.js",
-        "content/index.js"
+        "constants.js",
+        "logger.js",
+        "validator.js",
+        "storage.js",
+        "helpers.js",
+        "events.js",
+        "InstructionParser.js",
+        "ElementFinder.js",
+        "ActionRecorder.js",
+        "ActionExecutor.js",
+        "content.js"
       ],
-      "css": ["content/content.css"],
+      "css": ["content.css"],
       "run_at": "document_start"
     }
   ],
@@ -50,11 +50,11 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   
-  "options_page": "settings/index.html",
+  "options_page": "settings.html",
   
   "icons": {
-    "16": "common/assets/icon16.png",
-    "48": "common/assets/icon48.png",
-    "128": "common/assets/icon128.png"
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
   }
 }
