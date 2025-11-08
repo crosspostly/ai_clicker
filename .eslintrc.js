@@ -3,6 +3,8 @@ module.exports = {
     browser: true,
     es2021: true,
     webextensions: true,
+    node: true,
+    jest: true,
   },
   extends: ['eslint:recommended'],
   parserOptions: {
@@ -22,6 +24,23 @@ module.exports = {
     ActionRecorder: 'readonly',
     ActionExecutor: 'readonly',
     InstructionParser: 'readonly',
+    // Jest globals
+    describe: 'readonly',
+    it: 'readonly',
+    test: 'readonly',
+    expect: 'readonly',
+    beforeEach: 'readonly',
+    afterEach: 'readonly',
+    beforeAll: 'readonly',
+    afterAll: 'readonly',
+    jest: 'readonly',
+    // Node.js globals for tests
+    process: 'readonly',
+    global: 'readonly',
+    require: 'readonly',
+    module: 'readonly',
+    __dirname: 'readonly',
+    __filename: 'readonly',
   },
   rules: {
     'no-console': 'off',

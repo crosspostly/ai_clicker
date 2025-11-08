@@ -1,0 +1,6 @@
+src/__tests__/
+coverage/
+deploy/
+node_modules/
+*.min.js
+*.bundle.js
