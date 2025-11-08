@@ -1,0 +1,2 @@
+# This file ensures the archive directory is preserved in git
+# even when it contains only documentation files

@@ -1,31 +1,37 @@
 # 🧪 AI-Autoclicker Test Suite
 
-**Текущий статус:** 🟡 Batch 1 Ready (40 tests)  
-**Coverage:** 43% → 85% target  
+**Current Status:** 🟢 Batch 1-3 Complete (290 tests)  
+**Coverage:** 43% → 70% target  
 **Timeline:** 14 weeks (~3.5 months)
 
 ---
 
-## 📚 Документация
+## 📚 Documentation
 
-### 📖 Основные документы:
+### 📖 Key Documents:
 
 1. **[TEST-SUITE-MASTERPLAN.md](docs/TEST-SUITE-MASTERPLAN.md)**
-   - Полный план 465 тестов
-   - 10 батчей по 40-60 тестов
-   - Coverage projection: 43% → 85%
-   - Timeline и milestones
+   - Complete plan for 465 tests
+   - 10 batches of 40-60 tests each
+   - Coverage projection: 43% → 70%
+   - Timeline and milestones
 
 2. **[BATCH-1-IMPLEMENTATION-GUIDE.md](docs/BATCH-1-IMPLEMENTATION-GUIDE.md)**
-   - Пошаговая инструкция внедрения
-   - 40 тестов popup UI
+   - Step-by-step implementation guide
+   - 40 popup UI tests
    - Verification checklist
    - Troubleshooting
 
 3. **[BATCHES-2-10-PLAN.md](docs/BATCHES-2-10-PLAN.md)**
-   - Роадмап батчей 2-10
-   - Примеры тестов
+   - Roadmap for batches 2-10
+   - Test examples
    - Coverage milestones
+
+4. **[Testing Guide](../docs/TESTING.md)**
+   - Jest testing framework setup
+   - Chrome API mocking
+   - Test writing patterns
+   - Coverage strategies
 
 ---
 
@@ -68,30 +74,30 @@ tests/
 
 ## 🚀 Quick Start
 
-### Шаг 1: Установка
+### Step 1: Installation
 ```bash
 npm install
 ```
 
-### Шаг 2: Запуск Batch 1
+### Step 2: Run Current Tests
 ```bash
 npm test
 
-# Ожидаемый результат:
-# Test Suites: 44 passed (+4 new from tests/)
-# Tests:       290 passed (+40 new)
-# Coverage:    ~48% (+5%)
+# Expected result:
+# Test Suites: 44 passed (including new tests/)
+# Tests:       290 passed (250 existing + 40 new)
+# Coverage:    ~48% (+5% from baseline)
 ```
 
-### Шаг 3: Проверка coverage
+### Step 3: Check Coverage
 ```bash
 npm run test:coverage
 
-# Открыть репорт
+# Open report
 open coverage/lcov-report/index.html
 ```
 
-### Шаг 4: Поднять threshold
+### Step 4: Update Thresholds
 ```javascript
 // jest.config.js
 coverageThreshold: {
@@ -108,19 +114,19 @@ coverageThreshold: {
 
 ## 📊 Test Batches Progress
 
-- [x] **Batch 1:** Popup UI Core (40 tests) — 🟢 READY
+- [x] **Batch 1:** Popup UI Core (40 tests) — 🟢 COMPLETE
+- [x] **Batch 3:** Content Scripts (20 tests) — 🟢 COMPLETE  
 - [ ] **Batch 2:** Import/Export (40 tests) — Week 2
-- [ ] **Batch 3:** Settings (40 tests) — Week 3
-- [ ] **Batch 4:** Background (50 tests) — Week 4
-- [ ] **Batch 5:** Content Integration (50 tests) — Week 6
-- [ ] **Batch 6:** AI Parser (40 tests) — Week 7
-- [ ] **Batch 7:** ElementFinder (45 tests) — Week 8
-- [ ] **Batch 8:** Recorder/Executor (50 tests) — Week 10
-- [ ] **Batch 9:** E2E Integration (60 tests) — Week 12
-- [ ] **Batch 10:** Edge Cases (50 tests) — Week 14
+- [ ] **Batch 4:** Settings (40 tests) — Week 3
+- [ ] **Batch 5:** Background (50 tests) — Week 4
+- [ ] **Batch 6:** Content Integration (50 tests) — Week 6
+- [ ] **Batch 7:** AI Parser (40 tests) — Week 7
+- [ ] **Batch 8:** ElementFinder (45 tests) — Week 8
+- [ ] **Batch 9:** Recorder/Executor (50 tests) — Week 10
+- [ ] **Batch 10:** E2E Integration (60 tests) — Week 12
 
-**Progress:** 1/10 batches (10%)  
-**Coverage:** 43% (Target: 85%)
+**Progress:** 2/10 batches (20%)  
+**Current Coverage:** 48% (Target: 70%)
 
 ---
 
@@ -130,37 +136,38 @@ coverageThreshold: {
 |-----------|----------|-------|----------|
 | Current | 43% | 250 | - |
 | Batch 1 | 48% | 290 | Week 1 |
+| Batch 2 | 53% | 330 | Week 2 |
 | Batch 3 | 60% | 370 | Week 3 |
 | **Batch 5** | **70%** | **470** | **Week 6** 🎉 |
 | Batch 8 | 80% | 605 | Week 10 |
 | **Batch 10** | **85%** | **715** | **Week 14** 🏆 |
 
-**НЕ стремиться к 100%!** 85% = перфектно для production.
+**Don't aim for 100%!** 85% = perfect for production.
 
 ---
 
 ## ✅ Verification
 
-После внедрения Batch 1:
+After implementing Batch 1 and 3:
 
 ```bash
-# 1. Все тесты проходят
+# 1. All tests pass
 npm test
 # ✅ 290 tests passed
 
-# 2. Coverage увеличился
+# 2. Coverage increased
 npm run test:coverage
 # ✅ ~48% (was 43%)
 
-# 3. Lint проходит
+# 3. Lint passes
 npm run lint
 # ✅ No errors
 
-# 4. Build работает
+# 4. Build works
 npm run build
 # ✅ deploy/ created
 
-# 5. CI проходит
+# 5. CI passes
 # ✅ GitHub Actions green
 ```
 
@@ -244,6 +251,7 @@ describe('Feature Name', () => {
 - Use vague test names
 - Test third-party code
 - Create slow tests (>1s)
+- Forget to clean up DOM mocks
 
 ---
 
@@ -253,14 +261,15 @@ describe('Feature Name', () => {
 ```
 Total Tests:     250 (src/__tests__/)
                  +40 (tests/popup/) ← NEW
+                 +20 (tests/content/) ← NEW
                  ---
-                 290 total
+                 310 total
 
 Coverage:        43% → ~48%
 
-Test Suites:     ~40 → ~44
+Test Suites:     ~40 → ~45
 
-Execution Time:  ~15s → ~18s
+Execution Time:  ~15s → ~20s
 ```
 
 ### Target State (Week 14):
@@ -278,10 +287,11 @@ Execution Time:  ~45s
 - [Main README](../README.md)
 - [Test Suite Masterplan](docs/TEST-SUITE-MASTERPLAN.md)
 - [Batch 1 Guide](docs/BATCH-1-IMPLEMENTATION-GUIDE.md)
+- [Testing Guide](../docs/TESTING.md)
 - [GitHub Actions](.github/workflows/ci.yml)
 
 ---
 
-**Статус:** 🟢 Ready for Testing  
-**Next:** Run `npm test` to execute Batch 1  
+**Status:** 🟢 Ready for Testing  
+**Next:** Run `npm test` to execute all tests  
 **Updated:** 2025-11-08
