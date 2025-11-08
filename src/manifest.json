@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "ИИ-Автокликер",
+  "version": "2.0.0",
+  "description": "Автоматизация действий на веб-страницах с поддержкой Google Gemini ИИ",
+  
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "ИИ-Автокликер",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "common/constants.js",
+        "common/logger.js",
+        "common/validator.js",
+        "common/storage.js",
+        "common/helpers.js",
+        "ai/InstructionParser.js",
+        "content/ElementFinder.js",
+        "content/ActionRecorder.js",
+        "content/ActionExecutor.js",
+        "content/content.js"
+      ],
+      "css": ["content/content.css"],
+      "run_at": "document_start"
+    }
+  ],
+  
+  "host_permissions": [
+    "<all_urls>",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  
+  "options_page": "settings/settings.html",
+  
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}
