@@ -11,7 +11,7 @@
   ],
   
   "action": {
-    "default_popup": "popup/index.html",
+    "default_popup": "popup.html",
     "default_title": "ИИ-Автокликер",
     "default_icon": {
       "16": "common/assets/icon16.png",
@@ -21,15 +21,15 @@
   },
   
   "background": {
-    "service_worker": "background/index.js",
+    "service_worker": "background.js",
     "type": "module"
   },
   
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content/index.js"],
-      "css": ["content/content.css"],
+      "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_start",
       "type": "module"
     }
