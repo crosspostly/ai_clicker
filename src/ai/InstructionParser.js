@@ -169,7 +169,7 @@ export class InstructionParser {
 
       // Click action
       if (lower.includes('клик') || lower.includes('нажми')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : line;
         if (text && text.trim().length > 0) {
           actions.push({
@@ -182,7 +182,7 @@ export class InstructionParser {
 
       // Input action
       if (lower.includes('введи') || lower.includes('ввод')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -195,7 +195,7 @@ export class InstructionParser {
 
       // Hover action
       if (lower.includes('наведи') || lower.includes('наведение')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -208,7 +208,7 @@ export class InstructionParser {
 
       // Double click action
       if (lower.includes('двойной клик') || lower.includes('двойное нажатие')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -221,7 +221,7 @@ export class InstructionParser {
 
       // Right click action
       if (lower.includes('правый клик') || lower.includes('контекстное меню')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
@@ -256,7 +256,7 @@ export class InstructionParser {
 
       // Select action
       if (lower.includes('выбери') || lower.includes('выбрать')) {
-        const match = line.match(/'([^']+)'"|"([^"]+)"|«([^«]+)»/);
+        const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
         const text = match ? match[1] || match[2] || match[3] : '';
         if (text) {
           actions.push({
