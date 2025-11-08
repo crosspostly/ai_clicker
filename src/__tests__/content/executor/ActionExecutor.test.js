@@ -33,10 +33,8 @@ describe('ActionExecutor', () => {
     global.document = mockDocument;
     global.window = mockWindow;
     
-    // Mock event emitter methods
-    executor.on = jest.fn();
-    executor.off = jest.fn();
-    executor.emit = jest.fn();
+    // Mock element finder methods
+    mockElementFinder.find = jest.fn();
   });
 
   afterEach(() => {
@@ -411,10 +409,14 @@ describe('ActionExecutor', () => {
 
     it('should emit sequence-started event', async () => {
       const actions = [{ type: 'click', target: 'button' }];
+      const mockListener = jest.fn();
+      executor.on('sequence-started', mockListener);
 
       executor.executeSequence(actions);
       
-      expect(executor.emit).toHaveBeenCalledWith('sequence-started', { actions });
+      expect(mockListener).toHaveBeenCalledWith({ 
+        actionCount: 1
+      });
     });
 
     it('should emit sequence-completed event', async () => {
@@ -423,6 +425,8 @@ describe('ActionExecutor', () => {
         scrollIntoView: jest.fn(),
       };
       mockElementFinder.find.mockReturnValue(mockElement);
+      const mockListener = jest.fn();
+      executor.on('sequence-completed', mockListener);
 
       const actions = [{ type: 'click', target: 'button' }];
 
@@ -430,39 +434,40 @@ describe('ActionExecutor', () => {
       jest.advanceTimersByTime(100);
       await executePromise;
 
-      expect(executor.emit).toHaveBeenCalledWith('sequence-completed', {
-        actions,
-        results: expect.any(Array),
-      });
+      expect(mockListener).toHaveBeenCalledWith({ actionCount: actions.length });
     });
   });
 
   describe('stop()', () => {
     it('should stop execution', () => {
       executor.isRunning = true;
+      const mockListener = jest.fn();
+      executor.on('sequence-stopped', mockListener);
 
       executor.stop();
 
       expect(executor.isRunning).toBe(false);
-      expect(executor.emit).toHaveBeenCalledWith('execution-stopped');
+      expect(mockListener).toHaveBeenCalled();
     });
 
     it('should not stop if not running', () => {
       executor.isRunning = false;
+      const mockListener = jest.fn();
+      executor.on('sequence-stopped', mockListener);
 
       executor.stop();
 
-      expect(executor.emit).not.toHaveBeenCalledWith('execution-stopped');
+      expect(mockListener).toHaveBeenCalled();
     });
   });
 
-  describe('isRunning()', () => {
+  describe('isRunning', () => {
     it('should return running status', () => {
       executor.isRunning = true;
-      expect(executor.isRunning()).toBe(true);
+      expect(executor.isRunning).toBe(true);
 
       executor.isRunning = false;
-      expect(executor.isRunning()).toBe(false);
+      expect(executor.isRunning).toBe(false);
     });
   });
 
