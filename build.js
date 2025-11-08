@@ -1,341 +1,219 @@
-const fs = require('fs-extra');
-const path = require('path');
-const { execSync } = require('child_process');
+#!/usr/bin/env node
 
-// Конфигурация
-const CONFIG = {
-  source: path.join(__dirname, 'src'),
-  destination: path.join(__dirname, 'deploy'),
-  manifestPath: 'manifest.json',
-  excludePatterns: [
-    '.DS_Store',
-    'Thumbs.db',
-    '*.map',
-    '*.test.js',
-    '__tests__',
-    '*.spec.js'
-  ]
-};
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
 
-// Определяем production режим
-const isProduction = process.env.NODE_ENV === 'production';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Утилиты
-const log = {
-  info: (msg) => console.log(`ℹ️  ${msg}`),
-  success: (msg) => console.log(`✅ ${msg}`),
-  warning: (msg) => console.log(`⚠️  ${msg}`),
-  error: (msg) => console.error(`❌ ${msg}`),
-  step: (msg) => console.log(`\n🔧 ${msg}...`)
-};
+const srcDir = path.join(__dirname, 'src');
+const deployDir = path.join(__dirname, 'deploy');
 
-/**
- * Очистка папки deploy/
- */
-async function cleanDeploy() {
-  log.step('Очистка папки deploy');
-  await fs.remove(CONFIG.destination);
-  await fs.ensureDir(CONFIG.destination);
-  log.success('Папка deploy очищена');
+const htmlFiles = [
+  { src: 'popup/index.html', dest: 'popup.html' },
+  { src: 'settings/index.html', dest: 'settings.html' },
+];
+
+const cssFiles = [
+  { src: 'popup/popup.css', dest: 'popup.css' },
+  { src: 'settings/settings.css', dest: 'settings.css' },
+  { src: 'content/content.css', dest: 'content.css' },
+];
+
+const iconFiles = ['icon16.png', 'icon48.png', 'icon128.png'];
+
+function ensureDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
 }
 
-/**
- * Копирование файлов с фильтрацией
- */
-async function copyFiles() {
-  log.step('Копирование файлов из src в deploy');
+function cleanDeployDirectory() {
+  if (fs.existsSync(deployDir)) {
+    fs.rmSync(deployDir, { recursive: true, force: true });
+  }
+
+  ensureDirectory(deployDir);
+}
+
+cleanDeployDirectory();
+
+function resolvePath(relativePath) {
+  return path.join(srcDir, relativePath);
+}
+
+function copyFilePair({ src, dest }) {
+  const sourcePath = resolvePath(src);
+  const destinationPath = path.join(deployDir, dest);
+
+  if (fs.existsSync(sourcePath)) {
+    ensureDirectory(path.dirname(destinationPath));
+    fs.copyFileSync(sourcePath, destinationPath);
+    console.log(`✅ Copied ${src} -> ${dest}`);
+  }
+}
+
+function copyStaticFiles() {
+  console.log('📋 Copying static files...');
+
+  htmlFiles.forEach(copyFilePair);
+  cssFiles.forEach(copyFilePair);
+
+  const manifestSrc = resolvePath('manifest.json');
+  const manifestDest = path.join(deployDir, 'manifest.json');
+  if (fs.existsSync(manifestSrc)) {
+    fs.copyFileSync(manifestSrc, manifestDest);
+    console.log('✅ Copied manifest.json');
+  }
+
+  // FIXED: Icon path updated from common/assets to images
+  const imagesSrcDir = resolvePath('images');
+  const imagesDestDir = path.join(deployDir, 'images');
   
-  await fs.copy(CONFIG.source, CONFIG.destination, {
-    filter: (src) => {
-      const relativePath = path.relative(CONFIG.source, src);
-      
-      // Исключаем по паттернам
-      for (const pattern of CONFIG.excludePatterns) {
-        if (relativePath.includes(pattern)) {
-          return false;
-        }
+  if (fs.existsSync(imagesSrcDir)) {
+    ensureDirectory(imagesDestDir);
+    iconFiles.forEach(file => {
+      const srcFile = path.join(imagesSrcDir, file);
+      const destFile = path.join(imagesDestDir, file);
+      if (fs.existsSync(srcFile)) {
+        fs.copyFileSync(srcFile, destFile);
+        console.log(`✅ Copied icon ${file}`);
       }
-      
-      return true;
-    }
-  });
-  
-  log.success('Файлы скопированы');
-}
-
-/**
- * Обновление манифеста для production
- */
-async function updateManifest() {
-  if (!isProduction) {
-    log.info('Development режим - манифест не изменяется');
-    return;
-  }
-  
-  log.step('Обновление manifest.json для production');
-  
-  const manifestPath = path.join(CONFIG.destination, CONFIG.manifestPath);
-  const manifest = await fs.readJSON(manifestPath);
-  
-  // Убираем development-специфичные поля
-  delete manifest.key;
-  
-  // Обновляем версию (опционально)
-  if (process.env.VERSION) {
-    manifest.version = process.env.VERSION;
-  }
-  
-  // Убираем source maps из CSP
-  if (manifest.content_security_policy) {
-    manifest.content_security_policy = manifest.content_security_policy
-      .replace(/unsafe-eval/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-  
-  await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
-  log.success('Манифест обновлён для production');
-}
-
-/**
- * Минификация CSS (опционально)
- */
-async function minifyCSS() {
-  if (!isProduction) {
-    log.info('Development режим - CSS не минифицируется');
-    return;
-  }
-  
-  log.step('Минификация CSS файлов');
-  
-  try {
-    const cssFiles = await glob('**/*.css', { 
-      cwd: CONFIG.destination,
-      absolute: true 
     });
-    
-    for (const cssFile of cssFiles) {
-      const content = await fs.readFile(cssFile, 'utf8');
-      
-      // Простая минификация (удаление комментариев и лишних пробелов)
-      const minified = content
-        .replace(/\/\*[\s\S]*?\*\//g, '') // удаляем комментарии
-        .replace(/\s+/g, ' ')              // схлопываем пробелы
-        .replace(/\s*([{}:;,])\s*/g, '$1') // удаляем пробелы вокруг спецсимволов
-        .trim();
-      
-      await fs.writeFile(cssFile, minified);
-    }
-    
-    log.success(`Минифицировано ${cssFiles.length} CSS файлов`);
-  } catch (error) {
-    log.warning('Ошибка минификации CSS (не критично): ' + error.message);
-  }
-}
-
-/**
- * Создание ZIP архива для Chrome Web Store
- */
-async function createZip() {
-  if (!isProduction) {
-    log.info('Development режим - ZIP не создаётся');
-    return;
-  }
-  
-  log.step('Создание ZIP архива для Chrome Web Store');
-  
-  const manifest = await fs.readJSON(
-    path.join(CONFIG.destination, CONFIG.manifestPath)
-  );
-  
-  const version = manifest.version;
-  const zipName = `ai-autoclicker-v${version}.zip`;
-  const zipPath = path.join(__dirname, zipName);
-  
-  try {
-    // Используем системный zip
-    execSync(
-      `cd ${CONFIG.destination} && zip -r "${zipPath}" . -x "*.DS_Store" "*.map"`,
-      { stdio: 'inherit' }
-    );
-    
-    const stats = await fs.stat(zipPath);
-    const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
-    
-    log.success(`ZIP создан: ${zipName} (${sizeMB} MB)`);
-    
-    // Предупреждение если размер > 5MB
-    if (stats.size > 5 * 1024 * 1024) {
-      log.warning('Размер архива превышает 5MB! Рекомендуется оптимизация.');
-    }
-  } catch (error) {
-    log.error('Не удалось создать ZIP: ' + error.message);
-    log.info('Установите zip: sudo apt-get install zip (Linux) или brew install zip (Mac)');
-  }
-}
-
-/**
- * Проверка размера финальной сборки
- */
-async function checkSize() {
-  log.step('Проверка размера сборки');
-  
-  const getSize = async (dirPath) => {
-    let totalSize = 0;
-    const files = await fs.readdir(dirPath, { withFileTypes: true });
-    
-    for (const file of files) {
-      const filePath = path.join(dirPath, file.name);
-      
-      if (file.isDirectory()) {
-        totalSize += await getSize(filePath);
-      } else {
-        const stats = await fs.stat(filePath);
-        totalSize += stats.size;
-      }
-    }
-    
-    return totalSize;
-  };
-  
-  const totalBytes = await getSize(CONFIG.destination);
-  const totalMB = (totalBytes / 1024 / 1024).toFixed(2);
-  
-  log.info(`Общий размер: ${totalMB} MB`);
-  
-  if (totalBytes > 10 * 1024 * 1024) {
-    log.warning('Размер превышает 10MB! Chrome Web Store может отклонить.');
-  }
-}
-
-/**
- * Валидация сборки
- */
-async function validateBuild() {
-  log.step('Валидация сборки');
-  
-  const checks = [];
-  
-  // Проверка manifest.json
-  try {
-    const manifestPath = path.join(CONFIG.destination, CONFIG.manifestPath);
-    const manifest = await fs.readJSON(manifestPath);
-    
-    if (!manifest.manifest_version) {
-      checks.push('❌ manifest.json: отсутствует manifest_version');
-    } else if (manifest.manifest_version !== 3) {
-      checks.push('⚠️  manifest.json: рекомендуется Manifest V3');
-    }
-    
-    if (!manifest.version) {
-      checks.push('❌ manifest.json: отсутствует version');
-    }
-    
-    if (!manifest.name) {
-      checks.push('❌ manifest.json: отсутствует name');
-    }
-    
-    // Проверка иконок
-    const iconSizes = ['16', '48', '128'];
-    for (const size of iconSizes) {
-      if (manifest.icons && manifest.icons[size]) {
-        const iconPath = path.join(CONFIG.destination, manifest.icons[size]);
-        if (!(await fs.pathExists(iconPath))) {
-          checks.push(`❌ Иконка ${size}x${size} не найдена: ${manifest.icons[size]}`);
-        }
-      } else {
-        checks.push(`⚠️  Иконка ${size}x${size} не указана в манифесте`);
-      }
-    }
-    
-    // Проверка popup и settings
-    if (manifest.action?.default_popup) {
-      const popupPath = path.join(CONFIG.destination, manifest.action.default_popup);
-      if (!(await fs.pathExists(popupPath))) {
-        checks.push(`❌ Popup не найден: ${manifest.action.default_popup}`);
-      }
-    }
-    
-    if (manifest.options_page) {
-      const optionsPath = path.join(CONFIG.destination, manifest.options_page);
-      if (!(await fs.pathExists(optionsPath))) {
-        checks.push(`❌ Settings не найдены: ${manifest.options_page}`);
-      }
-    }
-    
-    // Проверка background script
-    if (manifest.background?.service_worker) {
-      const bgPath = path.join(CONFIG.destination, manifest.background.service_worker);
-      if (!(await fs.pathExists(bgPath))) {
-        checks.push(`❌ Background script не найден: ${manifest.background.service_worker}`);
-      }
-    }
-    
-    // Проверка content scripts
-    if (manifest.content_scripts) {
-      for (const cs of manifest.content_scripts) {
-        for (const jsFile of cs.js || []) {
-          const jsPath = path.join(CONFIG.destination, jsFile);
-          if (!(await fs.pathExists(jsPath))) {
-            checks.push(`❌ Content script не найден: ${jsFile}`);
-          }
-        }
-      }
-    }
-    
-  } catch (error) {
-    checks.push(`❌ Не удалось прочитать manifest.json: ${error.message}`);
-  }
-  
-  // Вывод результатов
-  if (checks.length === 0) {
-    log.success('Валидация пройдена успешно');
   } else {
-    log.warning('Обнаружены проблемы:');
-    checks.forEach(check => console.log(`  ${check}`));
+    console.warn('⚠️  images/ directory not found, trying fallback to common/assets/');
+    // Fallback for backward compatibility
+    const assetsSrcDir = resolvePath('common/assets');
+    const assetsDestDir = path.join(deployDir, 'images');
+    if (fs.existsSync(assetsSrcDir)) {
+      ensureDirectory(assetsDestDir);
+      iconFiles.forEach(file => {
+        const srcFile = path.join(assetsSrcDir, file);
+        const destFile = path.join(assetsDestDir, file);
+        if (fs.existsSync(srcFile)) {
+          fs.copyFileSync(srcFile, destFile);
+          console.log(`✅ Copied icon ${file} (from common/assets fallback)`);
+        }
+      });
+    }
   }
 }
 
-/**
- * Главная функция сборки
- */
-async function build() {
-  const startTime = Date.now();
-  
-  console.log('\n🏗️  === Сборка AI-Autoclicker ===\n');
-  log.info(`Режим: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-  
+function getRollupBin() {
+  const binName = process.platform === 'win32' ? 'rollup.cmd' : 'rollup';
+  const localBin = path.join(__dirname, 'node_modules', '.bin', binName);
+  return fs.existsSync(localBin) ? localBin : binName;
+}
+
+function bundleWithRollup(mode) {
   try {
-    await cleanDeploy();
-    await copyFiles();
-    await updateManifest();
-    await minifyCSS();
-    await validateBuild();
-    await checkSize();
-    
-    if (isProduction) {
-      await createZip();
-    }
-    
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    
-    console.log('\n✅ === Сборка завершена успешно ===');
-    log.info(`Время сборки: ${duration}s`);
-    log.info(`Результат: ${CONFIG.destination}`);
-    
-    if (isProduction) {
-      console.log('\n📦 Готово для публикации в Chrome Web Store!');
-    } else {
-      console.log('\n🔧 Готово для локальной разработки!');
-      console.log('   Загрузите папку deploy/ в chrome://extensions/');
-    }
-    
+    console.log('🔨 Running Rollup bundler...');
+    const rollupBin = getRollupBin();
+    const command = `"${rollupBin}" -c src/rollup.config.js`;
+
+    execSync(command, {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        NODE_ENV: mode,
+      },
+    });
+
+    console.log('✅ Rollup bundling complete!');
   } catch (error) {
-    log.error('Сборка провалилась: ' + error.message);
-    console.error(error);
+    console.error('❌ Rollup bundling failed:', error.message);
     process.exit(1);
   }
 }
 
-// Запуск сборки
+function verifyBuild() {
+  console.log('🔍 Verifying build...');
+  const requiredFiles = [
+    'manifest.json',
+    'content.js',
+    'popup.js',
+    'settings.js',
+    'background.js',
+    'popup.html',
+    'settings.html',
+  ];
+
+  let allFilesExist = true;
+  requiredFiles.forEach(file => {
+    const filePath = path.join(deployDir, file);
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ Missing: ${file}`);
+      allFilesExist = false;
+    } else {
+      console.log(`✅ Found: ${file}`);
+    }
+  });
+
+  const optionalFiles = ['content.css', 'popup.css', 'settings.css'];
+  optionalFiles.forEach(file => {
+    const filePath = path.join(deployDir, file);
+    if (fs.existsSync(filePath)) {
+      console.log(`✅ Found: ${file}`);
+    }
+  });
+
+  iconFiles.forEach(file => {
+    const filePath = path.join(deployDir, 'images', file);
+    if (fs.existsSync(filePath)) {
+      console.log(`✅ Found: images/${file}`);
+    } else {
+      console.error(`❌ Missing icon: images/${file}`);
+      allFilesExist = false;
+    }
+  });
+
+  if (allFilesExist) {
+    console.log('✅ All required files present in deploy/');
+  } else {
+    console.error('❌ Build verification failed!');
+    process.exit(1);
+  }
+}
+
+function checkBundleSizes() {
+  console.log('📊 Checking bundle sizes...');
+  const bundles = ['content.js', 'popup.js', 'settings.js', 'background.js'];
+
+  bundles.forEach(bundle => {
+    const filePath = path.join(deployDir, bundle);
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      const sizeKB = (stats.size / 1024).toFixed(2);
+      console.log(`📦 ${bundle}: ${sizeKB} KB`);
+    }
+  });
+}
+
+function build() {
+  try {
+    console.log('🚀 Starting build process...');
+    const startTime = Date.now();
+
+    const mode = process.env.NODE_ENV === 'development' ? 'development' : 'production';
+    process.env.NODE_ENV = mode;
+
+    bundleWithRollup(mode);
+    copyStaticFiles();
+    verifyBuild();
+    checkBundleSizes();
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`\n✅ Build complete! Extension ready in deploy/ (${duration}s)`);
+    console.log('\n📋 Next steps:');
+    console.log('1. Load deploy/ folder in Chrome (chrome://extensions/)');
+    console.log('2. Test popup, settings, and content script functionality');
+    console.log('3. Check DevTools console for any errors');
+  } catch (error) {
+    console.error('❌ Build failed:', error.message);
+    process.exit(1);
+  }
+}
+
 build();
