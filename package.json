@@ -1,0 +1,32 @@
+{
+  "name": "ai-autoclicker",
+  "version": "2.0.0",
+  "description": "Powerful AI-driven web automation extension for Chrome",
+  "author": "Your Name",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build/build.js",
+    "watch": "node build/watch.js",
+    "lint": "eslint src/ --fix",
+    "test": "jest",
+    "format": "prettier --write \"src/**/*.js\"",
+    "dev": "npm run build && npm run watch"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "babel-loader": "^9.1.0",
+    "eslint": "^8.50.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.0"
+  },
+  "browserslist": {
+    "production": [
+      "> 0.5%",
+      "last 2 versions",
+      "not dead"
+    ]
+  }
+}
