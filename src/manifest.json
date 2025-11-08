@@ -40,7 +40,7 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   
-  "options_page": "settings/index.html",
+  "options_page": "settings.html",
   
   "icons": {
     "16": "common/assets/icon16.png",

@@ -1,71 +1,108 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const srcDir = path.join(__dirname, 'src');
 const deployDir = path.join(__dirname, 'deploy');
 
-// Ensure deploy directory exists
-if (!fs.existsSync(deployDir)) {
-  fs.mkdirSync(deployDir, { recursive: true });
+const htmlFiles = [
+  { src: 'popup/index.html', dest: 'popup.html' },
+  { src: 'settings/index.html', dest: 'settings.html' },
+];
+
+const cssFiles = [
+  { src: 'popup/popup.css', dest: 'popup.css' },
+  { src: 'settings/settings.css', dest: 'settings.css' },
+  { src: 'content/content.css', dest: 'content.css' },
+];
+
+const iconFiles = ['icon16.png', 'icon48.png', 'icon128.png'];
+
+function ensureDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
 }
 
-// Copy static files
+function cleanDeployDirectory() {
+  if (fs.existsSync(deployDir)) {
+    fs.rmSync(deployDir, { recursive: true, force: true });
+  }
+
+  ensureDirectory(deployDir);
+}
+
+cleanDeployDirectory();
+
+function resolvePath(relativePath) {
+  return path.join(srcDir, relativePath);
+}
+
+function copyFilePair({ src, dest }) {
+  const sourcePath = resolvePath(src);
+  const destinationPath = path.join(deployDir, dest);
+
+  if (fs.existsSync(sourcePath)) {
+    ensureDirectory(path.dirname(destinationPath));
+    fs.copyFileSync(sourcePath, destinationPath);
+    console.log(`✅ Copied ${src} -> ${dest}`);
+  }
+}
+
 function copyStaticFiles() {
   console.log('📋 Copying static files...');
-  
-  // Copy HTML files
-  ['popup/index.html', 'settings/index.html'].forEach(file => {
-    const src = path.join(srcDir, file);
-    const dest = path.join(deployDir, path.basename(file));
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, dest);
-      console.log(`✅ Copied ${file} -> ${path.basename(file)}`);
-    }
-  });
 
-  // Copy CSS files
-  ['popup/popup.css', 'settings/settings.css', 'content/content.css'].forEach(file => {
-    const src = path.join(srcDir, file);
-    const dest = path.join(deployDir, path.basename(file));
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, dest);
-      console.log(`✅ Copied ${file} -> ${path.basename(file)}`);
-    }
-  });
+  htmlFiles.forEach(copyFilePair);
+  cssFiles.forEach(copyFilePair);
 
-  // Copy manifest
-  const manifestSrc = path.join(srcDir, 'manifest.json');
+  const manifestSrc = resolvePath('manifest.json');
   const manifestDest = path.join(deployDir, 'manifest.json');
   if (fs.existsSync(manifestSrc)) {
     fs.copyFileSync(manifestSrc, manifestDest);
     console.log('✅ Copied manifest.json');
   }
 
-  // Copy icons from common/assets/
-  const srcAssetsDir = path.join(srcDir, 'common/assets');
-  if (fs.existsSync(srcAssetsDir)) {
-    fs.readdirSync(srcAssetsDir).forEach(file => {
-      if (file.endsWith('.png')) {
-        fs.copyFileSync(
-          path.join(srcAssetsDir, file),
-          path.join(deployDir, file)
-        );
+  const assetsSrcDir = resolvePath('common/assets');
+  const assetsDestDir = path.join(deployDir, 'common/assets');
+  if (fs.existsSync(assetsSrcDir)) {
+    ensureDirectory(assetsDestDir);
+    iconFiles.forEach(file => {
+      const srcFile = path.join(assetsSrcDir, file);
+      const destFile = path.join(assetsDestDir, file);
+      if (fs.existsSync(srcFile)) {
+        fs.copyFileSync(srcFile, destFile);
         console.log(`✅ Copied icon ${file}`);
       }
     });
   }
 }
 
-// Run Rollup
-function bundleWithRollup() {
+function getRollupBin() {
+  const binName = process.platform === 'win32' ? 'rollup.cmd' : 'rollup';
+  const localBin = path.join(__dirname, 'node_modules', '.bin', binName);
+  return fs.existsSync(localBin) ? localBin : binName;
+}
+
+function bundleWithRollup(mode) {
   try {
     console.log('🔨 Running Rollup bundler...');
-    const isProduction = process.env.NODE_ENV === 'production';
-    const command = isProduction ? 'npm run rollup:prod' : 'npm run rollup:dev';
-    execSync(command, { stdio: 'inherit' });
+    const rollupBin = getRollupBin();
+    const command = `"${rollupBin}" -c src/rollup.config.js`;
+
+    execSync(command, {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        NODE_ENV: mode,
+      },
+    });
+
     console.log('✅ Rollup bundling complete!');
   } catch (error) {
     console.error('❌ Rollup bundling failed:', error.message);
@@ -73,7 +110,6 @@ function bundleWithRollup() {
   }
 }
 
-// Verify build
 function verifyBuild() {
   console.log('🔍 Verifying build...');
   const requiredFiles = [
@@ -83,7 +119,7 @@ function verifyBuild() {
     'settings.js',
     'background.js',
     'popup.html',
-    'settings.html'
+    'settings.html',
   ];
 
   let allFilesExist = true;
@@ -97,7 +133,6 @@ function verifyBuild() {
     }
   });
 
-  // Check for optional files
   const optionalFiles = ['content.css', 'popup.css', 'settings.css'];
   optionalFiles.forEach(file => {
     const filePath = path.join(deployDir, file);
@@ -106,12 +141,13 @@ function verifyBuild() {
     }
   });
 
-  // Check for icons
-  const iconFiles = ['icon16.png', 'icon48.png', 'icon128.png'];
   iconFiles.forEach(file => {
-    const filePath = path.join(deployDir, file);
+    const filePath = path.join(deployDir, 'common/assets', file);
     if (fs.existsSync(filePath)) {
-      console.log(`✅ Found: ${file}`);
+      console.log(`✅ Found: common/assets/${file}`);
+    } else {
+      console.error(`❌ Missing icon: common/assets/${file}`);
+      allFilesExist = false;
     }
   });
 
@@ -123,11 +159,10 @@ function verifyBuild() {
   }
 }
 
-// Check bundle sizes
 function checkBundleSizes() {
   console.log('📊 Checking bundle sizes...');
   const bundles = ['content.js', 'popup.js', 'settings.js', 'background.js'];
-  
+
   bundles.forEach(bundle => {
     const filePath = path.join(deployDir, bundle);
     if (fs.existsSync(filePath)) {
@@ -138,24 +173,25 @@ function checkBundleSizes() {
   });
 }
 
-// Main build process
-async function build() {
+function build() {
   try {
     console.log('🚀 Starting build process...');
     const startTime = Date.now();
-    
-    bundleWithRollup();
+
+    const mode = process.env.NODE_ENV === 'development' ? 'development' : 'production';
+    process.env.NODE_ENV = mode;
+
+    bundleWithRollup(mode);
     copyStaticFiles();
     verifyBuild();
     checkBundleSizes();
-    
+
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`\n✅ Build complete! Extension ready in deploy/ (${duration}s)`);
     console.log('\n📋 Next steps:');
     console.log('1. Load deploy/ folder in Chrome (chrome://extensions/)');
     console.log('2. Test popup, settings, and content script functionality');
     console.log('3. Check DevTools console for any errors');
-    
   } catch (error) {
     console.error('❌ Build failed:', error.message);
     process.exit(1);
