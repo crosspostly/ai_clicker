@@ -328,8 +328,12 @@ function addActionToUI(action, index) {
 
   actionItem.innerHTML = `
     <span class="action-text">${Validator.sanitizeHtml(actionText)}</span>
-    <button class="action-remove" onclick="removeAction(${index})">✕</button>
+    <button class="action-remove" data-index="${index}">✕</button>
   `;
+
+  // Add event listener for the remove button
+  const removeBtn = actionItem.querySelector('.action-remove');
+  removeBtn.addEventListener('click', () => removeAction(index));
 
   actionsContainer.appendChild(actionItem);
 }
@@ -337,12 +341,12 @@ function addActionToUI(action, index) {
 /**
  * Remove action
  */
-window.removeAction = function (index) {
+function removeAction(index) {
   recordedActions.splice(index, 1);
   renderActionsList();
   saveActions();
   updatePlaybackButton();
-};
+}
 
 /**
  * Save actions to storage
