@@ -3,6 +3,8 @@
  * Configures test environment and mocks
  */
 
+import { jest } from '@jest/globals';
+
 // Mock Chrome APIs
 global.chrome = {
   storage: {
