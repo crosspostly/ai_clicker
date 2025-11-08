@@ -1,215 +1,275 @@
-# Разработка ИИ-Автокликер
+# 🛠️ AI-Autoclicker Development
 
-## Локальная разработка
+## Local Development
 
-### Требования
-- Node.js 16+
-- npm
+### Prerequisites
+- **Node.js** 16+ and npm 8+
+- **Chrome Browser** 88+ (Extension Manifest V3)
+- **Git** for version control
 
-### Установка
+### Setup
 ```bash
+# Clone repository
 git clone https://github.com/crosspostly/ai_clicker.git
 cd ai_clicker
-npm install
-```
 
-### Сборка расширения
-```bash
+# Install dependencies
+npm install
+
+# Build extension
 npm run build
 ```
-Это скопирует файлы из `src/` в `deploy/`
 
-### Загрузка в Chrome
-1. Откройте `chrome://extensions/`
-2. Включите "Режим разработчика" (вверху справа)
-3. Нажмите "Загрузить распакованное расширение"
-4. Выберите папку `deploy/`
+### Loading in Chrome
+1. Open `chrome://extensions/`
+2. Enable "Developer mode" (top right toggle)
+3. Click "Load unpacked extension"
+4. Select the `deploy/` folder
 
-### Разработка
-- Редактируйте файлы в папке `src/`
-- Запустите `npm run build`
-- Обновите страницу в Chrome (кнопка обновления на странице расширения)
+### Development Workflow
+- **Edit files** in `src/` directory
+- **Run build** with `npm run build:watch` for automatic rebuilding
+- **Reload extension** in Chrome (click reload icon in extensions page)
+- **Test changes** immediately
 
-## Структура проекта
+## Project Structure
 
 ```
-src/                          # Исходные файлы
-├── manifest.json             # Конфигурация
-├── popup.html / popup.css / popup.js
-├── content.js                # Главный скрипт страницы
-├── background.js             # Service worker
-├── settings.html / settings.js
-├── ActionExecutor.js         # Выполнение действий
-├── ActionRecorder.js        # Запись действий
-├── ElementFinder.js         # Поиск элементов
-├── InstructionParser.js     # ИИ парсинг
-├── logger.js                # Логирование
-├── storage.js                # Хранилище
-├── validator.js             # Валидация
-├── helpers.js               # Вспомогательные функции
-├── constants.js             # Константы
-└── content.css              # Стили на странице
+src/                          # Source files
+├── manifest.json             # Extension configuration
+├── rollup.config.js         # Rollup bundler configuration
+├── popup/                  # Extension popup UI
+│   ├── index.html          # Popup interface
+│   ├── index.js           # Popup controller
+│   └── popup.css          # Popup styles
+├── content/                # Content scripts
+│   ├── index.js           # Main content script
+│   ├── content.css        # Content styles
+│   ├── recorder/          # Action recording
+│   ├── executor/          # Action execution
+│   └── finder/            # Element location
+├── settings/               # Settings page
+│   ├── index.html          # Settings interface
+│   ├── index.js           # Settings controller
+│   └── settings.css        # Settings styles
+├── background/             # Service worker
+│   └── index.js           # Background tasks
+├── ai/                     # AI processing
+│   └── InstructionParser.js # Gemini integration
+├── common/                 # Shared utilities
+│   ├── constants.js        # Application constants
+│   ├── logger.js           # Logging system
+│   ├── storage.js          # Storage abstraction
+│   ├── validator.js        # Input validation
+│   ├── helpers.js          # Utility functions
+│   └── events.js           # Event bus
+├── images/                 # Extension icons
+└── __tests__/              # Test files
 
-deploy/                        # Готовое расширение (не редактировать)
+deploy/                        # Built extension (load this in Chrome)
+├── content.js              # Bundled content script
+├── popup.js                # Bundled popup script
+├── settings.js             # Bundled settings script
+├── background.js           # Bundled service worker
+├── *.html                 # HTML interfaces
+├── *.css                  # Stylesheets
+├── manifest.json          # Extension manifest
+└── images/                # Extension icons
 ```
 
 ## API Gemini
 
-Получите ключ: https://makersuite.google.com/app/apikey (бесплатно, 1000 запросов/день)
+Get free key: https://makersuite.google.com/app/apikey (1,000 requests/day)
 
-## Где что находится
+**Models Used:**
+- **gemini-2.0-flash** (primary) - Fast, stable, cost-effective
+- **gemini-2.5-flash** (fallback) - Latest features, good reasoning
+- **gemini-2.5-pro** (last resort) - Most capable, slower
 
-- **Логика записи**: content.js → ActionRecorder.js → recordClick, recordInput, recordChange
-- **Выполнение действий**: content.js → ActionExecutor.js → executeAction
-- **Парсинг инструкций**: content.js → InstructionParser.js → parseInstructions
-- **Поиск элементов**: ElementFinder.js → find, findBySelector, findByText
-- **UI логика**: popup.js
-- **Настройки**: settings.js
-- **Логирование**: logger.js
-- **Хранилище**: storage.js
+## Module Locations
 
-## NPM скрипты
+- **Action Recording**: content/index.js → ActionRecorder.js → recordClick, recordInput
+- **Action Execution**: content/index.js → ActionExecutor.js → executeAction
+- **AI Processing**: content/index.js → InstructionParser.js → parseInstructions
+- **Element Finding**: content/index.js → ElementFinder.js → find, findBySelector, findByText
+- **Popup UI**: popup/index.js
+- **Settings Management**: settings/index.js
+- **Logging**: common/logger.js
+- **Storage**: common/storage.js
+- **Event Bus**: common/events.js
+
+## NPM Scripts
 
 ```bash
-npm run build       # Копирование src/ в deploy/
-npm run lint        # ESLint с авто-исправлением
-npm run test        # Jest тесты
-npm run format      # Prettier форматирование
+# Build commands
+npm run build            # Standard build
+npm run build:dev         # Development with source maps
+npm run build:prod        # Production with minification
+npm run build:watch      # Watch mode for development
+
+# Code quality
+npm run lint             # ESLint check and fix
+npm run format           # Prettier formatting
+
+# Testing
+npm test                 # Run all tests (Jest)
+npm run test:watch       # Watch mode for development
+npm run test:coverage    # Coverage report
+npm run test:verbose     # Verbose test output
+
+# Utilities
+npm run clean            # Remove deploy/ and ZIP files
 ```
 
-## Отладка
+## Debugging
 
-### 1. Popup отладка
-1. Откройте popup расширения
-2. Правый клик → "Просмотреть код" или F12
-3. Откроется DevTools для popup
+### 1. Popup Debugging
+1. Open extension popup
+2. Right-click → "Inspect" or F12
+3. DevTools opens for popup context
 
-### 2. Content script отладка
-1. Откройте любую веб-страницу
+### 2. Content Script Debugging
+1. Open any webpage
 2. F12 → Console tab
-3. Используйте глобальные переменные:
+3. Use available variables:
    ```javascript
-   // Доступ к компонентам
-   elementFinder.find('Кнопка')
-   actionRecorder.getActions()
+   // Access to components
+   elementFinder.find('Button');
+   actionRecorder.getActions();
    ```
 
-### 3. Background отладка
-1. chrome://extensions/
-2. Найти расширение
-3. "Просмотреть сервис-воркер: background.js"
+### 3. Background Debugging
+1. Go to chrome://extensions/
+2. Find AI-Autoclicker extension
+3. Click "Service worker" link
+4. DevTools opens for background context
 
-## Добавление нового функционала
+## Adding New Features
 
-### 1. Новый тип действия
-1. Добавить тип в constants.js
-2. Реализовать в ActionExecutor.js
-3. Добавить в InstructionParser.js
-4. Обновить UI если нужно
+### 1. New Action Type
+1. Add type to constants.js
+2. Implement in ActionExecutor.js
+3. Add to InstructionParser.js
+4. Update UI if needed
 
-### 2. Новая настройка
-1. Добавить в settings.html
-2. Обработать в settings.js
-3. Использовать через storage.js
+### 2. New Setting
+1. Add to settings.html
+2. Handle in settings.js
+3. Use through storage.js
 
-### 3. Новый метод поиска элементов
-1. Добавить метод в ElementFinder.js
-2. Обновить find() метод
-3. Добавить тесты
+### 3. New Element Finding Method
+1. Add method to ElementFinder.js
+2. Update find() method
+3. Add tests
 
-## Тестирование
+## Testing
 
-### Запуск тестов
+### Running Tests
 ```bash
 npm test
 ```
 
-### Покрытие
+### Coverage
 ```bash
 npm run test:coverage
 ```
 
-### Ручное тестирование
-1. Собрать: `npm run build`
-2. Загрузить в Chrome
-3. Протестировать функционал
-4. Проверить консоль на ошибки
+### Manual Testing
+1. Build: `npm run build`
+2. Load in Chrome
+3. Test functionality
+4. Check console for errors
 
-## Стиль кода
+## Code Style
 
-### ESLint правила
-- Используются строгие правила
-- Авто-исправление: `npm run lint`
+### ESLint Rules
+- Strict rules enforced
+- Auto-fix: `npm run lint`
 
-### Форматирование
-- Prettier для форматирования
-- Запуск: `npm run format`
+### Formatting
+- Prettier for code formatting
+- Run: `npm run format`
 
-### Конвенции
-- ES6+ синтаксис
-- async/await вместо Promise.then()
-- const по умолчанию, let когда нужно
-- Никогда не использовать var
-- JSDoc для всех функций и классов
+### Conventions
+- ES6+ syntax
+- async/await instead of Promise.then()
+- const by default, let when needed
+- Never use var
+- JSDoc for all functions and classes
 
-## Обработка ошибок
+## Error Handling
 
-### Структура ошибок
+### Error Structure
 ```javascript
 try {
-  // код
+  // code
 } catch (error) {
   logger.error('Operation failed', error);
-  // Показать пользователю понятное сообщение
+  // Show user-friendly message
 }
 ```
 
-### Типы ошибок
-- ValidationError - ошибки валидации
-- ElementNotFoundError - элемент не найден
-- ActionExecutionError - ошибка выполнения действия
-- GeminiAPIError - ошибка API Gemini
+### Error Types
+- ValidationError - input validation errors
+- ElementNotFoundError - element not found
+- ActionExecutionError - action execution errors
+- GeminiAPIError - Gemini API errors
 
-## Безопасность
+## Security
 
-### Валидация
-Все входные данные проходят через validator.js:
+### Validation
+All input data goes through validator.js:
 ```javascript
 validator.validateSelector(selector);
 validator.validateAction(action);
 ```
 
-### Защита от XSS
-- Использовать textContent вместо innerHTML
-- Санитизация пользовательского ввода
-- Валидация URL и селекторов
+### XSS Protection
+- Use textContent instead of innerHTML
+- Sanitize user input
+- Validate URLs and selectors
 
-## Производительность
+## Performance
 
-### Оптимизации
-- Кэширование элементов в ElementFinder
-- Асинхронные операции
-- Лимиты на количество данных
-- Периодическая очистка хранилища
+### Optimizations
+- Element caching in ElementFinder
+- Async operations
+- Data limits
+- Periodic storage cleanup
 
-### Профилирование
-- Использовать Chrome DevTools Performance
-- Проверять memory leaks
-- Оптимизировать горячие пути
+### Profiling
+- Use Chrome DevTools Performance
+- Check memory leaks
+- Optimize hot paths
 
-## Релиз
+## Release
 
-### Версионирование
+### Versioning
 - Semantic versioning: MAJOR.MINOR.PATCH
-- Обновить версию в manifest.json
-- Обновить в package.json
+- Update version in manifest.json
+- Update in package.json
 
-### Сборка
+### Build
 ```bash
 npm run build
 ```
 
-### Публикация
-1. Заархивировать папку deploy/
-2. Загрузить в Chrome Web Store
-3. Создать release tag в git
+### Publishing
+1. Archive deploy/ folder
+2. Upload to Chrome Web Store
+3. Create release tag in git
+
+---
+
+## 🔗 Cross-References
+
+- **[Installation Guide](docs/INSTALLATION.md)** - Setup instructions
+- **[Architecture Overview](ARCHITECTURE.md)** - System design
+- **[Testing Documentation](docs/TESTING.md)** - Jest testing setup
+- **[Contributing Guide](CONTRIBUTING.md)** - Contribution workflow
+
+---
+
+**Last Updated:** 2025-11-08  
+**Version:** 2.0.0  
+**Status:** 🟢 Current Development Guide

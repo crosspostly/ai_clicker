@@ -2,26 +2,13 @@
 
 ## Overview
 
-AI-Autoclicker is a Chrome extension that automates web actions through manual recording and AI-powered instruction processing. The architecture is designed around modularity, dependency injection, and event-driven communication to ensure maintainability and testability.
+AI-Autoclicker is a Chrome extension that automates web actions through manual recording and AI-powered instruction processing. The architecture is designed around ES6 modules, Rollup bundling, and event-driven communication to ensure maintainability and testability.
 
-## Current vs Target Architecture
+## Current Architecture
 
-### Current State (Flat Structure)
-The extension currently uses a flat file structure for stability during migration:
-```
-src/
-├── [all files at root level]
-├── manifest.json
-├── popup.html/css/js
-├── content.js/css
-├── background.js
-├── settings.html/css/js
-└── [module files...]
-```
+The extension now uses a fully modular ES6 structure with Rollup bundling:
 
-### Target Modular Structure
-The planned architecture organizes code by responsibility and feature:
-
+### Directory Structure
 ```
 src/
 ├── common/                     # Shared utilities and core infrastructure
@@ -30,35 +17,56 @@ src/
 │   ├── validator.js           # Input validation
 │   ├── storage.js             # Storage abstraction layer
 │   ├── helpers.js             # Utility functions
-│   ├── events.js              # Event bus implementation
-│   └── di-container.js        # Dependency injection container
+│   └── events.js              # Event bus implementation
 ├── ai/                         # AI and instruction processing
-│   ├── InstructionParser.js   # Gemini AI integration
-│   ├── ElementFinder.js       # Advanced element location
-│   └── ai-services.js         # AI-specific services
+│   └── InstructionParser.js   # Gemini AI integration
 ├── popup/                      # Extension popup interface
-│   ├── popup.html             # Popup UI structure
-│   ├── popup.css              # Popup styling
-│   ├── popup.js               # Popup controller
-│   └── components/            # Reusable UI components
+│   ├── index.html             # Popup UI structure
+│   ├── index.js               # Popup controller
+│   └── popup.css              # Popup styling
 ├── settings/                   # Extension settings and configuration
-│   ├── settings.html          # Settings UI
-│   ├── settings.css           # Settings styling
-│   ├── settings.js            # Settings controller
-│   └── config-manager.js      # Configuration management
+│   ├── index.html             # Settings UI
+│   ├── index.js               # Settings controller
+│   └── settings.css           # Settings styling
 ├── background/                 # Service worker and background tasks
-│   ├── background.js          # Service worker entry point
-│   ├── message-router.js      # Chrome message handling
-│   └── background-services.js # Background-specific services
+│   └── index.js              # Service worker entry point
 ├── content/                    # Content scripts and page interaction
-│   ├── content.js             # Main content script controller
-│   ├── content.css            # Content script styles
-│   ├── ActionRecorder.js      # Action recording logic
-│   ├── ActionExecutor.js      # Action execution engine
-│   └── page-interactor.js     # Page interaction utilities
-└── assets/                     # Static resources
-    ├── images/                # Icons and images
-    └── fonts/                 # Custom fonts (if needed)
+│   ├── index.js              # Main content script controller
+│   ├── content.css           # Content script styles
+│   ├── recorder/
+│   │   └── ActionRecorder.js  # Action recording logic
+│   ├── executor/
+│   │   └── ActionExecutor.js  # Action execution engine
+│   └── finder/
+│       └── ElementFinder.js   # Smart element selection
+├── images/                     # Static resources
+│   ├── icon16.png
+│   ├── icon48.png
+│   └── icon128.png
+├── manifest.json               # Extension configuration
+├── rollup.config.js           # Rollup bundler configuration
+└── __tests__/                 # Unit and integration tests
+```
+
+### Bundle Structure
+The Rollup bundler creates 4 optimized bundles:
+
+```javascript
+// Bundle 1: Content Script
+src/content/index.js → deploy/content.js
+// Includes: ElementFinder, ActionRecorder, ActionExecutor, content utilities
+
+// Bundle 2: Popup UI  
+src/popup/index.js → deploy/popup.js
+// Includes: popup logic, UI components, event handlers
+
+// Bundle 3: Settings Page
+src/settings/index.js → deploy/settings.js
+// Includes: settings management, configuration UI
+
+// Bundle 4: Service Worker
+src/background/index.js → deploy/background.js
+// Includes: background tasks, message routing, extension lifecycle
 ```
 
 ## System Architecture Diagram
@@ -78,99 +86,110 @@ graph TB
         
         subgraph "Background Service"
             BG[background.js]
-            MessageRouter[message-router.js]
         end
         
         subgraph "Content Scripts"
             Content[content.js]
             Recorder[ActionRecorder.js]
             Executor[ActionExecutor.js]
-            PageInteractor[page-interactor.js]
+            Finder[ElementFinder.js]
         end
     end
     
     subgraph "External Services"
         Gemini[Google Gemini API]
-        Storage[Chrome Storage API]
-        Tabs[Chrome Tabs API]
+        ChromeStorage[Chrome Storage API]
+        ChromeTabs[Chrome Tabs API]
     end
     
-    subgraph "Shared Infrastructure"
+    subgraph "Shared Modules"
         EventBus[Event Bus]
-        DI[DI Container]
         Logger[Logger]
         StorageMgr[Storage Manager]
         Validator[Validator]
-        ElementFinder[ElementFinder]
+        Helpers[Utility Functions]
+        Constants[App Constants]
+    end
+    
+    subgraph "AI Processing"
         InstructionParser[InstructionParser]
     end
     
-    %% Connections
-    Popup --> EventBus
-    Settings --> EventBus
-    BG --> MessageRouter
-    Content --> EventBus
+    %% ES6 Module Imports
+    Popup -->|imports| EventBus
+    Popup -->|imports| StorageMgr
+    Settings -->|imports| StorageMgr
+    BG -->|imports| EventBus
+    Content -->|imports| Recorder
+    Content -->|imports| Executor
+    Content -->|imports| Finder
     
-    MessageRouter --> EventBus
-    Recorder --> EventBus
-    Executor --> EventBus
-    
-    %% DI Dependencies
-    DI -.-> Logger
-    DI -.-> StorageMgr
-    DI -.-> Validator
-    DI -.-> EventBus
-    DI -.-> ElementFinder
-    DI -.-> InstructionParser
+    %% Module Dependencies
+    Recorder -->|imports| EventBus
+    Recorder -->|imports| Finder
+    Executor -->|imports| EventBus
+    Executor -->|imports| Finder
+    Finder -->|imports| Logger
+    InstructionParser -->|imports| Logger
     
     %% External API Calls
     InstructionParser --> Gemini
-    StorageMgr --> Storage
-    BG --> Tabs
+    StorageMgr --> ChromeStorage
+    BG --> ChromeTabs
     
     %% UI Connections
     Popup --> PopupUI
     Settings --> SettingsUI
-    Content --> PageInteractor
-    Recorder --> PageInteractor
-    Executor --> PageInteractor
+    
+    %% Shared Dependencies
+    EventBus -.->|uses| Logger
+    StorageMgr -.->|uses| Validator
+    Finder -.->|uses| Helpers
+    InstructionParser -.->|uses| Constants
 ```
 
 ## Component Responsibilities
 
 ### Common Layer (`common/`)
 
-#### DI Container
-- Manages all service dependencies
-- Provides singleton and factory patterns
-- Enables easy testing and mocking
-
 #### Event Bus
 - Centralized communication hub
 - Decouples components from each other
 - Supports pub/sub patterns
+- Event-driven architecture
 
 #### Storage Manager
 - Abstracts Chrome storage APIs
 - Provides versioned storage schemas
 - Handles data migration
+- Local and sync storage support
 
 #### Logger
 - Structured logging with levels
 - Context-aware logging
 - Performance monitoring
+- Chrome console integration
+
+#### Validator
+- Input validation and sanitization
+- Action validation
+- XSS prevention
+- Schema validation
+
+#### Constants
+- Application-wide constants
+- Action types and enums
+- Configuration values
+- API endpoints
 
 ### AI Layer (`ai/`)
 
 #### Instruction Parser
-- Integrates with Google Gemini API
+- Integrates with Google Gemini API (2.0/2.5 Flash)
 - Converts natural language to actions
 - Handles API errors and rate limiting
-
-#### Element Finder
-- Advanced element location strategies
-- Robust selector generation
-- Handles dynamic content
+- Fallback chain for model availability
+- Error handling in multiple languages
 
 ### UI Layer (`popup/`, `settings/`)
 
@@ -178,11 +197,13 @@ graph TB
 - Manages popup state and UI
 - Handles user interactions
 - Coordinates with content scripts
+- Event-driven updates
 
 #### Settings Manager
 - Configuration persistence
 - Settings validation
 - User preference management
+- API key management
 
 ### Background Layer (`background/`)
 
@@ -190,11 +211,8 @@ graph TB
 - Extension lifecycle management
 - Cross-tab communication
 - Background task coordination
-
-#### Message Router
-- Chrome message passing
-- Request/response handling
-- Security validation
+- Message routing
+- Extension event handling
 
 ### Content Layer (`content/`)
 
@@ -202,16 +220,26 @@ graph TB
 - Page context management
 - Component coordination
 - User interaction handling
+- DOM event management
 
 #### Action Recorder
 - Event interception
 - Action sequence building
 - Recording state management
+- Visual feedback
 
 #### Action Executor
 - Action playback engine
 - Error handling and recovery
 - Execution monitoring
+- Speed control
+
+#### Element Finder
+- Advanced element location strategies
+- Robust selector generation
+- Handles dynamic content
+- Multiple search strategies
+- IFRAME support
 
 ## Communication Flows
 
@@ -260,9 +288,14 @@ sequenceDiagram
     User->>Popup: Enter instruction
     Popup->>EventBus: emit('instruction:submit', text)
     EventBus->>Parser: parseInstruction(text)
-    Parser->>Gemini: API request
-    Gemini-->>Parser: Action sequence
-    Parser->>EventBus: emit('instruction:parsed', actions)
+    Parser->>Gemini: API request (2.0/2.5 Flash)
+    alt Model Success
+        Gemini-->>Parser: Action sequence
+        Parser->>EventBus: emit('instruction:parsed', actions)
+    else Model Failure
+        Parser->>Gemini: Try fallback model
+        Parser->>EventBus: emit('instruction:error', error)
+    end
     EventBus->>Content: handle('instruction:parsed')
     Content->>Executor: executeActions(actions)
     
@@ -272,28 +305,25 @@ sequenceDiagram
     end
 ```
 
-### 3. Dependency Injection Bootstrap
+### 3. ES6 Module Bootstrap
 
 ```mermaid
 sequenceDiagram
     participant Bootstrap
-    participant DIContainer
+    participant Modules
     participant EventBus
     participant Services
     participant Components
     
-    Bootstrap->>DIContainer: create()
-    DIContainer->>EventBus: register('eventBus', factory)
-    DIContainer->>Services: registerCoreServices()
+    Bootstrap->>Modules: import modules
+    Modules->>Services: initialize services
+    Services->>EventBus: create instance
     
-    Bootstrap->>DIContainer: get('eventBus')
-    DIContainer-->>Bootstrap: EventBus instance
-    
-    Bootstrap->>Components: initialize(DIContainer)
-    Components->>DIContainer: get(requiredDependencies)
-    DIContainer-->>Components: Service instances
+    Bootstrap->>Components: initialize components
+    Components->>Modules: import dependencies
     
     Components->>EventBus: subscribeToEvents()
+    EventBus-->>Components: event handlers registered
 ```
 
 ## Event Bus Schema
@@ -351,73 +381,85 @@ sequenceDiagram
 }
 ```
 
-## Dependency Injection Configuration
+## ES6 Module Examples
 
-### Service Registration
+### Module Import Pattern
 
 ```javascript
-// di-container.js
-class DIContainer {
+// content/index.js - Main entry point
+import { EventBus } from '../common/events.js';
+import { Logger } from '../common/logger.js';
+import { StorageManager } from '../common/storage.js';
+import ActionRecorder from './recorder/ActionRecorder.js';
+import ActionExecutor from './executor/ActionExecutor.js';
+import ElementFinder from './finder/ElementFinder.js';
+
+class ContentController {
   constructor() {
-    this.services = new Map();
-    this.singletons = new Map();
+    this.eventBus = new EventBus();
+    this.logger = new Logger('Content');
+    this.storage = new StorageManager();
+    this.recorder = new ActionRecorder(this.eventBus, this.logger);
+    this.executor = new ActionExecutor(this.eventBus, this.logger);
+    this.finder = new ElementFinder(this.logger);
   }
 
-  registerServices() {
-    // Core services (singletons)
-    this.register('eventBus', () => new EventEmitter(), { singleton: true });
-    this.register('logger', () => new Logger(), { singleton: true });
-    this.register('storage', () => new StorageManager(), { singleton: true });
-    this.register('validator', () => new Validator(), { singleton: true });
+  async initialize() {
+    // Setup event listeners
+    this.eventBus.on('recording:start', () => this.recorder.start());
+    this.eventBus.on('recording:stop', () => this.recorder.stop());
+    this.eventBus.on('actions:execute', ({ actions, speed }) => 
+      this.executor.execute(actions, speed));
     
-    // AI services
-    this.register('elementFinder', (container) => 
-      new ElementFinder(container.get('logger')), { singleton: true });
-    this.register('instructionParser', (container) => 
-      new InstructionParser(container.get('logger')), { singleton: true });
+    // Initialize content script functionality
+    this.setupMessageHandling();
+    this.setupDOMEventListeners();
     
-    // Action services (factory pattern for new instances)
-    this.register('actionRecorder', (container) => 
-      new ActionRecorder(
-        container.get('elementFinder'),
-        container.get('eventBus'),
-        container.get('logger')
-      ));
-    
-    this.register('actionExecutor', (container) => 
-      new ActionExecutor(
-        container.get('elementFinder'),
-        container.get('eventBus'),
-        container.get('logger')
-      ));
+    this.logger.info('Content script initialized');
   }
 }
+
+// Initialize when content script loads
+const controller = new ContentController();
+controller.initialize();
 ```
 
-### Component Bootstrap
+### Shared Module Pattern
 
 ```javascript
-// content.js bootstrap
-async function initializeContentScript() {
-  const container = new DIContainer();
-  container.registerServices();
-  
-  const eventBus = container.get('eventBus');
-  const recorder = container.get('actionRecorder');
-  const executor = container.get('actionExecutor');
-  
-  // Setup event listeners
-  eventBus.on('recording:start', () => recorder.start());
-  eventBus.on('recording:stop', () => recorder.stop());
-  eventBus.on('actions:execute', ({ actions, speed }) => 
-    executor.execute(actions, speed));
-  
-  // Initialize content script functionality
-  setupMessageHandling(eventBus);
-  setupDOMEventListeners(recorder);
-  
-  return { container, eventBus, recorder, executor };
+// common/events.js - Event bus implementation
+export class EventBus {
+  constructor() {
+    this.events = new Map();
+  }
+
+  on(event, callback) {
+    if (!this.events.has(event)) {
+      this.events.set(event, []);
+    }
+    this.events.get(event).push(callback);
+  }
+
+  emit(event, data) {
+    if (this.events.has(event)) {
+      this.events.get(event).forEach(callback => callback(data));
+    }
+  }
+
+  off(event, callback) {
+    if (this.events.has(event)) {
+      const callbacks = this.events.get(event);
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+  }
 }
+
+// Export singleton instance for shared use
+export const globalEventBus = new EventBus();
+export default globalEventBus;
 ```
 
 ## Security Architecture
@@ -426,11 +468,13 @@ async function initializeContentScript() {
 - No inline scripts or event handlers
 - All external resources have proper integrity hashes
 - Minimal permissions requested
+- ES6 modules with proper integrity
 
 ### Input Validation
 - All user inputs validated through `validator.js`
 - XSS prevention through proper escaping
-- SQL injection prevention through parameterized queries
+- Selector validation and sanitization
+- Action schema validation
 
 ### Permission Model
 - `activeTab` - Only access current active tab
@@ -438,7 +482,19 @@ async function initializeContentScript() {
 - `storage` - Local data persistence only
 - `host_permissions` - All URLs for content script injection
 
+### Data Protection
+- API keys stored securely in Chrome storage
+- No sensitive data in logs
+- Input sanitization before processing
+- Secure communication between contexts
+
 ## Performance Considerations
+
+### Bundle Optimization
+- Tree-shaking removes unused code
+- Minification reduces bundle size
+- Source maps for development debugging
+- 4 optimized bundles vs 300+ files
 
 ### Lazy Loading
 - Services loaded on-demand
@@ -447,73 +503,105 @@ async function initializeContentScript() {
 
 ### Memory Management
 - Event listeners properly cleaned up
-- Service instances managed by DI container
+- Module scoping prevents memory leaks
 - Storage quotas monitored and respected
 
 ### Optimization Strategies
 - Element selector caching
 - Action batching for improved performance
 - Background processing for heavy computations
+- Rollup code splitting
+
+## Build Pipeline
+
+### Rollup Configuration
+```javascript
+// rollup.config.js
+export default [
+  {
+    input: 'src/content/index.js',
+    output: {
+      file: 'deploy/content.js',
+      format: 'es',
+      sourcemap: isDev,
+    },
+    plugins: [resolve(), replace({...}), ...(isDev ? [] : [terser()])]
+  },
+  // Similar configs for popup, settings, background
+];
+```
+
+### Build Process
+1. **Clean deploy/** directory**
+2. **Run Rollup bundling** - 4 parallel builds
+3. **Copy static files** - HTML, CSS, images, manifest
+4. **Verify build** - Check all required files exist
+5. **Report bundle sizes** - Monitor optimization
 
 ## Testing Architecture
 
 ### Unit Testing
 - Each service tested in isolation
-- DI container enables easy mocking
+- ES6 modules enable easy mocking
 - Event bus allows testing event flows
+- Jest with Chrome API mocks
 
 ### Integration Testing
 - Component interaction tested
 - Chrome extension APIs mocked
 - End-to-end user flows validated
+- JSDOM for DOM testing
 
-### Test Utilities
-```javascript
-// test-utils.js
-class TestDIContainer extends DIContainer {
-  constructor() {
-    super();
-    this.registerMockServices();
-  }
-  
-  registerMockServices() {
-    this.register('eventBus', () => new MockEventBus());
-    this.register('storage', () => new MockStorage());
-    this.register('logger', () => new MockLogger());
-  }
-}
+### Test Structure
+```
+tests/
+├── content/           # Content script tests
+├── popup/            # Popup UI tests
+├── settings/         # Settings tests
+├── background/       # Background service tests
+├── common/           # Utility tests
+└── integration/      # End-to-end tests
 ```
 
-## Migration Strategy
-
-### Phase 1: Infrastructure (Current)
-- [x] Flatten file structure for stability
-- [x] Implement basic event bus
-- [x] Create DI container foundation
-
-### Phase 2: Modular Migration
-- [ ] Organize files into target structure
-- [ ] Update import statements
-- [ ] Migrate to DI pattern
-
-### Phase 3: Advanced Features
-- [ ] Implement advanced UI components
-- [ ] Add comprehensive testing
-- [ ] Performance optimization
-
-### Phase 4: Production Readiness
-- [ ] Documentation completion
-- [ ] Security audit
-- [ ] Performance benchmarking
+### Coverage Strategy
+- **Target:** 65-70% overall coverage
+- **Critical paths:** 90%+ coverage
+- **Utilities:** 80%+ coverage
+- **UI components:** 75%+ coverage
 
 ## Future Extensibility
 
 The modular architecture enables easy addition of:
 
-- **New Action Types**: Add to `ActionExecutor` and register in DI
+- **New Action Types**: Add to `ActionExecutor` and import where needed
 - **AI Providers**: Implement new `InstructionParser` variants
 - **UI Themes**: Extend popup with theme system
 - **Cloud Sync**: Add storage provider implementations
 - **Advanced Recording**: Implement new recording strategies
 
-The event bus and DI container ensure that new features can be added without modifying existing code, following the Open/Closed Principle.
+The ES6 module system and event bus ensure that new features can be added without modifying existing code, following the Open/Closed Principle.
+
+## Cross-References
+
+- **[Installation Guide](docs/INSTALLATION.md)** - Step-by-step setup
+- **[Development Setup](docs/DEVELOPMENT.md)** - Development workflows
+- **[Testing Documentation](docs/TESTING.md)** - Testing with Jest
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- **[Gemini API Migration](docs/GEMINI-API-MIGRATION.md)** - API integration details
+- **[Final Readiness Check](docs/FINAL-READINESS-CHECK.md)** - Release checklist
+
+---
+
+## Architecture Summary
+
+AI-Autoclicker v2.0 represents a complete modernization with:
+
+✅ **ES6 Modules** - Clean import/export syntax  
+✅ **Rollup Bundling** - Optimized production builds  
+✅ **Event-Driven Architecture** - Decoupled components  
+✅ **Comprehensive Testing** - Jest with Chrome API mocks  
+✅ **Modern Build Pipeline** - Automated bundling and verification  
+✅ **Security-First Design** - CSP compliance and validation  
+✅ **Performance Optimized** - Tree-shaking and minification  
+
+This architecture ensures maintainability, testability, and performance for future development.
