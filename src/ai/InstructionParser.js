@@ -9,7 +9,7 @@ import { ACTION_TYPES } from '../common/constants.js';
 const GEMINI_MODELS = [
   'gemini-2.0-flash',      // Primary: Stable, fast, cost-effective
   'gemini-2.5-flash',      // Fallback: Latest features
-  'gemini-2.5-pro'         // Last resort: Most capable for complex tasks
+  'gemini-2.5-pro',         // Last resort: Most capable for complex tasks
 ];
 
 export class InstructionParser {
@@ -150,10 +150,10 @@ export class InstructionParser {
     
     // All models failed - throw comprehensive error
     throw new Error(
-      `Все модели Gemini не сработали. ` +
+      'Все модели Gemini не сработали. ' +
       `Последняя ошибка: ${lastError?.message || 'Неизвестно'}. ` +
       `Пробовали: ${GEMINI_MODELS.join(', ')}. ` +
-      `Проверьте API ключ или используйте ручной режим.`
+      'Проверьте API ключ или используйте ручной режим.',
     );
   }
 
