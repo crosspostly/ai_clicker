@@ -58,7 +58,7 @@ class ElementFinder {
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
+        null,
       );
       return result.singleNodeValue;
     } catch (error) {
@@ -100,7 +100,7 @@ class ElementFinder {
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
+        null,
       );
       return result.singleNodeValue;
     } catch (error) {
@@ -120,7 +120,7 @@ class ElementFinder {
         document,
         null,
         XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
+        null,
       );
       return result.singleNodeValue;
     } catch (error) {

@@ -151,7 +151,7 @@ class StorageManager {
    */
   static async getExecutionHistory(limit = 50) {
     const result = await this.get('executionHistory', 'local');
-    let history = result.executionHistory || [];
+    const history = result.executionHistory || [];
     return history.slice(-limit);
   }
 }

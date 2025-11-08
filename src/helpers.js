@@ -102,7 +102,7 @@ class Helpers {
         const value = obj[header];
         const escaped = String(value).replace(/"/g, '""');
         return `"${escaped}"`;
-      }).join(',')
+      }).join(','),
     );
     
     return [headers.join(','), ...rows].join('\n');

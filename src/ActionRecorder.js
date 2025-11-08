@@ -261,7 +261,7 @@ class ActionRecorder {
    */
   off(event, callback) {
     this.listeners = this.listeners.filter(
-      l => !(l.event === event && l.callback === callback)
+      l => !(l.event === event && l.callback === callback),
     );
   }
 
