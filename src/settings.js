@@ -19,12 +19,15 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Setup event listeners
  */
 function setupEventListeners() {
-  const form = document.getElementById('settings-form');
-  if (form) {
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveSettings();
-    });
+  const saveBtn = document.getElementById('save-settings');
+  const clearBtn = document.getElementById('clear-storage');
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveSettings);
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearStorage);
   }
 }
 
@@ -33,26 +36,19 @@ function setupEventListeners() {
  */
 async function loadSettings() {
   try {
-    const result = await StorageManager.get([
-      'geminiApiKey',
-      'geminiEnabled',
-      'logLevel',
-      'maxRetries',
-      'timeout',
-      'showHints',
-      'saveHistory',
-    ], 'sync');
+    const settings = await StorageManager.get(['geminiApiKey', 'geminiEnabled'], 'sync');
+    
+    if (settings.geminiApiKey) {
+      document.getElementById('gemini-api-key').value = settings.geminiApiKey;
+    }
 
-    document.getElementById('gemini-api-key').value = result.geminiApiKey || '';
-    document.getElementById('gemini-enabled').checked = result.geminiEnabled !== false;
-    document.getElementById('log-level').value = result.logLevel || 'INFO';
-    document.getElementById('max-retries').value = result.maxRetries || 3;
-    document.getElementById('timeout').value = result.timeout || 30000;
-    document.getElementById('show-hints').checked = result.showHints !== false;
-    document.getElementById('save-history').checked = result.saveHistory !== false;
+    if (settings.geminiEnabled !== undefined) {
+      document.getElementById('gemini-enabled').checked = settings.geminiEnabled;
+    }
+
+    showStatus('info', 'main-status', '✓ Настройки загружены');
   } catch (error) {
-    console.error('Failed to load settings:', error);
-    showStatus('error', 'main-status', 'Ошибка загрузки настроек');
+    showStatus('error', 'main-status', `✗ Ошибка загрузки: ${error.message}`);
   }
 }
 
@@ -61,124 +57,33 @@ async function loadSettings() {
  */
 async function saveSettings() {
   try {
-    // Validate API key if provided
     const apiKey = document.getElementById('gemini-api-key').value.trim();
-    if (apiKey && apiKey.length > 0) {
-      try {
-        Validator.validateApiKey(apiKey);
-      } catch (error) {
-        showStatus('error', 'gemini-status', `✗ ${error.message}`);
-        return;
-      }
+    const enabled = document.getElementById('gemini-enabled').checked;
+
+    if (apiKey) {
+      Validator.validateApiKey(apiKey);
     }
 
-    const settings = {
+    await StorageManager.set({
       geminiApiKey: apiKey,
-      geminiEnabled: document.getElementById('gemini-enabled').checked,
-      logLevel: document.getElementById('log-level').value,
-      maxRetries: parseInt(document.getElementById('max-retries').value),
-      timeout: parseInt(document.getElementById('timeout').value),
-      showHints: document.getElementById('show-hints').checked,
-      saveHistory: document.getElementById('save-history').checked,
-    };
+      geminiEnabled: enabled,
+    }, 'sync');
 
-    await StorageManager.set(settings, 'sync');
-    showStatus('success', 'main-status', '✓ Настройки сохранены успешно!');
+    showStatus('success', 'main-status', '✓ Настройки сохранены');
   } catch (error) {
-    console.error('Failed to save settings:', error);
-    showStatus('error', 'main-status', `✗ Ошибка: ${error.message}`);
+    showStatus('error', 'main-status', `✗ Ошибка сохранения: ${error.message}`);
   }
 }
 
 /**
- * Test Gemini API connection
+ * Clear all storage
  */
-async function testGeminiAPI() {
-  const apiKey = document.getElementById('gemini-api-key').value.trim();
-  const statusEl = document.getElementById('gemini-status');
-
-  if (!apiKey) {
-    showStatus('error', 'gemini-status', '✗ Пожалуйста, введите API ключ');
-    return;
-  }
-
-  try {
-    Validator.validateApiKey(apiKey);
-  } catch (error) {
-    showStatus('error', 'gemini-status', `✗ ${error.message}`);
-    return;
-  }
-
-  showStatus('info', 'gemini-status', '⏳ Тестирование подключения...');
-
-  try {
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: 'Скажи одно слово на русском',
-                },
-              ],
-            },
-          ],
-        }),
-      },
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.candidates && data.candidates[0]) {
-        showStatus('success', 'gemini-status', '✓ Подключение успешно! Gemini готов к работе.');
-        // Save the validated key
-        await StorageManager.set({ geminiApiKey: apiKey }, 'sync');
-      } else {
-        showStatus('error', 'gemini-status', '✗ Неожиданный ответ от API');
-      }
-    } else {
-      const error = await response.json();
-      showStatus(
-        'error',
-        'gemini-status',
-        `✗ Ошибка: ${error.error?.message || response.statusText}`,
-      );
-    }
-  } catch (error) {
-    showStatus('error', 'gemini-status', `✗ Ошибка подключения: ${error.message}`);
-  }
-}
-
-/**
- * Clear Gemini API key
- */
-async function clearGeminiKey() {
-  if (confirm('Вы уверены? API ключ будет удален.')) {
+async function clearStorage() {
+  if (confirm('Вы уверены? Все данные будут удалены.')) {
     try {
-      document.getElementById('gemini-api-key').value = '';
-      await StorageManager.set({ geminiApiKey: '' }, 'sync');
-      showStatus('success', 'gemini-status', '✓ API ключ удален');
-    } catch (error) {
-      showStatus('error', 'gemini-status', `✗ Ошибка: ${error.message}`);
-    }
-  }
-}
-
-/**
- * Reset settings to defaults
- */
-async function resetSettings() {
-  if (confirm('Восстановить настройки по умолчанию? Это удалит все текущие данные.')) {
-    try {
-      await StorageManager.clear('sync');
+      await StorageManager.clear();
+      showStatus('success', 'main-status', '✓ Данные удалены');
       await loadSettings();
-      showStatus('success', 'main-status', '✓ Настройки восстановлены');
     } catch (error) {
       showStatus('error', 'main-status', `✗ Ошибка: ${error.message}`);
     }

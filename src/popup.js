@@ -95,7 +95,7 @@ function setupEventListeners() {
  * Setup message listeners for content script
  */
 function setupMessageListeners() {
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
     switch (request.type) {
       case 'actionRecorded':
         recordedActions.push(request.data);

@@ -66,7 +66,7 @@ class Helpers {
     if (obj instanceof Object) {
       const clone = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           clone[key] = this.deepClone(obj[key]);
         }
       }
