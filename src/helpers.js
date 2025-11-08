@@ -7,7 +7,7 @@ class Helpers {
    * Delay execution for specified milliseconds
    */
   static delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -30,7 +30,7 @@ class Helpers {
    */
   static throttle(func, limit = 250) {
     let inThrottle;
-    return function(...args) {
+    return function (...args) {
       if (!inThrottle) {
         func.apply(this, args);
         inThrottle = true;
@@ -42,7 +42,7 @@ class Helpers {
   /**
    * Generate unique ID
    */
-  static generateId(prefix = '') {
+  static generateId(prefix = "") {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
     return prefix ? `${prefix}-${id}` : id;
   }
@@ -51,18 +51,18 @@ class Helpers {
    * Deep clone object
    */
   static deepClone(obj) {
-    if (obj === null || typeof obj !== 'object') {
+    if (obj === null || typeof obj !== "object") {
       return obj;
     }
-    
+
     if (obj instanceof Date) {
       return new Date(obj.getTime());
     }
-    
+
     if (obj instanceof Array) {
-      return obj.map(item => this.deepClone(item));
+      return obj.map((item) => this.deepClone(item));
     }
-    
+
     if (obj instanceof Object) {
       const clone = {};
       for (const key in obj) {
@@ -78,14 +78,14 @@ class Helpers {
    * Format bytes to readable size
    */
   static formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
-    
+    if (bytes === 0) return "0 Bytes";
+
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   }
 
   /**
@@ -93,31 +93,33 @@ class Helpers {
    */
   static arrayToCSV(array) {
     if (!Array.isArray(array) || array.length === 0) {
-      return '';
+      return "";
     }
-    
+
     const headers = Object.keys(array[0]);
-    const rows = array.map(obj =>
-      headers.map(header => {
-        const value = obj[header];
-        const escaped = String(value).replace(/"/g, '""');
-        return `"${escaped}"`;
-      }).join(','),
+    const rows = array.map((obj) =>
+      headers
+        .map((header) => {
+          const value = obj[header];
+          const escaped = String(value).replace(/"/g, '""');
+          return `"${escaped}"`;
+        })
+        .join(","),
     );
-    
-    return [headers.join(','), ...rows].join('\n');
+
+    return [headers.join(","), ...rows].join("\n");
   }
 
   /**
    * Parse CSV to array
    */
   static csvToArray(csv) {
-    const lines = csv.split('\n');
+    const lines = csv.split("\n");
     if (lines.length === 0) return [];
-    
-    const headers = lines[0].split(',').map(h => h.trim());
-    return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
+
+    const headers = lines[0].split(",").map((h) => h.trim());
+    return lines.slice(1).map((line) => {
+      const values = line.split(",").map((v) => v.trim());
       const obj = {};
       headers.forEach((header, index) => {
         obj[header] = values[index];
@@ -136,7 +138,7 @@ class Helpers {
   /**
    * Format timestamp to human readable
    */
-  static formatTimestamp(timestamp, locale = 'en-US') {
+  static formatTimestamp(timestamp, locale = "en-US") {
     return new Date(timestamp).toLocaleString(locale);
   }
 
@@ -147,7 +149,7 @@ class Helpers {
     return !!(
       element &&
       element.offsetParent !== null &&
-      window.getComputedStyle(element).display !== 'none'
+      window.getComputedStyle(element).display !== "none"
     );
   }
 
@@ -169,8 +171,8 @@ class Helpers {
   /**
    * Scroll element into view
    */
-  static scrollToElement(element, behavior = 'smooth') {
-    element.scrollIntoView({ behavior, block: 'center', inline: 'center' });
+  static scrollToElement(element, behavior = "smooth") {
+    element.scrollIntoView({ behavior, block: "center", inline: "center" });
   }
 
   /**
@@ -179,22 +181,24 @@ class Helpers {
   static waitForElement(selector, timeout = 5000) {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
-      
+
       const checkElement = () => {
         const element = document.querySelector(selector);
         if (element) {
           resolve(element);
           return;
         }
-        
+
         if (Date.now() - startTime > timeout) {
-          reject(new Error(`Element "${selector}" not found within ${timeout}ms`));
+          reject(
+            new Error(`Element "${selector}" not found within ${timeout}ms`),
+          );
           return;
         }
-        
+
         requestAnimationFrame(checkElement);
       };
-      
+
       checkElement();
     });
   }
@@ -203,7 +207,7 @@ class Helpers {
    * Get text content from element
    */
   static getElementText(element) {
-    return element ? element.innerText || element.textContent || '' : '';
+    return element ? element.innerText || element.textContent || "" : "";
   }
 
   /**
@@ -240,11 +244,14 @@ class Helpers {
    */
   static buildQueryString(params) {
     return Object.entries(params)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join('&');
+      .map(
+        ([key, value]) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+      )
+      .join("&");
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { Helpers };
 }

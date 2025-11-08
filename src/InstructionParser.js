@@ -7,22 +7,34 @@ class InstructionParser {
   /**
    * Parse instructions using AI or fallback method
    */
-  static async parse(instructions, useGemini = false, geminiApiKey = null, pageContext = '') {
+  static async parse(
+    instructions,
+    useGemini = false,
+    geminiApiKey = null,
+    pageContext = "",
+  ) {
     try {
       if (useGemini && geminiApiKey) {
-        return await this.parseWithGemini(instructions, geminiApiKey, pageContext);
+        return await this.parseWithGemini(
+          instructions,
+          geminiApiKey,
+          pageContext,
+        );
       }
     } catch (error) {
-      console.warn('Gemini parsing failed, falling back to rule-based parser:', error);
+      console.warn(
+        "Gemini parsing failed, falling back to rule-based parser:",
+        error,
+      );
     }
-    
+
     return this.parseWithFallback(instructions);
   }
 
   /**
    * Parse using Gemini API
    */
-  static async parseWithGemini(instructions, apiKey, pageContext = '') {
+  static async parseWithGemini(instructions, apiKey, pageContext = "") {
     const systemPrompt = `Ты - ассистент автоматизации веб-действий. 
 Пользователь дает инструкции на естественном языке. 
 Твоя задача разбить инструкции на точные действия в формате JSON.
@@ -36,7 +48,7 @@ class InstructionParser {
   "description": "краткое описание действия на русском"
 }`;
 
-    const userMessage = `Контекст страницы: ${pageContext || 'неизвестен'}
+    const userMessage = `Контекст страницы: ${pageContext || "неизвестен"}
 
 Инструкции пользователя: ${instructions}
 
@@ -47,7 +59,7 @@ class InstructionParser {
         {
           parts: [
             {
-              text: systemPrompt + '\n\n' + userMessage,
+              text: systemPrompt + "\n\n" + userMessage,
             },
           ],
         },
@@ -60,20 +72,20 @@ class InstructionParser {
       },
       safetySettings: [
         {
-          category: 'HARM_CATEGORY_HARASSMENT',
-          threshold: 'BLOCK_NONE',
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_NONE",
         },
         {
-          category: 'HARM_CATEGORY_HATE_SPEECH',
-          threshold: 'BLOCK_NONE',
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_NONE",
         },
         {
-          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-          threshold: 'BLOCK_NONE',
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_NONE",
         },
         {
-          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-          threshold: 'BLOCK_NONE',
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_NONE",
         },
       ],
     };
@@ -81,9 +93,9 @@ class InstructionParser {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       },
@@ -91,20 +103,22 @@ class InstructionParser {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Gemini API Error: ${error.error?.message || response.statusText}`);
+      throw new Error(
+        `Gemini API Error: ${error.error?.message || response.statusText}`,
+      );
     }
 
     const data = await response.json();
-    const responseText = data.candidates[0]?.content?.parts[0]?.text || '';
-    
+    const responseText = data.candidates[0]?.content?.parts[0]?.text || "";
+
     try {
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
     } catch (parseError) {
-      console.error('Failed to parse Gemini JSON response:', parseError);
-      throw new Error('Invalid JSON response from Gemini');
+      console.error("Failed to parse Gemini JSON response:", parseError);
+      throw new Error("Invalid JSON response from Gemini");
     }
   }
 
@@ -113,18 +127,18 @@ class InstructionParser {
    */
   static parseWithFallback(instructions) {
     const actions = [];
-    const lines = instructions.split('\n').filter(l => l.trim());
+    const lines = instructions.split("\n").filter((l) => l.trim());
 
     for (const line of lines) {
       const lower = line.toLowerCase();
 
       // Click action
-      if (lower.includes('клик') || lower.includes('нажми')) {
+      if (lower.includes("клик") || lower.includes("нажми")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : line;
+        const text = match ? match[1] || match[2] || match[3] : line;
         if (text && text.trim().length > 0) {
           actions.push({
-            type: 'click',
+            type: "click",
             target: text.trim(),
             description: `Клик на "${text.trim()}"`,
           });
@@ -132,12 +146,12 @@ class InstructionParser {
       }
 
       // Input action
-      if (lower.includes('введи') || lower.includes('ввод')) {
+      if (lower.includes("введи") || lower.includes("ввод")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : '';
+        const text = match ? match[1] || match[2] || match[3] : "";
         if (text) {
           actions.push({
-            type: 'input',
+            type: "input",
             value: text,
             description: `Введи: "${text}"`,
           });
@@ -145,12 +159,12 @@ class InstructionParser {
       }
 
       // Hover action
-      if (lower.includes('наведи') || lower.includes('наведение')) {
+      if (lower.includes("наведи") || lower.includes("наведение")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : '';
+        const text = match ? match[1] || match[2] || match[3] : "";
         if (text) {
           actions.push({
-            type: 'hover',
+            type: "hover",
             target: text,
             description: `Наведение на "${text}"`,
           });
@@ -158,12 +172,12 @@ class InstructionParser {
       }
 
       // Double click action
-      if (lower.includes('двойной клик') || lower.includes('двойное нажатие')) {
+      if (lower.includes("двойной клик") || lower.includes("двойное нажатие")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : '';
+        const text = match ? match[1] || match[2] || match[3] : "";
         if (text) {
           actions.push({
-            type: 'double_click',
+            type: "double_click",
             target: text,
             description: `Двойной клик на "${text}"`,
           });
@@ -171,12 +185,12 @@ class InstructionParser {
       }
 
       // Right click action
-      if (lower.includes('правый клик') || lower.includes('контекстное меню')) {
+      if (lower.includes("правый клик") || lower.includes("контекстное меню")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : '';
+        const text = match ? match[1] || match[2] || match[3] : "";
         if (text) {
           actions.push({
-            type: 'right_click',
+            type: "right_click",
             target: text,
             description: `Правый клик на "${text}"`,
           });
@@ -184,34 +198,34 @@ class InstructionParser {
       }
 
       // Scroll action
-      if (lower.includes('прокрут')) {
+      if (lower.includes("прокрут")) {
         const match = line.match(/(\d+)/);
         const pixels = match ? parseInt(match[1]) : 400;
         actions.push({
-          type: 'scroll',
+          type: "scroll",
           pixels,
           description: `Прокрутка на ${pixels}px`,
         });
       }
 
       // Wait action
-      if (lower.includes('жди') || lower.includes('ожид')) {
+      if (lower.includes("жди") || lower.includes("ожид")) {
         const match = line.match(/(\d+)/);
         const duration = match ? parseInt(match[1]) * 1000 : 2000;
         actions.push({
-          type: 'wait',
+          type: "wait",
           duration,
           description: `Ожидание ${duration}ms`,
         });
       }
 
       // Select action
-      if (lower.includes('выбери') || lower.includes('выбрать')) {
+      if (lower.includes("выбери") || lower.includes("выбрать")) {
         const match = line.match(/'([^']+)'|"([^"]+)"|«([^«]+)»/);
-        const text = match ? (match[1] || match[2] || match[3]) : '';
+        const text = match ? match[1] || match[2] || match[3] : "";
         if (text) {
           actions.push({
-            type: 'select',
+            type: "select",
             value: text,
             description: `Выбрать "${text}"`,
           });
@@ -227,10 +241,19 @@ class InstructionParser {
    */
   static validateActions(actions) {
     if (!Array.isArray(actions)) {
-      throw new Error('Actions must be an array');
+      throw new Error("Actions must be an array");
     }
 
-    const validTypes = ['click', 'input', 'hover', 'scroll', 'wait', 'select', 'double_click', 'right_click'];
+    const validTypes = [
+      "click",
+      "input",
+      "hover",
+      "scroll",
+      "wait",
+      "select",
+      "double_click",
+      "right_click",
+    ];
 
     for (const action of actions) {
       if (!action.type || !validTypes.includes(action.type)) {
@@ -276,12 +299,12 @@ class InstructionParser {
       const nextAction = actions[i + 1];
 
       // Remove consecutive wait actions, keep only the longest
-      if (action.type === 'wait' && nextAction && nextAction.type === 'wait') {
+      if (action.type === "wait" && nextAction && nextAction.type === "wait") {
         continue;
       }
 
       // Remove wait if very short
-      if (action.type === 'wait' && action.duration < 100) {
+      if (action.type === "wait" && action.duration < 100) {
         continue;
       }
 
@@ -292,6 +315,6 @@ class InstructionParser {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { InstructionParser };
 }

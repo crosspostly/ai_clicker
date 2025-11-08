@@ -42,7 +42,7 @@ class ElementFinder {
 
       return null;
     } catch (error) {
-      console.error('Error finding element:', error);
+      console.error("Error finding element:", error);
       return null;
     }
   }
@@ -72,7 +72,7 @@ class ElementFinder {
   findBySelector(selector) {
     try {
       // Remove quotes if present
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
       return document.querySelector(cleanSelector);
     } catch (error) {
       return null;
@@ -146,7 +146,7 @@ class ElementFinder {
    */
   findAll(selector) {
     try {
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
       return Array.from(document.querySelectorAll(cleanSelector));
     } catch (error) {
       return [];
@@ -158,14 +158,14 @@ class ElementFinder {
    */
   findByLabelText(labelText) {
     try {
-      const labels = document.querySelectorAll('label');
+      const labels = document.querySelectorAll("label");
       for (const label of labels) {
         if (label.textContent.includes(labelText)) {
-          const htmlFor = label.getAttribute('for');
+          const htmlFor = label.getAttribute("for");
           if (htmlFor) {
             return document.getElementById(htmlFor);
           }
-          return label.querySelector('input, textarea, select');
+          return label.querySelector("input, textarea, select");
         }
       }
       return null;
@@ -179,9 +179,14 @@ class ElementFinder {
    */
   findByButtonText(text) {
     try {
-      const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]');
+      const buttons = document.querySelectorAll(
+        'button, input[type="button"], input[type="submit"]',
+      );
       for (const button of buttons) {
-        if (button.textContent.trim() === text.trim() || button.value === text) {
+        if (
+          button.textContent.trim() === text.trim() ||
+          button.value === text
+        ) {
           return button;
         }
       }
@@ -196,7 +201,9 @@ class ElementFinder {
    */
   findByPlaceholder(placeholder) {
     try {
-      return document.querySelector(`input[placeholder="${placeholder}"], textarea[placeholder="${placeholder}"]`);
+      return document.querySelector(
+        `input[placeholder="${placeholder}"], textarea[placeholder="${placeholder}"]`,
+      );
     } catch (error) {
       return null;
     }
@@ -224,7 +231,7 @@ class ElementFinder {
    */
   findClosestParent(element, selector) {
     try {
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
       return element.closest(cleanSelector);
     } catch (error) {
       return null;
@@ -237,7 +244,7 @@ class ElementFinder {
   findInContainer(container, selector) {
     try {
       if (!container) return null;
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
       return container.querySelector(cleanSelector);
     } catch (error) {
       return null;
@@ -255,7 +262,7 @@ class ElementFinder {
       if (element) {
         return element;
       }
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     throw new Error(`Element "${target}" not found within ${timeout}ms`);
@@ -266,18 +273,25 @@ class ElementFinder {
    */
   isInteractive(element) {
     if (!element) return false;
-    
-    const interactiveTags = ['button', 'a', 'input', 'select', 'textarea', 'label'];
+
+    const interactiveTags = [
+      "button",
+      "a",
+      "input",
+      "select",
+      "textarea",
+      "label",
+    ];
     if (interactiveTags.includes(element.tagName.toLowerCase())) {
       return true;
     }
-    
-    const role = element.getAttribute('role');
-    if (role && ['button', 'link', 'menuitem', 'tab'].includes(role)) {
+
+    const role = element.getAttribute("role");
+    if (role && ["button", "link", "menuitem", "tab"].includes(role)) {
       return true;
     }
-    
-    return element.onclick !== null || element.style.cursor === 'pointer';
+
+    return element.onclick !== null || element.style.cursor === "pointer";
   }
 
   /**
@@ -285,11 +299,11 @@ class ElementFinder {
    */
   isVisible(element) {
     if (!element) return false;
-    
+
     return !!(
       element.offsetParent !== null &&
-      window.getComputedStyle(element).display !== 'none' &&
-      window.getComputedStyle(element).visibility !== 'hidden'
+      window.getComputedStyle(element).display !== "none" &&
+      window.getComputedStyle(element).visibility !== "hidden"
     );
   }
 
@@ -304,7 +318,7 @@ class ElementFinder {
     const path = [];
     while (element.parentElement) {
       let selector = element.tagName.toLowerCase();
-      
+
       if (element.id) {
         selector += `#${element.id}`;
         path.unshift(selector);
@@ -327,10 +341,10 @@ class ElementFinder {
       element = element.parentElement;
     }
 
-    return path.join(' > ');
+    return path.join(" > ");
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { ElementFinder };
 }

@@ -5,7 +5,7 @@
 class ExecutionError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'ExecutionError';
+    this.name = "ExecutionError";
   }
 }
 
@@ -21,42 +21,43 @@ class ActionExecutor {
    */
   async executeAction(action, speed = 1) {
     if (!action || !action.type) {
-      throw new ExecutionError('Invalid action: missing type');
+      throw new ExecutionError("Invalid action: missing type");
     }
 
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms / speed));
+    const delay = (ms) =>
+      new Promise((resolve) => setTimeout(resolve, ms / speed));
 
     try {
       switch (action.type) {
-        case 'click':
+        case "click":
           await this.executeClick(action, delay);
           break;
 
-        case 'double_click':
+        case "double_click":
           await this.executeDoubleClick(action, delay);
           break;
 
-        case 'right_click':
+        case "right_click":
           await this.executeRightClick(action, delay);
           break;
 
-        case 'input':
+        case "input":
           await this.executeInput(action, delay);
           break;
 
-        case 'select':
+        case "select":
           await this.executeSelect(action, delay);
           break;
 
-        case 'hover':
+        case "hover":
           await this.executeHover(action, delay);
           break;
 
-        case 'scroll':
+        case "scroll":
           await this.executeScroll(action, delay);
           break;
 
-        case 'wait':
+        case "wait":
           await this.executeWait(action, delay);
           break;
 
@@ -64,9 +65,9 @@ class ActionExecutor {
           throw new ExecutionError(`Unknown action type: ${action.type}`);
       }
 
-      this.emit('action-completed', { action, status: 'success' });
+      this.emit("action-completed", { action, status: "success" });
     } catch (error) {
-      this.emit('action-failed', { action, error: error.message });
+      this.emit("action-failed", { action, error: error.message });
       throw error;
     }
   }
@@ -77,7 +78,9 @@ class ActionExecutor {
   async executeClick(action, delay) {
     const element = this.elementFinder.find(action.target || action.selector);
     if (!element) {
-      throw new ExecutionError(`Element not found: ${action.target || action.selector}`);
+      throw new ExecutionError(
+        `Element not found: ${action.target || action.selector}`,
+      );
     }
 
     if (!this.elementFinder.isVisible(element)) {
@@ -96,7 +99,9 @@ class ActionExecutor {
   async executeDoubleClick(action, delay) {
     const element = this.elementFinder.find(action.target || action.selector);
     if (!element) {
-      throw new ExecutionError(`Element not found: ${action.target || action.selector}`);
+      throw new ExecutionError(
+        `Element not found: ${action.target || action.selector}`,
+      );
     }
 
     if (!this.elementFinder.isVisible(element)) {
@@ -105,7 +110,7 @@ class ActionExecutor {
     }
 
     await delay(100);
-    const event = new MouseEvent('dblclick', {
+    const event = new MouseEvent("dblclick", {
       bubbles: true,
       cancelable: true,
       view: window,
@@ -120,7 +125,9 @@ class ActionExecutor {
   async executeRightClick(action, delay) {
     const element = this.elementFinder.find(action.target || action.selector);
     if (!element) {
-      throw new ExecutionError(`Element not found: ${action.target || action.selector}`);
+      throw new ExecutionError(
+        `Element not found: ${action.target || action.selector}`,
+      );
     }
 
     if (!this.elementFinder.isVisible(element)) {
@@ -129,7 +136,7 @@ class ActionExecutor {
     }
 
     await delay(100);
-    const event = new MouseEvent('contextmenu', {
+    const event = new MouseEvent("contextmenu", {
       bubbles: true,
       cancelable: true,
       view: window,
@@ -143,7 +150,7 @@ class ActionExecutor {
    */
   async executeInput(action, delay) {
     if (!action.value && !action.text) {
-      throw new ExecutionError('Input action missing value');
+      throw new ExecutionError("Input action missing value");
     }
 
     const target = action.target || action.selector;
@@ -173,17 +180,20 @@ class ActionExecutor {
     await delay(50);
 
     // Clear existing value
-    if (element.tagName.toLowerCase() === 'input' || element.tagName.toLowerCase() === 'textarea') {
-      element.value = '';
-      element.dispatchEvent(new Event('input', { bubbles: true }));
+    if (
+      element.tagName.toLowerCase() === "input" ||
+      element.tagName.toLowerCase() === "textarea"
+    ) {
+      element.value = "";
+      element.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     // Type text character by character
     const text = action.value || action.text;
     for (const char of text) {
       element.value += char;
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-      element.dispatchEvent(new Event('change', { bubbles: true }));
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
       await delay(50);
     }
 
@@ -196,13 +206,13 @@ class ActionExecutor {
   async executeSelect(action, delay) {
     const value = action.value;
     if (!value) {
-      throw new ExecutionError('Select action missing value');
+      throw new ExecutionError("Select action missing value");
     }
 
     const target = action.target || action.selector;
     const selectElement = this.elementFinder.find(target);
 
-    if (!selectElement || selectElement.tagName.toLowerCase() !== 'select') {
+    if (!selectElement || selectElement.tagName.toLowerCase() !== "select") {
       throw new ExecutionError(`Select element not found: ${target}`);
     }
 
@@ -213,7 +223,7 @@ class ActionExecutor {
 
     await delay(100);
     selectElement.value = value;
-    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    selectElement.dispatchEvent(new Event("change", { bubbles: true }));
     await delay(200);
   }
 
@@ -223,7 +233,9 @@ class ActionExecutor {
   async executeHover(action, delay) {
     const element = this.elementFinder.find(action.target || action.selector);
     if (!element) {
-      throw new ExecutionError(`Element not found: ${action.target || action.selector}`);
+      throw new ExecutionError(
+        `Element not found: ${action.target || action.selector}`,
+      );
     }
 
     if (!this.elementFinder.isVisible(element)) {
@@ -232,7 +244,7 @@ class ActionExecutor {
     }
 
     await delay(100);
-    const event = new MouseEvent('mouseover', {
+    const event = new MouseEvent("mouseover", {
       bubbles: true,
       cancelable: true,
       view: window,
@@ -246,12 +258,12 @@ class ActionExecutor {
    */
   async executeScroll(action, delay) {
     const pixels = action.pixels || action.value || 400;
-    if (typeof pixels !== 'number' || pixels < -10000 || pixels > 10000) {
-      throw new ExecutionError('Invalid scroll distance');
+    if (typeof pixels !== "number" || pixels < -10000 || pixels > 10000) {
+      throw new ExecutionError("Invalid scroll distance");
     }
 
     await delay(50);
-    window.scrollBy({ top: pixels, behavior: 'smooth' });
+    window.scrollBy({ top: pixels, behavior: "smooth" });
     await delay(Math.abs(pixels) / 2); // Adjust delay based on distance
   }
 
@@ -260,8 +272,8 @@ class ActionExecutor {
    */
   async executeWait(action, delay) {
     const duration = action.duration || action.value || 1000;
-    if (typeof duration !== 'number' || duration < 0 || duration > 300000) {
-      throw new ExecutionError('Invalid wait duration');
+    if (typeof duration !== "number" || duration < 0 || duration > 300000) {
+      throw new ExecutionError("Invalid wait duration");
     }
 
     await delay(duration);
@@ -272,11 +284,11 @@ class ActionExecutor {
    */
   async executeSequence(actions, speed = 1) {
     if (!Array.isArray(actions)) {
-      throw new ExecutionError('Actions must be an array');
+      throw new ExecutionError("Actions must be an array");
     }
 
     this.isRunning = true;
-    this.emit('sequence-started', { actionCount: actions.length });
+    this.emit("sequence-started", { actionCount: actions.length });
 
     try {
       for (let i = 0; i < actions.length; i++) {
@@ -285,12 +297,16 @@ class ActionExecutor {
         }
 
         const action = actions[i];
-        this.emit('action-started', { action, index: i, total: actions.length });
+        this.emit("action-started", {
+          action,
+          index: i,
+          total: actions.length,
+        });
 
         try {
           await this.executeAction(action, speed);
         } catch (error) {
-          this.emit('sequence-error', {
+          this.emit("sequence-error", {
             action,
             index: i,
             error: error.message,
@@ -300,10 +316,10 @@ class ActionExecutor {
           continue;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      this.emit('sequence-completed', { actionCount: actions.length });
+      this.emit("sequence-completed", { actionCount: actions.length });
     } finally {
       this.isRunning = false;
     }
@@ -314,7 +330,7 @@ class ActionExecutor {
    */
   stop() {
     this.isRunning = false;
-    this.emit('sequence-stopped');
+    this.emit("sequence-stopped");
   }
 
   /**
@@ -329,7 +345,7 @@ class ActionExecutor {
    */
   off(event, callback) {
     this.listeners = this.listeners.filter(
-      l => !(l.event === event && l.callback === callback),
+      (l) => !(l.event === event && l.callback === callback),
     );
   }
 
@@ -345,6 +361,6 @@ class ActionExecutor {
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { ActionExecutor, ExecutionError };
 }
