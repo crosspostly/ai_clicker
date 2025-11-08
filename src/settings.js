@@ -130,7 +130,7 @@ async function testGeminiAPI() {
             },
           ],
         }),
-      }
+      },
     );
 
     if (response.ok) {
@@ -147,7 +147,7 @@ async function testGeminiAPI() {
       showStatus(
         'error',
         'gemini-status',
-        `✗ Ошибка: ${error.error?.message || response.statusText}`
+        `✗ Ошибка: ${error.error?.message || response.statusText}`,
       );
     }
   } catch (error) {

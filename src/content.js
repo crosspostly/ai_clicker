@@ -215,7 +215,7 @@ async function handleStartAIMode(instructions, geminiApiKey) {
       instructions,
       !!geminiApiKey,
       geminiApiKey,
-      document.title
+      document.title,
     );
 
     sendMessageToPopup({

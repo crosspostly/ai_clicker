@@ -123,7 +123,7 @@ class Validator {
       return '';
     }
     
-    let sanitized = text
+    const sanitized = text
       .trim()
       .slice(0, maxLength)
       .replace(/[<>]/g, '');

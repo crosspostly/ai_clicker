@@ -86,7 +86,7 @@ class InstructionParser {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -269,7 +269,7 @@ class InstructionParser {
    * Optimize action sequence (remove unnecessary waits, etc.)
    */
   static optimizeSequence(actions) {
-    let optimized = [];
+    const optimized = [];
 
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i];
