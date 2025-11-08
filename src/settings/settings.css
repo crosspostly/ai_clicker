@@ -1,0 +1,273 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: #f5f7fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Settings Container */
+.settings {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.settings__header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 24px;
+  border-bottom: 1px solid #667eea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.settings__title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Content */
+.settings__content {
+  flex: 1;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Sections */
+.settings__section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings__heading {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Fields */
+.settings__field {
+  margin-bottom: 16px;
+}
+
+.settings__field:last-child {
+  margin-bottom: 0;
+}
+
+.settings__label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+  cursor: pointer;
+}
+
+.settings__required {
+  color: #f56565;
+}
+
+/* Inputs */
+.settings__input,
+.settings__select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.settings__input:focus,
+.settings__select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.settings__input::placeholder {
+  color: #999;
+}
+
+/* Checkboxes */
+.settings__checkbox {
+  margin-right: 8px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  accent-color: #667eea;
+}
+
+.settings__label:has(.settings__checkbox) {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Hints */
+.settings__hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.settings__hint a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.settings__hint a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+.settings__button {
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #333;
+}
+
+.settings__button:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.settings__button:active {
+  background: #efefef;
+}
+
+.settings__button--primary {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.settings__button--primary:hover {
+  background: #5568d3;
+  border-color: #5568d3;
+}
+
+.settings__button--danger {
+  background: #f56565;
+  color: white;
+  border-color: #f56565;
+}
+
+.settings__button--danger:hover {
+  background: #e53e3e;
+  border-color: #e53e3e;
+}
+
+.settings__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Footer */
+.settings__footer {
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.settings__footer .settings__button {
+  min-width: 150px;
+}
+
+/* Status Messages */
+.settings__message {
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  animation: slideIn 0.2s ease-out;
+}
+
+.settings__message--success {
+  background: #c6f6d5;
+  border: 1px solid #9ae6b4;
+  color: #22543d;
+}
+
+.settings__message--error {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #c53030;
+}
+
+.settings__message--info {
+  background: #bee3f8;
+  border: 1px solid #90cdf4;
+  color: #2c5282;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings__content {
+    padding: 16px;
+  }
+
+  .settings__section {
+    padding: 16px;
+  }
+
+  .settings__footer {
+    flex-direction: column;
+  }
+
+  .settings__footer .settings__button {
+    width: 100%;
+  }
+
+  .settings__button--primary {
+    margin-right: 0;
+  }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Настройки - ИИ-Автокликер</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="settings">
+    <!-- Header -->
+    <header class="settings__header">
+      <h1 class="settings__title">Настройки ИИ-Автокликера</h1>
+    </header>
+
+    <!-- Content -->
+    <main class="settings__content">
+      <!-- API Settings -->
+      <section class="settings__section">
+        <h2 class="settings__heading">API Settings</h2>
+
+        <div class="settings__field">
+          <label class="settings__label" for="gemini-api-key">
+            Gemini API Key
+            <span class="settings__required">*</span>
+          </label>
+          <input
+            type="password"
+            id="gemini-api-key"
+            class="settings__input"
+            placeholder="AIza..."
+          />
+          <p class="settings__hint">
+            Получите API ключ на
+            <a href="https://makersuite.google.com" target="_blank">Google AI Studio</a>
+          </p>
+        </div>
+
+        <div class="settings__field">
+          <label class="settings__label" for="gemini-enabled">
+            <input
+              type="checkbox"
+              id="gemini-enabled"
+              class="settings__checkbox"
+              checked
+            />
+            Использовать Gemini AI для парсинга инструкций
+          </label>
+        </div>
+      </section>
+
+      <!-- Execution Settings -->
+      <section class="settings__section">
+        <h2 class="settings__heading">Настройки выполнения</h2>
+
+        <div class="settings__field">
+          <label class="settings__label" for="timeout">
+            Таймаут выполнения (мс)
+          </label>
+          <input
+            type="number"
+            id="timeout"
+            class="settings__input"
+            value="30000"
+            min="1000"
+            max="300000"
+          />
+        </div>
+
+        <div class="settings__field">
+          <label class="settings__label" for="max-retries">
+            Максимум попыток
+          </label>
+          <input
+            type="number"
+            id="max-retries"
+            class="settings__input"
+            value="3"
+            min="1"
+            max="10"
+          />
+        </div>
+      </section>
+
+      <!-- UI Settings -->
+      <section class="settings__section">
+        <h2 class="settings__heading">Интерфейс</h2>
+
+        <div class="settings__field">
+          <label class="settings__label" for="show-hints">
+            <input type="checkbox" id="show-hints" class="settings__checkbox" checked />
+            Показывать подсказки
+          </label>
+        </div>
+
+        <div class="settings__field">
+          <label class="settings__label" for="save-history">
+            <input type="checkbox" id="save-history" class="settings__checkbox" checked />
+            Сохранять историю действий
+          </label>
+        </div>
+
+        <div class="settings__field">
+          <label class="settings__label" for="log-level">
+            Уровень логирования
+          </label>
+          <select id="log-level" class="settings__select">
+            <option value="ERROR">Только ошибки</option>
+            <option value="WARN">Предупреждения и ошибки</option>
+            <option value="INFO" selected>Информационные сообщения</option>
+            <option value="DEBUG">Все сообщения (Debug)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Advanced Settings -->
+      <section class="settings__section">
+        <h2 class="settings__heading">Дополнительно</h2>
+
+        <div class="settings__field">
+          <button id="export-settings" class="settings__button">
+            Экспортировать настройки
+          </button>
+        </div>
+
+        <div class="settings__field">
+          <button id="clear-storage" class="settings__button settings__button--danger">
+            Очистить все данные
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="settings__footer">
+      <button id="save-settings" class="settings__button settings__button--primary">
+        Сохранить настройки
+      </button>
+      <button id="reset-settings" class="settings__button">
+        Сброс на значения по умолчанию
+      </button>
+    </footer>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

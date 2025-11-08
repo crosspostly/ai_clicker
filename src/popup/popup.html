@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ИИ-Автокликер</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="popup">
+    <!-- Header -->
+    <div class="popup__header">
+      <h1 class="popup__title">ИИ-Автокликер</h1>
+      <span class="popup__version">v2.0.0</span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="popup__content">
+      <!-- Status Section -->
+      <div class="popup__section">
+        <h2 class="popup__subtitle">Статус</h2>
+        <div id="status" class="popup__status">
+          <div class="popup__status-item">
+            <span class="popup__status-label">Запись:</span>
+            <span id="recording-status" class="popup__status-value">Не активна</span>
+          </div>
+          <div class="popup__status-item">
+            <span class="popup__status-label">Выполнение:</span>
+            <span id="execution-status" class="popup__status-value">Не активно</span>
+          </div>
+          <div class="popup__status-item">
+            <span class="popup__status-label">Действий записано:</span>
+            <span id="actions-count" class="popup__status-value">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recording Controls -->
+      <div class="popup__section">
+        <h2 class="popup__subtitle">Запись действий</h2>
+        <div class="popup__buttons">
+          <button id="start-recording" class="popup__button popup__button--primary">
+            Начать запись
+          </button>
+          <button id="stop-recording" class="popup__button" disabled>
+            Остановить запись
+          </button>
+        </div>
+        <button id="clear-actions" class="popup__button popup__button--full">
+          Очистить действия
+        </button>
+      </div>
+
+      <!-- Execution Controls -->
+      <div class="popup__section">
+        <h2 class="popup__subtitle">Выполнение</h2>
+        <div class="popup__buttons">
+          <button id="execute-actions" class="popup__button popup__button--success" disabled>
+            Выполнить действия
+          </button>
+          <button id="stop-execution" class="popup__button" disabled>
+            Остановить
+          </button>
+        </div>
+        <div class="popup__buttons popup__buttons--secondary">
+          <button id="pause-execution" class="popup__button" disabled>
+            Пауза
+          </button>
+          <button id="resume-execution" class="popup__button" disabled>
+            Продолжить
+          </button>
+        </div>
+      </div>
+
+      <!-- Speed Control -->
+      <div class="popup__section">
+        <h2 class="popup__subtitle">Скорость выполнения</h2>
+        <div class="popup__speed-control">
+          <input
+            type="range"
+            id="speed-slider"
+            class="popup__slider"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value="1"
+          />
+          <span id="speed-value" class="popup__speed-value">1.0x</span>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="popup__section" id="progress-section" style="display: none">
+        <h2 class="popup__subtitle">Прогресс</h2>
+        <div class="popup__progress">
+          <div id="progress-bar" class="popup__progress-bar"></div>
+        </div>
+        <div class="popup__progress-text">
+          <span id="progress-current">0</span> / <span id="progress-total">0</span>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="popup__section">
+        <button id="open-settings" class="popup__button popup__button--secondary">
+          ⚙️ Настройки
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="popup__footer">
+      <a href="https://github.com" target="_blank" class="popup__link">GitHub</a>
+      <span class="popup__separator">•</span>
+      <a href="https://github.com" target="_blank" class="popup__link">Помощь</a>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
