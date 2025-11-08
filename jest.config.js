@@ -2,7 +2,7 @@
  * Jest configuration for AI-Autoclicker
  */
 
-module.exports = {
+export default {
   // Test environment
   testEnvironment: 'jsdom',
   
@@ -36,11 +36,14 @@ module.exports = {
   
   // Module transformation
   transform: {
-    '^.+\\.js$': 'babel-jest'
+    '^.+\\.js$': ['babel-jest', { 
+      presets: [['@babel/preset-env', { targets: { node: 'current' } }]]
+    }]
   },
   
-  // Module path mapping
+  // Module name mapping for ES modules
   moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1'
   },
   

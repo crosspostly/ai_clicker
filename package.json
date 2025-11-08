@@ -11,10 +11,10 @@
     "build:watch": "NODE_ENV=development rollup -c src/rollup.config.js --watch",
     "clean": "rm -rf deploy *.zip",
     "lint": "eslint src/ --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:verbose": "jest --verbose",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "test:verbose": "NODE_OPTIONS='--experimental-vm-modules' jest --verbose",
     "format": "prettier --write 'src/**/*.js'"
   },
   "keywords": [
