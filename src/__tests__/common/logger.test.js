@@ -271,4 +271,247 @@ describe('Logger (Instance API)', () => {
       expect(parsed[0].message).toBe('Test message');
     });
   });
+
+  describe('Logger Comprehensive Tests', () => {
+    describe('Logger formatting', () => {
+      it('should format module name properly', () => {
+        logger.log('Test');
+        const message = consoleSpy.log.mock.calls[0][0];
+        expect(message).toContain('[TestLogger]');
+      });
+
+      it('should include timestamp information', () => {
+        logger.log('Timestamped message');
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+
+      it('should handle long messages', () => {
+        const longMessage = 'x'.repeat(1000);
+        logger.log(longMessage);
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+    });
+
+    describe('Logger data handling', () => {
+      it('should handle complex objects', () => {
+        const complexObj = { nested: { deep: { value: 123 } }, array: [1, 2, 3] };
+        logger.log(complexObj);
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+
+      it('should handle circular references', () => {
+        const obj = { a: 1 };
+        obj.self = obj;
+        expect(() => logger.log(obj)).not.toThrow();
+      });
+
+      it('should handle multiple arguments', () => {
+        logger.log('Msg1', 'Msg2', { data: 'test' }, [1, 2, 3]);
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+
+      it('should preserve data types', () => {
+        logger.log(42, 'string', true, null, undefined);
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+
+      it('should handle large arrays', () => {
+        const largeArray = new Array(1000).fill({ item: 'data' });
+        logger.log(largeArray);
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+    });
+
+    describe('Logger level management', () => {
+      it('should filter logs by level', () => {
+        Logger.setLevel(Logger.LEVELS.WARN);
+        Logger.debug('DebugModule', 'Should not appear');
+        Logger.warn('DebugModule', 'Should appear');
+        
+        expect(consoleSpy.debug).not.toHaveBeenCalled();
+        expect(consoleSpy.warn).toHaveBeenCalled();
+      });
+
+      it('should respect ERROR level', () => {
+        Logger.setLevel(Logger.LEVELS.ERROR);
+        Logger.info('InfoModule', 'Should not appear');
+        Logger.warn('WarnModule', 'Should not appear');
+        Logger.error('ErrorModule', 'Should appear');
+        
+        expect(consoleSpy.info).not.toHaveBeenCalled();
+        expect(consoleSpy.warn).not.toHaveBeenCalled();
+        expect(consoleSpy.error).toHaveBeenCalled();
+      });
+
+      it('should allow level changes', () => {
+        Logger.setLevel(Logger.LEVELS.DEBUG);
+        Logger.debug('Module1', 'Message');
+        const call1 = consoleSpy.debug.mock.calls.length;
+        
+        Logger.setLevel(Logger.LEVELS.ERROR);
+        Logger.debug('Module2', 'Message');
+        const call2 = consoleSpy.debug.mock.calls.length;
+        
+        expect(call2).toBe(call1);
+      });
+
+      it('should clamp invalid log levels', () => {
+        Logger.setLevel(-100);
+        expect(Logger.currentLevel).toBe(Logger.LEVELS.DEBUG);
+        
+        Logger.setLevel(1000);
+        expect(Logger.currentLevel).toBe(Logger.LEVELS.ERROR);
+      });
+    });
+
+    describe('Logger instance tests', () => {
+      it('should maintain separate log history per instance', () => {
+        const logger1 = new Logger('Logger1', 'DEBUG');
+        const logger2 = new Logger('Logger2', 'DEBUG');
+        
+        logger1.info('Message1');
+        logger2.info('Message2');
+        
+        expect(logger1.logs).toHaveLength(1);
+        expect(logger2.logs).toHaveLength(1);
+        expect(logger1.logs[0].message).toBe('Message1');
+        expect(logger2.logs[0].message).toBe('Message2');
+      });
+
+      it('should respect maxLogs limit', () => {
+        const smallLogger = new Logger('SmallLogger', 'DEBUG', 3);
+        
+        smallLogger.info('Message1');
+        smallLogger.info('Message2');
+        smallLogger.info('Message3');
+        smallLogger.info('Message4');
+        
+        expect(smallLogger.logs.length).toBeLessThanOrEqual(3);
+      });
+
+      it('should store log metadata', () => {
+        logger.info('Test message');
+        
+        expect(logger.logs[0]).toHaveProperty('level');
+        expect(logger.logs[0]).toHaveProperty('message');
+        expect(logger.logs[0]).toHaveProperty('timestamp');
+      });
+
+      it('should filter logs by level', () => {
+        logger.debug('Debug');
+        logger.info('Info');
+        logger.warn('Warn');
+        logger.error('Error');
+        
+        const debugLogs = logger.getLogs('DEBUG');
+        expect(debugLogs).toHaveLength(1);
+        expect(debugLogs[0].message).toBe('Debug');
+      });
+
+      it('should limit returned logs', () => {
+        logger.info('Msg1');
+        logger.info('Msg2');
+        logger.info('Msg3');
+        
+        const limited = logger.getLogs(null, 2);
+        expect(limited).toHaveLength(2);
+      });
+    });
+
+    describe('Logger output formatting', () => {
+      it('should format all log levels consistently', () => {
+        logger.debug('Debug msg');
+        logger.info('Info msg');
+        logger.warn('Warn msg');
+        logger.error('Error msg');
+        
+        expect(consoleSpy.log).toHaveBeenCalled();
+        expect(consoleSpy.warn).toHaveBeenCalled();
+        expect(consoleSpy.error).toHaveBeenCalled();
+      });
+
+      it('should include context in messages', () => {
+        logger.info('Message with context', { userId: 123 });
+        expect(consoleSpy.log).toHaveBeenCalled();
+      });
+
+      it('should handle error objects', () => {
+        const error = new Error('Test error');
+        logger.error('An error occurred', error);
+        expect(consoleSpy.error).toHaveBeenCalled();
+      });
+    });
+
+    describe('Logger export functionality', () => {
+      it('should export multiple logs', () => {
+        logger.info('Message 1');
+        logger.warn('Message 2');
+        logger.error('Message 3');
+        
+        const exported = logger.export();
+        const parsed = JSON.parse(exported);
+        
+        expect(parsed).toHaveLength(3);
+      });
+
+      it('should preserve log levels in export', () => {
+        logger.debug('Debug');
+        logger.error('Error');
+        
+        const exported = logger.export();
+        const parsed = JSON.parse(exported);
+        
+        expect(parsed[0].level).toBe('DEBUG');
+        expect(parsed[1].level).toBe('ERROR');
+      });
+
+      it('should export with timestamps', () => {
+        logger.info('Test');
+        const exported = logger.export();
+        const parsed = JSON.parse(exported);
+        
+        expect(parsed[0].timestamp).toBeDefined();
+      });
+    });
+
+    describe('Logger clear functionality', () => {
+      it('should clear all logs', () => {
+        logger.info('Message 1');
+        logger.info('Message 2');
+        expect(logger.logs).toHaveLength(2);
+        
+        logger.clear();
+        expect(logger.logs).toHaveLength(0);
+      });
+
+      it('should clear only the current logger', () => {
+        const logger1 = new Logger('Logger1', 'DEBUG');
+        const logger2 = new Logger('Logger2', 'DEBUG');
+        
+        logger1.info('Message1');
+        logger2.info('Message2');
+        
+        logger1.clear();
+        expect(logger1.logs).toHaveLength(0);
+        expect(logger2.logs).toHaveLength(1);
+      });
+    });
+
+    describe('Static Logger API', () => {
+      it('should use static methods without instance', () => {
+        Logger.setLevel(Logger.LEVELS.DEBUG);
+        Logger.debug('Static', 'message');
+        expect(consoleSpy.debug).toHaveBeenCalled();
+      });
+
+      it('should maintain global level', () => {
+        Logger.setLevel(Logger.LEVELS.WARN);
+        Logger.info('Module', 'Should not appear');
+        Logger.warn('Module', 'Should appear');
+        
+        expect(consoleSpy.info).not.toHaveBeenCalled();
+        expect(consoleSpy.warn).toHaveBeenCalled();
+      });
+    });
+  });
 });
