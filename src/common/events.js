@@ -3,7 +3,7 @@
  * Provides pub/sub pattern for custom events
  */
 
-class EventEmitter {
+export class EventEmitter {
   constructor() {
     this.events = {};
   }
@@ -52,8 +52,4 @@ class EventEmitter {
     if (!this.events[event]) return;
     this.events[event].forEach(listener => listener(...args));
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { EventEmitter };
 }

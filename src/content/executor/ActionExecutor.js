@@ -2,14 +2,14 @@
  * Executes recorded or AI-generated actions with comprehensive error handling
  */
 
-class ExecutionError extends Error {
+export class ExecutionError extends Error {
   constructor(message) {
     super(message);
     this.name = 'ExecutionError';
   }
 }
 
-class ActionExecutor {
+export class ActionExecutor {
   constructor(elementFinder) {
     this.elementFinder = elementFinder;
     this.isRunning = false;
@@ -359,8 +359,4 @@ class ActionExecutor {
       }
     }
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { ActionExecutor, ExecutionError };
 }

@@ -3,14 +3,17 @@
  * Provides encrypted and secure storage access
  */
 
-class StorageError extends Error {
+import { Logger } from './logger.js';
+import { STORAGE_KEYS } from './constants.js';
+
+export class StorageError extends Error {
   constructor(message) {
     super(message);
     this.name = 'StorageError';
   }
 }
 
-class StorageManager {
+export class StorageManager {
   /**
    * Get value from local storage
    * @param {string|Array} keys - Key or keys to retrieve
@@ -259,8 +262,4 @@ class StorageManager {
     const history = result.executionHistory || [];
     return history.slice(-limit);
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { StorageManager, StorageError };
 }

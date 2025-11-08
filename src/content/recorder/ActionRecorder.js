@@ -2,7 +2,7 @@
  * Records user interactions on the page
  */
 
-class ActionRecorder {
+export class ActionRecorder {
   constructor(elementFinder) {
     this.elementFinder = elementFinder;
     this.isRecording = false;
@@ -294,8 +294,4 @@ class ActionRecorder {
       }
     }
   }
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { ActionRecorder };
 }
