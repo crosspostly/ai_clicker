@@ -68,18 +68,36 @@ function copyStaticFiles() {
     console.log('✅ Copied manifest.json');
   }
 
-  const assetsSrcDir = resolvePath('common/assets');
-  const assetsDestDir = path.join(deployDir, 'common/assets');
-  if (fs.existsSync(assetsSrcDir)) {
-    ensureDirectory(assetsDestDir);
+  // FIXED: Icon path updated from common/assets to images
+  const imagesSrcDir = resolvePath('images');
+  const imagesDestDir = path.join(deployDir, 'images');
+  
+  if (fs.existsSync(imagesSrcDir)) {
+    ensureDirectory(imagesDestDir);
     iconFiles.forEach(file => {
-      const srcFile = path.join(assetsSrcDir, file);
-      const destFile = path.join(assetsDestDir, file);
+      const srcFile = path.join(imagesSrcDir, file);
+      const destFile = path.join(imagesDestDir, file);
       if (fs.existsSync(srcFile)) {
         fs.copyFileSync(srcFile, destFile);
         console.log(`✅ Copied icon ${file}`);
       }
     });
+  } else {
+    console.warn('⚠️  images/ directory not found, trying fallback to common/assets/');
+    // Fallback for backward compatibility
+    const assetsSrcDir = resolvePath('common/assets');
+    const assetsDestDir = path.join(deployDir, 'images');
+    if (fs.existsSync(assetsSrcDir)) {
+      ensureDirectory(assetsDestDir);
+      iconFiles.forEach(file => {
+        const srcFile = path.join(assetsSrcDir, file);
+        const destFile = path.join(assetsDestDir, file);
+        if (fs.existsSync(srcFile)) {
+          fs.copyFileSync(srcFile, destFile);
+          console.log(`✅ Copied icon ${file} (from common/assets fallback)`);
+        }
+      });
+    }
   }
 }
 
@@ -142,11 +160,11 @@ function verifyBuild() {
   });
 
   iconFiles.forEach(file => {
-    const filePath = path.join(deployDir, 'common/assets', file);
+    const filePath = path.join(deployDir, 'images', file);
     if (fs.existsSync(filePath)) {
-      console.log(`✅ Found: common/assets/${file}`);
+      console.log(`✅ Found: images/${file}`);
     } else {
-      console.error(`❌ Missing icon: common/assets/${file}`);
+      console.error(`❌ Missing icon: images/${file}`);
       allFilesExist = false;
     }
   });
