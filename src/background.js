@@ -17,12 +17,12 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
     switch (request.type) {
-      case "actionRecorded":
+      case 'actionRecorded':
         // Forward to popup if needed
         handleActionRecorded(request);
         break;
 
-      case "executeActions":
+      case 'executeActions':
         // Could be used for cross-tab execution
         handleExecuteActions(request);
         break;
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         break;
     }
   } catch (error) {
-    console.error("[Background] Error handling message:", error);
+    console.error('[Background] Error handling message:', error);
   }
 
   sendResponse({ success: true });
@@ -63,7 +63,7 @@ chrome.tabs.onActivated.addListener((_activeInfo) => {
  * Listen for tab updates
  */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, _tab) => {
-  if (changeInfo.status === "complete") {
+  if (changeInfo.status === 'complete') {
     // Tab completed loading
   }
 });
@@ -72,7 +72,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, _tab) => {
  * Clean up stale data periodically
  */
 setInterval(() => {
-  chrome.storage.local.get(["executionHistory"], (result) => {
+  chrome.storage.local.get(['executionHistory'], (result) => {
     const history = result.executionHistory || [];
     // Keep only last 100 executions
     if (history.length > 100) {

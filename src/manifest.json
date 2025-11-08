@@ -33,6 +33,7 @@
         "validator.js",
         "storage.js",
         "helpers.js",
+        "events.js",
         "InstructionParser.js",
         "ElementFinder.js",
         "ActionRecorder.js",

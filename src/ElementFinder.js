@@ -42,7 +42,7 @@ class ElementFinder {
 
       return null;
     } catch (error) {
-      console.error("Error finding element:", error);
+      console.error('Error finding element:', error);
       return null;
     }
   }
@@ -72,7 +72,7 @@ class ElementFinder {
   findBySelector(selector) {
     try {
       // Remove quotes if present
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
       return document.querySelector(cleanSelector);
     } catch (error) {
       return null;
@@ -146,7 +146,7 @@ class ElementFinder {
    */
   findAll(selector) {
     try {
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
       return Array.from(document.querySelectorAll(cleanSelector));
     } catch (error) {
       return [];
@@ -158,14 +158,14 @@ class ElementFinder {
    */
   findByLabelText(labelText) {
     try {
-      const labels = document.querySelectorAll("label");
+      const labels = document.querySelectorAll('label');
       for (const label of labels) {
         if (label.textContent.includes(labelText)) {
-          const htmlFor = label.getAttribute("for");
+          const htmlFor = label.getAttribute('for');
           if (htmlFor) {
             return document.getElementById(htmlFor);
           }
-          return label.querySelector("input, textarea, select");
+          return label.querySelector('input, textarea, select');
         }
       }
       return null;
@@ -231,7 +231,7 @@ class ElementFinder {
    */
   findClosestParent(element, selector) {
     try {
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
       return element.closest(cleanSelector);
     } catch (error) {
       return null;
@@ -244,7 +244,7 @@ class ElementFinder {
   findInContainer(container, selector) {
     try {
       if (!container) return null;
-      const cleanSelector = selector.replace(/^['"]|['"]$/g, "");
+      const cleanSelector = selector.replace(/^['"]|['"]$/g, '');
       return container.querySelector(cleanSelector);
     } catch (error) {
       return null;
@@ -275,23 +275,23 @@ class ElementFinder {
     if (!element) return false;
 
     const interactiveTags = [
-      "button",
-      "a",
-      "input",
-      "select",
-      "textarea",
-      "label",
+      'button',
+      'a',
+      'input',
+      'select',
+      'textarea',
+      'label',
     ];
     if (interactiveTags.includes(element.tagName.toLowerCase())) {
       return true;
     }
 
-    const role = element.getAttribute("role");
-    if (role && ["button", "link", "menuitem", "tab"].includes(role)) {
+    const role = element.getAttribute('role');
+    if (role && ['button', 'link', 'menuitem', 'tab'].includes(role)) {
       return true;
     }
 
-    return element.onclick !== null || element.style.cursor === "pointer";
+    return element.onclick !== null || element.style.cursor === 'pointer';
   }
 
   /**
@@ -302,8 +302,8 @@ class ElementFinder {
 
     return !!(
       element.offsetParent !== null &&
-      window.getComputedStyle(element).display !== "none" &&
-      window.getComputedStyle(element).visibility !== "hidden"
+      window.getComputedStyle(element).display !== 'none' &&
+      window.getComputedStyle(element).visibility !== 'hidden'
     );
   }
 
@@ -341,10 +341,10 @@ class ElementFinder {
       element = element.parentElement;
     }
 
-    return path.join(" > ");
+    return path.join(' > ');
   }
 }
 
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = { ElementFinder };
 }

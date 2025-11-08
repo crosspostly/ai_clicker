@@ -6,67 +6,102 @@
 class ValidationError extends Error {
   constructor(message) {
     super(message);
-    this.name = "ValidationError";
+    this.name = 'ValidationError';
   }
 }
 
 class Validator {
   /**
-   * Validate API key format
+   * Validate action object according to specification
+   * @param {Object} action - Action to validate
+   * @returns {boolean} True if valid
+   * @throws {ValidationError} If action is invalid
    */
-  static validateApiKey(key) {
-    if (!key || typeof key !== "string") {
-      throw new ValidationError("API key must be a non-empty string");
+  static validateAction(action) {
+    if (!action || typeof action !== 'object') {
+      throw new ValidationError('Action must be an object');
     }
-    if (key.length < 10) {
-      throw new ValidationError("API key is too short");
+
+    const validTypes = [
+      'click',
+      'input',
+      'select',
+      'scroll',
+      'wait',
+      'double_click',
+      'right_click',
+      'hover',
+    ];
+
+    if (!action.type || !validTypes.includes(action.type)) {
+      throw new ValidationError(`Invalid action type: ${action.type}`);
     }
-    if (key.length > 500) {
-      throw new ValidationError("API key is too long");
+
+    return true;
+  }
+
+  /**
+   * Validate CSS selector
+   */
+  static validateSelector(selector) {
+    if (!selector || typeof selector !== 'string') {
+      throw new ValidationError('Selector must be a non-empty string');
+    }
+    if (selector.length > 500) {
+      throw new ValidationError('Selector is too long');
+    }
+    try {
+      document.querySelector(selector);
+      return true;
+    } catch {
+      throw new ValidationError(`Invalid CSS selector: ${selector}`);
+    }
+  }
+
+  /**
+   * Validate Gemini API key format
+   * @param {string} key - API key to validate
+   * @returns {boolean} True if valid
+   * @throws {ValidationError} If key is invalid
+   */
+  static validateGeminiKey(key) {
+    if (!key || typeof key !== 'string') {
+      throw new ValidationError('API key must be a string');
+    }
+    if (key.length !== 39 || !key.startsWith('AIza')) {
+      throw new ValidationError('Invalid Gemini API key format');
     }
     return true;
   }
 
   /**
    * Validate instructions text
+   * @param {string} instructions - Instructions to validate
+   * @returns {boolean} True if valid
+   * @throws {ValidationError} If instructions are invalid
    */
   static validateInstructions(instructions) {
-    if (!instructions || typeof instructions !== "string") {
-      throw new ValidationError("Instructions must be a non-empty string");
-    }
-    if (instructions.trim().length === 0) {
-      throw new ValidationError("Instructions cannot be empty");
+    if (!instructions || typeof instructions !== 'string') {
+      throw new ValidationError('Instructions must be a non-empty string');
     }
     if (instructions.length > 5000) {
-      throw new ValidationError(
-        "Instructions text is too long (max 5000 chars)",
-      );
+      throw new ValidationError('Instructions are too long');
     }
     return true;
   }
 
   /**
-   * Validate action object
+   * Validate API key format (alias for validateGeminiKey)
    */
-  static validateAction(action) {
-    if (!action || typeof action !== "object") {
-      throw new ValidationError("Action must be an object");
+  static validateApiKey(key) {
+    if (!key || typeof key !== 'string') {
+      throw new ValidationError('API key must be a non-empty string');
     }
-    if (!action.type || typeof action.type !== "string") {
-      throw new ValidationError("Action must have a valid type");
+    if (key.length < 10) {
+      throw new ValidationError('API key is too short');
     }
-    const validTypes = [
-      "click",
-      "input",
-      "hover",
-      "scroll",
-      "wait",
-      "select",
-      "double_click",
-      "right_click",
-    ];
-    if (!validTypes.includes(action.type)) {
-      throw new ValidationError(`Invalid action type: ${action.type}`);
+    if (key.length > 500) {
+      throw new ValidationError('API key is too long');
     }
     return true;
   }
@@ -84,26 +119,11 @@ class Validator {
   }
 
   /**
-   * Validate DOM selector
-   */
-  static validateSelector(selector) {
-    if (!selector || typeof selector !== "string") {
-      throw new ValidationError("Selector must be a non-empty string");
-    }
-    try {
-      document.querySelector(selector);
-      return true;
-    } catch {
-      throw new ValidationError(`Invalid CSS selector: ${selector}`);
-    }
-  }
-
-  /**
    * Validate XPath
    */
   static validateXPath(xpath) {
-    if (!xpath || typeof xpath !== "string") {
-      throw new ValidationError("XPath must be a non-empty string");
+    if (!xpath || typeof xpath !== 'string') {
+      throw new ValidationError('XPath must be a non-empty string');
     }
     try {
       document.evaluate(
@@ -123,11 +143,11 @@ class Validator {
    * Sanitize HTML to prevent XSS
    */
   static sanitizeHtml(html) {
-    if (typeof html !== "string") {
-      return "";
+    if (typeof html !== 'string') {
+      return '';
     }
 
-    const div = document.createElement("div");
+    const div = document.createElement('div');
     div.textContent = html;
     return div.innerHTML;
   }
@@ -136,11 +156,11 @@ class Validator {
    * Sanitize text input
    */
   static sanitizeText(text, maxLength = 1000) {
-    if (typeof text !== "string") {
-      return "";
+    if (typeof text !== 'string') {
+      return '';
     }
 
-    const sanitized = text.trim().slice(0, maxLength).replace(/[<>]/g, "");
+    const sanitized = text.trim().slice(0, maxLength).replace(/[<>]/g, '');
 
     return sanitized;
   }
@@ -149,8 +169,8 @@ class Validator {
    * Validate email format
    */
   static validateEmail(email) {
-    if (!email || typeof email !== "string") {
-      throw new ValidationError("Email must be a non-empty string");
+    if (!email || typeof email !== 'string') {
+      throw new ValidationError('Email must be a non-empty string');
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -179,15 +199,15 @@ class Validator {
    * Validate duration in milliseconds
    */
   static validateDuration(duration) {
-    if (typeof duration !== "number" || duration < 0 || duration > 300000) {
+    if (typeof duration !== 'number' || duration < 0 || duration > 300000) {
       throw new ValidationError(
-        "Duration must be a number between 0 and 300000ms",
+        'Duration must be a number between 0 and 300000ms',
       );
     }
     return true;
   }
 }
 
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = { Validator, ValidationError };
 }

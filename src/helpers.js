@@ -5,36 +5,74 @@
 class Helpers {
   /**
    * Delay execution for specified milliseconds
+   * @param {number} ms - Delay in milliseconds
+   * @returns {Promise} Promise that resolves after delay
    */
   static delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Check if element is visible
+   * @param {Element} element - DOM element to check
+   * @returns {boolean} True if element is visible
+   */
+  static isVisible(element) {
+    return !!(element && element.offsetParent);
+  }
+
+  /**
+   * Scroll element into view
+   * @param {Element} element - DOM element to scroll to
+   */
+  static scrollIntoView(element) {
+    try {
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (error) {
+      if (typeof Logger !== 'undefined') {
+        Logger.error('Helpers', 'scrollIntoView failed', error);
+      }
+    }
+  }
+
+  /**
+   * Generate CSS selector for element
+   * @param {Element} element - DOM element to generate selector for
+   * @returns {string} CSS selector string
+   */
+  static generateSelector(element) {
+    if (element.id) return `#${element.id}`;
+    if (element.className) return `.${element.className.split(' ')[0]}`;
+    return element.tagName.toLowerCase();
   }
 
   /**
    * Debounce function calls
+   * @param {Function} func - Function to debounce
+   * @param {number} delay - Delay in milliseconds
+   * @returns {Function} Debounced function
    */
-  static debounce(func, wait = 250) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
+  static debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
     };
   }
 
   /**
    * Throttle function calls
+   * @param {Function} func - Function to throttle
+   * @param {number} limit - Time limit in milliseconds
+   * @returns {Function} Throttled function
    */
-  static throttle(func, limit = 250) {
+  static throttle(func, limit) {
     let inThrottle;
-    return function (...args) {
+    return function(...args) {
       if (!inThrottle) {
-        func.apply(this, args);
+        func(...args);
         inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
+        setTimeout(() => inThrottle = false, limit);
       }
     };
   }
@@ -42,7 +80,7 @@ class Helpers {
   /**
    * Generate unique ID
    */
-  static generateId(prefix = "") {
+  static generateId(prefix = '') {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
     return prefix ? `${prefix}-${id}` : id;
   }
@@ -51,7 +89,7 @@ class Helpers {
    * Deep clone object
    */
   static deepClone(obj) {
-    if (obj === null || typeof obj !== "object") {
+    if (obj === null || typeof obj !== 'object') {
       return obj;
     }
 
@@ -78,14 +116,14 @@ class Helpers {
    * Format bytes to readable size
    */
   static formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return '0 Bytes';
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
   /**
@@ -93,7 +131,7 @@ class Helpers {
    */
   static arrayToCSV(array) {
     if (!Array.isArray(array) || array.length === 0) {
-      return "";
+      return '';
     }
 
     const headers = Object.keys(array[0]);
@@ -104,22 +142,22 @@ class Helpers {
           const escaped = String(value).replace(/"/g, '""');
           return `"${escaped}"`;
         })
-        .join(","),
+        .join(','),
     );
 
-    return [headers.join(","), ...rows].join("\n");
+    return [headers.join(','), ...rows].join('\n');
   }
 
   /**
    * Parse CSV to array
    */
   static csvToArray(csv) {
-    const lines = csv.split("\n");
+    const lines = csv.split('\n');
     if (lines.length === 0) return [];
 
-    const headers = lines[0].split(",").map((h) => h.trim());
+    const headers = lines[0].split(',').map((h) => h.trim());
     return lines.slice(1).map((line) => {
-      const values = line.split(",").map((v) => v.trim());
+      const values = line.split(',').map((v) => v.trim());
       const obj = {};
       headers.forEach((header, index) => {
         obj[header] = values[index];
@@ -138,7 +176,7 @@ class Helpers {
   /**
    * Format timestamp to human readable
    */
-  static formatTimestamp(timestamp, locale = "en-US") {
+  static formatTimestamp(timestamp, locale = 'en-US') {
     return new Date(timestamp).toLocaleString(locale);
   }
 
@@ -149,7 +187,7 @@ class Helpers {
     return !!(
       element &&
       element.offsetParent !== null &&
-      window.getComputedStyle(element).display !== "none"
+      window.getComputedStyle(element).display !== 'none'
     );
   }
 
@@ -171,8 +209,8 @@ class Helpers {
   /**
    * Scroll element into view
    */
-  static scrollToElement(element, behavior = "smooth") {
-    element.scrollIntoView({ behavior, block: "center", inline: "center" });
+  static scrollToElement(element, behavior = 'smooth') {
+    element.scrollIntoView({ behavior, block: 'center', inline: 'center' });
   }
 
   /**
@@ -207,7 +245,7 @@ class Helpers {
    * Get text content from element
    */
   static getElementText(element) {
-    return element ? element.innerText || element.textContent || "" : "";
+    return element ? element.innerText || element.textContent || '' : '';
   }
 
   /**
@@ -248,10 +286,10 @@ class Helpers {
         ([key, value]) =>
           `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
       )
-      .join("&");
+      .join('&');
   }
 }
 
-if (typeof module !== "undefined" && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
   module.exports = { Helpers };
 }
