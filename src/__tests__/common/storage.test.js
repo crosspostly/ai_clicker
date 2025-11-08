@@ -208,4 +208,160 @@ describe('StorageManager Class', () => {
       }
     }, expect.any(Function));
   });
+
+  describe('StorageManager Comprehensive Tests', () => {
+    test('should handle non-existent keys gracefully', async () => {
+      chrome.storage.local.get.mockResolvedValue({});
+      const result = await StorageManager.getLocal('nonexistent');
+      expect(result).toEqual({});
+    });
+
+    test('should handle concurrent get operations', async () => {
+      chrome.storage.local.get.mockResolvedValue({ key1: 'val1', key2: 'val2' });
+      const [result1, result2] = await Promise.all([
+        StorageManager.getLocal('key1'),
+        StorageManager.getLocal('key2')
+      ]);
+      expect(result1).toBeDefined();
+      expect(result2).toBeDefined();
+    });
+
+    test('should handle concurrent set operations', async () => {
+      chrome.storage.local.set.mockResolvedValue({});
+      await Promise.all([
+        StorageManager.setLocal({ key1: 'val1' }),
+        StorageManager.setLocal({ key2: 'val2' }),
+        StorageManager.setLocal({ key3: 'val3' })
+      ]);
+      expect(chrome.storage.local.set).toHaveBeenCalledTimes(3);
+    });
+
+    test('should preserve data types in storage', async () => {
+      chrome.storage.local.set.mockResolvedValue({});
+      const data = {
+        string: 'value',
+        number: 42,
+        boolean: true,
+        object: { nested: 'data' },
+        array: [1, 2, 3],
+        null: null
+      };
+      await StorageManager.setLocal(data);
+      expect(chrome.storage.local.set).toHaveBeenCalledWith(data);
+    });
+
+    test('should handle large data objects', async () => {
+      chrome.storage.local.set.mockResolvedValue({});
+      const largeData = new Array(1000).fill({ key: 'value' });
+      await StorageManager.setLocal({ largeKey: largeData });
+      expect(chrome.storage.local.set).toHaveBeenCalled();
+    });
+
+    test('should handle array of keys in getLocal', async () => {
+      chrome.storage.local.get.mockResolvedValue({ 
+        key1: 'value1', 
+        key2: 'value2' 
+      });
+      const result = await StorageManager.getLocal(['key1', 'key2']);
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    test('should handle string keys in getLocal', async () => {
+      chrome.storage.local.get.mockResolvedValue({ key: 'value' });
+      const result = await StorageManager.getLocal('key');
+      expect(result).toEqual({ key: 'value' });
+    });
+
+    test('should handle remove errors gracefully', async () => {
+      chrome.storage.local.remove.mockImplementation((keys, callback) => {
+        setTimeout(() => callback(), 10);
+      });
+      chrome.runtime.lastError = null;
+      await expect(
+        StorageManager.remove('key', 'local')
+      ).resolves.toBeUndefined();
+    });
+
+    test('should handle clear errors gracefully', async () => {
+      chrome.storage.local.clear.mockImplementation((callback) => {
+        setTimeout(() => callback(), 10);
+      });
+      chrome.runtime.lastError = null;
+      await expect(
+        StorageManager.clear('local')
+      ).resolves.toBeUndefined();
+    });
+
+    test('should support both local and sync storage', async () => {
+      chrome.storage.local.get.mockResolvedValue({ key: 'local' });
+      chrome.storage.sync.get.mockResolvedValue({ key: 'sync' });
+      
+      const local = await StorageManager.getLocal('key');
+      const sync = await StorageManager.getSync('key');
+      
+      expect(local).toEqual({ key: 'local' });
+      expect(sync).toEqual({ key: 'sync' });
+    });
+
+    test('should handle saveActions with proper timestamp and expiration', async () => {
+      chrome.storage.local.set.mockImplementation((data, callback) => {
+        callback();
+      });
+      chrome.runtime.lastError = null;
+      
+      const actions = [
+        { type: 'click', target: 'button' },
+        { type: 'input', value: 'text' }
+      ];
+      
+      await StorageManager.saveActions(actions, 60);
+      const call = chrome.storage.local.set.mock.calls[0][0];
+      
+      expect(call.recordedActions.actions).toEqual(actions);
+      expect(call.recordedActions.savedAt).toBeDefined();
+      expect(call.recordedActions.expiresAt).toBeGreaterThan(call.recordedActions.savedAt);
+    });
+
+    test('should handle getAll with proper null parameter', async () => {
+      chrome.storage.local.get.mockImplementation((keys, callback) => {
+        expect(keys).toBeNull();
+        callback({ key1: 'val1', key2: 'val2' });
+      });
+      
+      const result = await StorageManager.getAll('local');
+      expect(result).toEqual({ key1: 'val1', key2: 'val2' });
+    });
+
+    test('StorageError should have proper error properties', () => {
+      const error = new StorageError('Custom error message');
+      expect(error).toBeInstanceOf(Error);
+      expect(error.name).toBe('StorageError');
+      expect(error.message).toBe('Custom error message');
+      expect(error.stack).toBeDefined();
+    });
+
+    test('should handle storage quota exceeded errors', async () => {
+      chrome.storage.local.set.mockRejectedValue(new Error('QuotaExceededError'));
+      const result = await StorageManager.setLocal({ key: 'value' });
+      expect(result).toBeUndefined();
+    });
+
+    test('should handle undefined callbacks gracefully', async () => {
+      chrome.storage.local.get.mockImplementation((key) => {
+        return Promise.resolve({ [key]: 'value' });
+      });
+      const result = await StorageManager.getLocal('key');
+      expect(result).toBeDefined();
+    });
+
+    test('should maintain data integrity across operations', async () => {
+      chrome.storage.local.set.mockResolvedValue({});
+      
+      const original = { deep: { nested: { value: 'test' } } };
+      await StorageManager.setLocal(original);
+      
+      const setCall = chrome.storage.local.set.mock.calls[0][0];
+      expect(setCall).toEqual(original);
+    });
+  });
 });

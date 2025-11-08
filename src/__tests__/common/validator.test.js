@@ -366,4 +366,163 @@ describe('Validator', () => {
       });
     });
   });
+
+  describe('Type validation edge cases', () => {
+    it('should handle type validation for various primitives', () => {
+      expect(Validator.isString('')).toBe(true);
+      expect(Validator.isString(' ')).toBe(true);
+      expect(Validator.isNumber(0)).toBe(true);
+      expect(Validator.isNumber(-1)).toBe(true);
+      expect(Validator.isBoolean(true)).toBe(true);
+      expect(Validator.isBoolean(false)).toBe(true);
+    });
+
+    it('should handle Array validation', () => {
+      expect(Validator.isArray([])).toBe(true);
+      expect(Validator.isArray([1, 2, 3])).toBe(true);
+      expect(Validator.isArray({ length: 3 })).toBe(false);
+      expect(Validator.isArray('array')).toBe(false);
+    });
+
+    it('should handle Object validation', () => {
+      expect(Validator.isObject({})).toBe(true);
+      expect(Validator.isObject(new Date())).toBe(true);
+      expect(Validator.isObject(/regex/)).toBe(true);
+      expect(Validator.isObject([])).toBe(false);
+      expect(Validator.isObject(null)).toBe(false);
+    });
+
+    it('should handle Function validation', () => {
+      expect(Validator.isFunction(() => {})).toBe(true);
+      expect(Validator.isFunction(function() {})).toBe(true);
+      expect(Validator.isFunction(async () => {})).toBe(true);
+      expect(Validator.isFunction(class Foo {})).toBe(true);
+      expect(Validator.isFunction('not a function')).toBe(false);
+    });
+  });
+
+  describe('String validation edge cases', () => {
+    it('should validate email addresses with special characters', () => {
+      expect(Validator.isValidEmail('user+tag@example.com')).toBe(true);
+      expect(Validator.isValidEmail('user.name@example.co.uk')).toBe(true);
+      expect(Validator.isValidEmail('user_name@example.com')).toBe(true);
+    });
+
+    it('should reject malformed emails', () => {
+      expect(Validator.isValidEmail('user@')).toBe(false);
+      expect(Validator.isValidEmail('@example.com')).toBe(false);
+      expect(Validator.isValidEmail('user name@example.com')).toBe(false);
+    });
+
+    it('should validate URLs with different protocols', () => {
+      expect(Validator.isValidUrl('https://example.com')).toBe(true);
+      expect(Validator.isValidUrl('http://example.com')).toBe(true);
+      expect(Validator.isValidUrl('https://localhost:3000')).toBe(true);
+    });
+
+    it('should handle string length validation', () => {
+      expect(Validator.minLength('hello', 3)).toBe(true);
+      expect(Validator.minLength('hi', 3)).toBe(false);
+      expect(Validator.maxLength('hello', 10)).toBe(true);
+      expect(Validator.maxLength('hello', 3)).toBe(false);
+    });
+  });
+
+  describe('Comprehensive edge case handling', () => {
+    it('should handle empty collections', () => {
+      expect(Validator.isEmpty([])).toBe(true);
+      expect(Validator.isEmpty({})).toBe(true);
+      expect(Validator.isEmpty('')).toBe(true);
+      expect(Validator.isEmpty(null)).toBe(true);
+    });
+
+    it('should handle numeric edge cases', () => {
+      expect(Validator.isNumber(0)).toBe(true);
+      expect(Validator.isNumber(-0)).toBe(true);
+      expect(Validator.isNumber(Infinity)).toBe(true);
+      expect(Validator.isNumber(-Infinity)).toBe(true);
+      expect(Validator.isNumber(NaN)).toBe(false);
+    });
+
+    it('should correctly identify falsy vs empty', () => {
+      expect(Validator.isEmpty(false)).toBe(false);
+      expect(Validator.isEmpty(0)).toBe(false);
+      expect(Validator.isEmpty('0')).toBe(false);
+    });
+
+    it('should handle complex nested objects', () => {
+      const complex = {
+        nested: {
+          deep: {
+            value: [1, 2, { inner: 'data' }]
+          }
+        }
+      };
+      expect(Validator.isObject(complex)).toBe(true);
+      expect(Validator.isEmpty(complex)).toBe(false);
+    });
+  });
+
+  describe('Validation error handling', () => {
+    it('should handle ValidationError instances', () => {
+      const error = new Validator.ValidationError('Test error');
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toBe('Test error');
+    });
+
+    it('should create proper error stack traces', () => {
+      const error = new Validator.ValidationError('Error with stack');
+      expect(error.stack).toBeDefined();
+      expect(error.stack).toContain('ValidationError');
+    });
+  });
+
+  describe('Data structure validation', () => {
+    it('should validate action structures comprehensively', () => {
+      const validAction = {
+        type: 'click',
+        target: 'button',
+        selector: '.submit-btn'
+      };
+      const result = Validator.validateAction(validAction);
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should handle missing required action fields', () => {
+      const incompleteAction = {
+        target: 'button'
+      };
+      const result = Validator.validateAction(incompleteAction);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should validate scenario with multiple actions', () => {
+      const scenario = {
+        id: 1,
+        name: 'Multi-step scenario',
+        description: 'A complex scenario',
+        actions: [
+          { type: 'click', target: 'button' },
+          { type: 'input', value: 'text', target: 'field' },
+          { type: 'wait', duration: 1000 }
+        ],
+        createdAt: new Date().toISOString()
+      };
+      const result = Validator.validateScenario(scenario);
+      expect(result.isValid).toBe(true);
+    });
+
+    it('should reject scenario with invalid action types', () => {
+      const badScenario = {
+        id: 1,
+        name: 'Bad scenario',
+        actions: [
+          { type: 'unknown_action', target: 'element' }
+        ]
+      };
+      const result = Validator.validateScenario(badScenario);
+      expect(result.isValid).toBe(false);
+    });
+  });
 });
