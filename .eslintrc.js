@@ -6,12 +6,22 @@ module.exports = {
   },
   extends: ['eslint:recommended'],
   parserOptions: {
-    ecmaVersion: 12,
+    ecmaVersion: 2022,
     sourceType: 'module',
   },
   globals: {
     chrome: 'readonly',
     module: 'readonly',
+    Logger: 'readonly',
+    Validator: 'readonly',
+    Storage: 'readonly',
+    StorageManager: 'readonly',
+    Helpers: 'readonly',
+    EventEmitter: 'readonly',
+    ElementFinder: 'readonly',
+    ActionRecorder: 'readonly',
+    ActionExecutor: 'readonly',
+    InstructionParser: 'readonly',
   },
   rules: {
     'no-console': 'off',

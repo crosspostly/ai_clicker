@@ -9,39 +9,39 @@ let geminiEnabled = false;
 let geminiApiKey = null;
 
 // DOM elements
-const startRecordingBtn = document.getElementById("start-recording");
-const stopRecordingBtn = document.getElementById("stop-recording");
-const playActionsBtn = document.getElementById("play-actions");
-const clearActionsBtn = document.getElementById("clear-actions");
-const exportActionsBtn = document.getElementById("export-actions");
-const importActionsBtn = document.getElementById("import-actions");
-const importFileInput = document.getElementById("import-file-input");
-const actionsContainer = document.getElementById("actions-container");
-const modeManualBtn = document.getElementById("mode-manual");
-const modeAutoBtn = document.getElementById("mode-auto");
-const manualModeDiv = document.getElementById("manual-mode");
-const autoModeDiv = document.getElementById("auto-mode");
-const startAutoBtn = document.getElementById("start-auto");
-const stopAutoBtn = document.getElementById("stop-auto");
-const aiInstructions = document.getElementById("ai-instructions");
-const statusText = document.getElementById("status-text");
-const statusLog = document.getElementById("status-log");
-const playbackSpeed = document.getElementById("playback-speed");
-const speedLabel = document.getElementById("speed-label");
-const settingsBtn = document.getElementById("settings-btn");
+const startRecordingBtn = document.getElementById('start-recording');
+const stopRecordingBtn = document.getElementById('stop-recording');
+const playActionsBtn = document.getElementById('play-actions');
+const clearActionsBtn = document.getElementById('clear-actions');
+const exportActionsBtn = document.getElementById('export-actions');
+const importActionsBtn = document.getElementById('import-actions');
+const importFileInput = document.getElementById('import-file-input');
+const actionsContainer = document.getElementById('actions-container');
+const modeManualBtn = document.getElementById('mode-manual');
+const modeAutoBtn = document.getElementById('mode-auto');
+const manualModeDiv = document.getElementById('manual-mode');
+const autoModeDiv = document.getElementById('auto-mode');
+const startAutoBtn = document.getElementById('start-auto');
+const stopAutoBtn = document.getElementById('stop-auto');
+const aiInstructions = document.getElementById('ai-instructions');
+const statusText = document.getElementById('status-text');
+const statusLog = document.getElementById('status-log');
+const playbackSpeed = document.getElementById('playback-speed');
+const speedLabel = document.getElementById('speed-label');
+const settingsBtn = document.getElementById('settings-btn');
 
 /**
  * Initialize popup
  */
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
     await loadSettings();
     await loadSavedActions();
     setupEventListeners();
     setupMessageListeners();
   } catch (error) {
-    console.error("Popup initialization error:", error);
-    addLog("Ошибка инициализации", "error");
+    console.error('Popup initialization error:', error);
+    addLog('Ошибка инициализации', 'error');
   }
 });
 
@@ -51,13 +51,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadSettings() {
   try {
     const result = await StorageManager.get(
-      ["geminiEnabled", "geminiApiKey"],
-      "sync",
+      ['geminiEnabled', 'geminiApiKey'],
+      'sync',
     );
     geminiEnabled = result.geminiEnabled !== false;
     geminiApiKey = result.geminiApiKey || null;
   } catch (error) {
-    console.error("Failed to load settings:", error);
+    console.error('Failed to load settings:', error);
   }
 }
 
@@ -70,8 +70,8 @@ async function loadSavedActions() {
     renderActionsList();
     updatePlaybackButton();
   } catch (error) {
-    console.error("Failed to load actions:", error);
-    addLog("Ошибка загрузки действий", "error");
+    console.error('Failed to load actions:', error);
+    addLog('Ошибка загрузки действий', 'error');
   }
 }
 
@@ -79,19 +79,19 @@ async function loadSavedActions() {
  * Setup event listeners
  */
 function setupEventListeners() {
-  modeManualBtn.addEventListener("click", switchToManualMode);
-  modeAutoBtn.addEventListener("click", switchToAutoMode);
-  startRecordingBtn.addEventListener("click", startRecording);
-  stopRecordingBtn.addEventListener("click", stopRecording);
-  playActionsBtn.addEventListener("click", playActions);
-  clearActionsBtn.addEventListener("click", clearActions);
-  exportActionsBtn.addEventListener("click", exportActions);
-  importActionsBtn.addEventListener("click", () => importFileInput.click());
-  importFileInput.addEventListener("change", handleImportFile);
-  startAutoBtn.addEventListener("click", startAutoMode);
-  stopAutoBtn.addEventListener("click", stopAutoMode);
-  playbackSpeed.addEventListener("change", updateSpeedLabel);
-  settingsBtn.addEventListener("click", openSettings);
+  modeManualBtn.addEventListener('click', switchToManualMode);
+  modeAutoBtn.addEventListener('click', switchToAutoMode);
+  startRecordingBtn.addEventListener('click', startRecording);
+  stopRecordingBtn.addEventListener('click', stopRecording);
+  playActionsBtn.addEventListener('click', playActions);
+  clearActionsBtn.addEventListener('click', clearActions);
+  exportActionsBtn.addEventListener('click', exportActions);
+  importActionsBtn.addEventListener('click', () => importFileInput.click());
+  importFileInput.addEventListener('change', handleImportFile);
+  startAutoBtn.addEventListener('click', startAutoMode);
+  stopAutoBtn.addEventListener('click', stopAutoMode);
+  playbackSpeed.addEventListener('change', updateSpeedLabel);
+  settingsBtn.addEventListener('click', openSettings);
 }
 
 /**
@@ -100,22 +100,22 @@ function setupEventListeners() {
 function setupMessageListeners() {
   chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
     switch (request.type) {
-      case "actionRecorded":
+      case 'actionRecorded':
         recordedActions.push(request.data);
         addActionToUI(request.data, recordedActions.length - 1);
         saveActions();
         updatePlaybackButton();
         break;
 
-      case "aiStatus":
+      case 'aiStatus':
         statusText.textContent = `${request.status.charAt(0).toUpperCase() + request.status.slice(1)}`;
         if (request.message) {
-          addLog(request.message, request.level || "info");
+          addLog(request.message, request.level || 'info');
         }
         break;
 
-      case "aiLog":
-        addLog(request.message, request.level || "info");
+      case 'aiLog':
+        addLog(request.message, request.level || 'info');
         break;
     }
   });
@@ -126,10 +126,10 @@ function setupMessageListeners() {
  */
 function switchToManualMode() {
   isAutoMode = false;
-  modeManualBtn.classList.add("active");
-  modeAutoBtn.classList.remove("active");
-  manualModeDiv.classList.add("active");
-  autoModeDiv.classList.remove("active");
+  modeManualBtn.classList.add('active');
+  modeAutoBtn.classList.remove('active');
+  manualModeDiv.classList.add('active');
+  autoModeDiv.classList.remove('active');
 }
 
 /**
@@ -137,10 +137,10 @@ function switchToManualMode() {
  */
 function switchToAutoMode() {
   isAutoMode = true;
-  modeAutoBtn.classList.add("active");
-  modeManualBtn.classList.remove("active");
-  autoModeDiv.classList.add("active");
-  manualModeDiv.classList.remove("active");
+  modeAutoBtn.classList.add('active');
+  modeManualBtn.classList.remove('active');
+  autoModeDiv.classList.add('active');
+  manualModeDiv.classList.remove('active');
 }
 
 /**
@@ -149,15 +149,15 @@ function switchToAutoMode() {
 function startRecording() {
   isRecording = true;
   recordedActions = [];
-  actionsContainer.innerHTML = "";
+  actionsContainer.innerHTML = '';
   startRecordingBtn.disabled = true;
   stopRecordingBtn.disabled = false;
   playActionsBtn.disabled = true;
-  addLog("🔴 Запись началась", "info");
+  addLog('🔴 Запись началась', 'info');
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: "startRecording" });
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'startRecording' });
     }
   });
 }
@@ -172,12 +172,12 @@ function stopRecording() {
   updatePlaybackButton();
   addLog(
     `⏹️ Запись остановлена (${recordedActions.length} действий)`,
-    "success",
+    'success',
   );
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: "stopRecording" });
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'stopRecording' });
     }
   });
 
@@ -201,13 +201,13 @@ function updatePlaybackButton() {
  * Clear actions
  */
 function clearActions() {
-  if (confirm("Удалить все записанные действия?")) {
+  if (confirm('Удалить все записанные действия?')) {
     recordedActions = [];
-    actionsContainer.innerHTML = "";
+    actionsContainer.innerHTML = '';
     playActionsBtn.disabled = true;
     exportActionsBtn.disabled = true;
     saveActions();
-    addLog("🗑️ Действия удалены", "info");
+    addLog('🗑️ Действия удалены', 'info');
   }
 }
 
@@ -219,13 +219,13 @@ function playActions() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       chrome.tabs.sendMessage(tabs[0].id, {
-        action: "playActions",
+        action: 'playActions',
         actions: recordedActions,
         speed: speed,
       });
     }
   });
-  addLog(`▶️ Воспроизведение с скоростью ${speed}x`, "info");
+  addLog(`▶️ Воспроизведение с скоростью ${speed}x`, 'info');
 }
 
 /**
@@ -233,19 +233,19 @@ function playActions() {
  */
 function exportActions() {
   if (recordedActions.length === 0) {
-    addLog("⚠️ Нет действий для экспорта", "warn");
+    addLog('⚠️ Нет действий для экспорта', 'warn');
     return;
   }
 
   const json = JSON.stringify(recordedActions, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = `actions-${Date.now()}.json`;
   link.click();
   URL.revokeObjectURL(url);
-  addLog("📥 Действия экспортированы", "success");
+  addLog('📥 Действия экспортированы', 'success');
 }
 
 /**
@@ -260,27 +260,27 @@ function handleImportFile(event) {
     try {
       const json = JSON.parse(e.target.result);
       if (!Array.isArray(json)) {
-        throw new Error("Ожидается массив действий");
+        throw new Error('Ожидается массив действий');
       }
 
       recordedActions = json;
       renderActionsList();
       saveActions();
       updatePlaybackButton();
-      addLog(`📤 Загружено ${json.length} действий`, "success");
+      addLog(`📤 Загружено ${json.length} действий`, 'success');
     } catch (error) {
-      addLog(`✗ Ошибка импорта: ${error.message}`, "error");
+      addLog(`✗ Ошибка импорта: ${error.message}`, 'error');
     }
   };
   reader.readAsText(file);
-  event.target.value = ""; // Reset file input
+  event.target.value = ''; // Reset file input
 }
 
 /**
  * Render actions list
  */
 function renderActionsList() {
-  actionsContainer.innerHTML = "";
+  actionsContainer.innerHTML = '';
   recordedActions.forEach((action, index) => {
     addActionToUI(action, index);
   });
@@ -290,34 +290,34 @@ function renderActionsList() {
  * Add action to UI
  */
 function addActionToUI(action, index) {
-  const actionItem = document.createElement("div");
-  actionItem.className = "action-item";
+  const actionItem = document.createElement('div');
+  actionItem.className = 'action-item';
 
-  let actionText = "";
+  let actionText = '';
   switch (action.type) {
-    case "click":
-      actionText = `Клик: ${action.target || action.selector || "элемент"}`;
+    case 'click':
+      actionText = `Клик: ${action.target || action.selector || 'элемент'}`;
       break;
-    case "input":
-      actionText = `Ввод: "${action.value || ""}"`;
+    case 'input':
+      actionText = `Ввод: "${action.value || ''}"`;
       break;
-    case "hover":
+    case 'hover':
       actionText = `Наведение: ${action.target || action.selector}`;
       break;
-    case "scroll":
+    case 'scroll':
       actionText = `Прокрутка на ${action.pixels}px`;
       break;
-    case "wait":
+    case 'wait':
       actionText = `Ожидание ${action.duration}ms`;
       break;
-    case "select":
+    case 'select':
       actionText = `Выбрать: ${action.value}`;
       break;
-    case "double_click":
-      actionText = `Двойной клик: ${action.target || "элемент"}`;
+    case 'double_click':
+      actionText = `Двойной клик: ${action.target || 'элемент'}`;
       break;
-    case "right_click":
-      actionText = `Правый клик: ${action.target || "элемент"}`;
+    case 'right_click':
+      actionText = `Правый клик: ${action.target || 'элемент'}`;
       break;
     default:
       actionText = `${action.type}`;
@@ -348,7 +348,7 @@ async function saveActions() {
   try {
     await StorageManager.saveActions(recordedActions);
   } catch (error) {
-    console.error("Failed to save actions:", error);
+    console.error('Failed to save actions:', error);
   }
 }
 
@@ -358,30 +358,30 @@ async function saveActions() {
 async function startAutoMode() {
   const instructions = aiInstructions.value.trim();
   if (!instructions) {
-    addLog("⚠️ Введите инструкции", "warn");
+    addLog('⚠️ Введите инструкции', 'warn');
     return;
   }
 
   try {
     startAutoBtn.disabled = true;
     stopAutoBtn.disabled = false;
-    statusText.textContent = "🕐 Анализирую...";
-    statusLog.innerHTML = "";
+    statusText.textContent = '🕐 Анализирую...';
+    statusLog.innerHTML = '';
 
-    addLog("🤖 Анализирую инструкции...", "info");
+    addLog('🤖 Анализирую инструкции...', 'info');
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         chrome.tabs.sendMessage(tabs[0].id, {
-          action: "startAIMode",
+          action: 'startAIMode',
           instructions: instructions,
           geminiApiKey: geminiEnabled ? geminiApiKey : null,
         });
       }
     });
   } catch (error) {
-    console.error("Failed to start AI mode:", error);
-    addLog(`✗ Ошибка: ${error.message}`, "error");
+    console.error('Failed to start AI mode:', error);
+    addLog(`✗ Ошибка: ${error.message}`, 'error');
     startAutoBtn.disabled = false;
     stopAutoBtn.disabled = true;
   }
@@ -393,12 +393,12 @@ async function startAutoMode() {
 function stopAutoMode() {
   startAutoBtn.disabled = false;
   stopAutoBtn.disabled = true;
-  statusText.textContent = "🛑 Остановлено";
-  addLog("⏸️ Выполнение остановлено", "warn");
+  statusText.textContent = '🛑 Остановлено';
+  addLog('⏸️ Выполнение остановлено', 'warn');
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: "stopAIMode" });
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'stopAIMode' });
     }
   });
 }
@@ -407,19 +407,19 @@ function stopAutoMode() {
  * Update speed label
  */
 function updateSpeedLabel() {
-  speedLabel.textContent = playbackSpeed.value + "x";
+  speedLabel.textContent = playbackSpeed.value + 'x';
 }
 
 /**
  * Add log message
  */
-function addLog(message, level = "info") {
-  const logEntry = document.createElement("div");
+function addLog(message, level = 'info') {
+  const logEntry = document.createElement('div');
   logEntry.className = `log-entry log-${level}`;
-  const time = new Date().toLocaleTimeString("ru-RU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  const time = new Date().toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   });
   logEntry.innerHTML = `<span style="opacity:0.6;font-size:10px;">[${time}]</span> ${Validator.sanitizeHtml(message)}`;
   statusLog.appendChild(logEntry);
