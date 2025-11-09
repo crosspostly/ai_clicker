@@ -1,0 +1,57 @@
+=========================================
+AI-CLICKER TEST DIAGNOSTICS REPORT
+Generated: Sun Nov  9 06:22:15 UTC 2025
+=========================================
+
+1. ENVIRONMENT
+---
+Node version: v20.19.5
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm version: 11.6.2
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+Jest version: ai-autoclicker@2.0.0 /home/engine/project
+OS: Linux engine-98d2df92-0040-4f35-9311-1f45554e63d0-67956bf45c-fs76l 6.12.35 #1 SMP Mon Sep 22 17:54:17 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+2. PROJECT STRUCTURE
+---
+Total JS files in src/: 41
+Total test files: 50
+node_modules size: 154M
+
+3. CONFIGURATION FILES
+---
+-rw-r--r-- 1 engine engine   78 Nov  9 06:16 .babelrc
+-rw-r--r-- 1 engine engine 1372 Nov  9 06:16 .eslintrc.cjs
+-rw-r--r-- 1 engine engine 1442 Nov  9 06:16 jest.config.cjs
+
+4. CRITICAL FILES STATUS
+---
+✓ src/common/validator.js (209 lines)
+✓ src/common/logger.js (222 lines)
+✓ src/background/index.js (111 lines)
+✓ src/common/helpers.js (293 lines)
+
+5. RUNNING TESTS WITH DIAGNOSTICS
+---
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+
+> ai-autoclicker@2.0.0 test
+> NODE_OPTIONS='--experimental-vm-modules' jest --no-coverage --listTests
+
+/home/engine/project/src/__tests__/content/executor/ActionExecutor.test.js
+/home/engine/project/src/__tests__/popup/index.test.js
+/home/engine/project/src/__tests__/common/helpers.test.js
+/home/engine/project/src/__tests__/common/validator.test.js
+/home/engine/project/src/__tests__/content/index.test.js
+/home/engine/project/src/__tests__/common/logger.test.js
+/home/engine/project/src/__tests__/content/recorder/ActionRecorder.test.js
+/home/engine/project/src/__tests__/build/build.test.js
+/home/engine/project/src/__tests__/background/index.test.js
+/home/engine/project/src/__tests__/content/finder/ElementFinder.test.js
+/home/engine/project/src/__tests__/integration/extension.test.js
+/home/engine/project/src/__tests__/integration/es6-modules.test.js
+/home/engine/project/tests/content/action-executor.test.js
+/home/engine/project/src/__tests__/import-export/import-export-formats.test.js
+/home/engine/project/tests/content/element-finder.test.js
+
+DIAGNOSTICS COMPLETE
