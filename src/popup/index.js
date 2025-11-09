@@ -13,7 +13,7 @@ let geminiApiKey = null;
 export const state = {
   isRecording: false,
   actions: recordedActions,
-  currentTabId: null
+  currentTabId: null,
 };
 
 // Export functions for testing
@@ -26,41 +26,14 @@ export function startRecording() {
   
   if (typeof chrome !== 'undefined' && chrome.runtime) {
     return chrome.runtime.sendMessage({
-      type: 'START_RECORDING'
+      type: 'START_RECORDING',
     });
   }
   return Promise.resolve();
 }
 
-export function stopRecording() {
-  state.isRecording = false;
-  if (elements.startRecording) elements.startRecording.disabled = false;
-  if (elements.stopRecording) elements.stopRecording.disabled = true;
-  if (elements.playActions) elements.playActions.disabled = false;
-  
-  if (typeof chrome !== 'undefined' && chrome.runtime) {
-    return chrome.runtime.sendMessage({
-      type: 'STOP_RECORDING'
-    });
-  }
-  return Promise.resolve();
-}
 
-export function playActions() {
-  if (typeof chrome !== 'undefined' && chrome.runtime) {
-    return chrome.runtime.sendMessage({
-      type: 'PLAY_ACTIONS',
-      actions: state.actions
-    });
-  }
-  return Promise.resolve();
-}
 
-export function clearActions() {
-  state.actions = [];
-  if (elements.playActions) elements.playActions.disabled = true;
-  if (elements.actionsContainer) elements.actionsContainer.innerHTML = '';
-}
 
 export function loadState() {
   // Handle test environment
@@ -110,7 +83,7 @@ export const elements = {
   // Additional elements expected by tests
   statusMessage: getElement('status-text'),
   actionsList: getElement('actions-container'),
-  instructionInput: getElement('ai-instructions')
+  instructionInput: getElement('ai-instructions'),
 };
 
 /**
