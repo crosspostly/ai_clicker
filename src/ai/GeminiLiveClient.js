@@ -1,7 +1,9 @@
 /**
- * Gemini Live API Client - Production Ready
- * Handles WebSocket connection with security and error handling
+ * Gemini Live API Client - Production Ready + Enhanced
+ * Handles WebSocket connection with security, multi-model fallback, and command parsing
  */
+
+import { API_CONFIG } from '../common/constants.js';
 
 export class GeminiLiveClient {
   constructor(apiKey) {
@@ -12,40 +14,52 @@ export class GeminiLiveClient {
     this.responseHandlers = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Start with 1 second
+    this.reconnectDelay = 1000;
+    // ✅ Multi-model support
+    this.currentModel = API_CONFIG.GEMINI_LIVE_MODELS[0];
+    this.fallbackIndex = 0;
   }
 
   /**
-   * ✅ Connect to Gemini Live API with secure API key handling
+   * ✅ Connect with multi-model fallback
    */
-  async connect() {
+  async connect(modelIndex = 0) {
+    this.fallbackIndex = modelIndex;
+    this.currentModel = API_CONFIG.GEMINI_LIVE_MODELS[this.fallbackIndex];
+    
     return new Promise((resolve, reject) => {
-      // ✅ SECURITY: Don't put API key in URL
-      const wsUrl = 'wss://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-live:streamGenerateContent';
+      const wsUrl = 'wss://generativelanguage.googleapis.com/v1beta/models/' + this.currentModel + ':streamGenerateContent';
       
       try {
         this.ws = new WebSocket(wsUrl);
         
-        // Set connection timeout
         const timeout = setTimeout(() => {
           if (!this.isConnected) {
             this.ws.close();
-            reject(new Error('Connection timeout'));
+            // ✅ Try next model in fallback chain
+            if (this.fallbackIndex < API_CONFIG.GEMINI_LIVE_MODELS.length - 1) {
+              console.log('[GeminiLive] Trying fallback model...');
+              this.connect(this.fallbackIndex + 1)
+                .then(resolve)
+                .catch(reject);
+            } else {
+              reject(new Error('All models failed to connect'));
+            }
           }
         }, 10000);
         
         this.ws.onopen = () => {
           clearTimeout(timeout);
-          console.log('[GeminiLive] Connected');
+          console.log('[GeminiLive] Connected to', this.currentModel);
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
           
-          // ✅ SECURITY: Send API key in setup message, not URL
+          // Send setup with API key
           this.ws.send(JSON.stringify({
             setup: {
               api_key: this.apiKey,
-              model: 'models/gemini-2.0-flash-live',
+              model: 'models/' + this.currentModel,
               generation_config: {
                 response_modalities: ['AUDIO', 'TEXT'],
                 speech_config: {
@@ -59,7 +73,7 @@ export class GeminiLiveClient {
             }
           }));
           
-          resolve();
+          resolve({ model: this.currentModel });
         };
         
         this.ws.onerror = (error) => {
@@ -81,8 +95,6 @@ export class GeminiLiveClient {
         this.ws.onclose = () => {
           console.log('[GeminiLive] Disconnected');
           this.isConnected = false;
-          
-          // ✅ Auto-reconnect with exponential backoff
           this.attemptReconnect();
         };
       } catch (error) {
@@ -92,7 +104,7 @@ export class GeminiLiveClient {
   }
 
   /**
-   * ✅ Auto-reconnect with exponential backoff
+   * Auto-reconnect with exponential backoff
    */
   async attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -108,7 +120,7 @@ export class GeminiLiveClient {
     
     setTimeout(async () => {
       try {
-        await this.connect();
+        await this.connect(this.fallbackIndex);
         console.log('[GeminiLive] Reconnected successfully');
         this.emit('reconnected');
       } catch (error) {
@@ -119,7 +131,7 @@ export class GeminiLiveClient {
   }
 
   /**
-   * ✅ Send multimodal input with error handling
+   * Send multimodal input with error handling
    */
   async sendInput({ text, audio, screenshot }) {
     if (!this.isConnected) {
@@ -147,7 +159,7 @@ export class GeminiLiveClient {
       if (screenshot) {
         parts.push({
           inline_data: {
-            mime_type: 'image/jpeg', // ✅ JPEG for smaller size
+            mime_type: 'image/jpeg',
             data: screenshot
           }
         });
@@ -184,6 +196,12 @@ export class GeminiLiveClient {
         const textPart = modelTurn.parts.find(p => p.text);
         if (textPart) {
           this.emit('text', textPart.text);
+          
+          // ✅ Try to parse as command
+          const command = this.parseCommand(textPart.text);
+          if (command) {
+            this.emit('command', command);
+          }
         }
         
         // Extract audio response
@@ -200,7 +218,6 @@ export class GeminiLiveClient {
       }
     }
     
-    // Handle setup complete
     if (message.setupComplete) {
       console.log('[GeminiLive] Setup complete');
       this.emit('ready');
@@ -211,6 +228,95 @@ export class GeminiLiveClient {
         this.sendInput(queued);
       }
     }
+  }
+
+  /**
+   * ✅ Parse command from text (fallback for when Gemini doesn't use function calling)
+   */
+  parseCommand(text) {
+    const normalized = text.toLowerCase().trim();
+    
+    // Double click (check before single click)
+    if (normalized.includes('double click') || normalized.includes('двойной клик')) {
+      return { type: 'double_click', target: this._extractTarget(text) };
+    }
+    
+    // Right click (check before single click)
+    if (normalized.includes('right click') || normalized.includes('правый клик')) {
+      return { type: 'right_click', target: this._extractTarget(text) };
+    }
+    
+    // Click
+    if (normalized.includes('click') || normalized.includes('нажми') || normalized.includes('клик')) {
+      return { type: 'click', target: this._extractTarget(text) };
+    }
+    
+    // Scroll
+    if (normalized.includes('scroll') || normalized.includes('прокрути')) {
+      const direction = (normalized.includes('down') || normalized.includes('вниз')) ? 'down' : 'up';
+      return { type: 'scroll', direction };
+    }
+    
+    // Input/Type
+    if (normalized.includes('type') || normalized.includes('введи') || normalized.includes('напиши')) {
+      return { type: 'input', value: this._extractInputText(text) };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Extract target from command text
+   */
+  _extractTarget(text) {
+    const patterns = [
+      /click\s+(?:the\s+)?(.+?)(?:\s+button|\s+link|\s+element|$)/i,
+      /нажми\s+(?:на\s+)?(.+?)(?:\s+кнопку|\s+ссылку|\s+элемент|$)/i,
+      /клик\s+(?:по\s+)?(.+?)(?:\s+кнопке|\s+ссылке|$)/i,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return 'button';
+  }
+
+  /**
+   * Extract input text from command
+   */
+  _extractInputText(text) {
+    const patterns = [
+      /type\s+["']?(.+?)["']?$/i,
+      /введи\s+["']?(.+?)["']?$/i,
+      /напиши\s+["']?(.+?)["']?$/i,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    return '';
+  }
+
+  /**
+   * ✅ Get available models
+   */
+  getAvailableModels() {
+    return [...API_CONFIG.GEMINI_LIVE_MODELS];
+  }
+
+  /**
+   * ✅ Get current model
+   */
+  getCurrentModel() {
+    return this.currentModel;
   }
 
   /**
@@ -237,5 +343,17 @@ export class GeminiLiveClient {
       this.ws = null;
       this.isConnected = false;
     }
+  }
+
+  /**
+   * Get connection status
+   */
+  getStatus() {
+    return {
+      isConnected: this.isConnected,
+      currentModel: this.currentModel,
+      fallbackIndex: this.fallbackIndex,
+      queuedMessages: this.messageQueue.length
+    };
   }
 }
