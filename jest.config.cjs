@@ -20,9 +20,8 @@ module.exports = {
   ],
   
   // Module resolution
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1'  // ✅ ПРАВИЛЬНЫЙ REGEX (без leading slash)
-  },
+  // Remove moduleNameMapper to let Jest handle imports naturally
+  // moduleNameMapper removed as it was causing module resolution issues
   
   // Transform
   transform: {

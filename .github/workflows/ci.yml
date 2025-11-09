@@ -31,6 +31,9 @@ jobs:
     - name: Run ESLint
       run: npm run lint
     
+    - name: Build extension
+      run: npm run build
+    
     - name: Run tests
       run: npm run test:ci
     

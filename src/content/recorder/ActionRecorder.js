@@ -294,4 +294,23 @@ export class ActionRecorder {
       }
     }
   }
+
+  /**
+   * Clear all recorded actions
+   */
+  clearActions() {
+    this.recordedActions = [];
+    this.lastAction = null;
+  }
+
+  /**
+   * Get recording status
+   */
+  getRecordingStatus() {
+    return {
+      isRecording: this.isRecording,
+      actionCount: this.recordedActions.length,
+      actions: [...this.recordedActions]
+    };
+  }
 }

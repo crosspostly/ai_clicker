@@ -9,42 +9,127 @@ let recordedActions = [];
 let geminiEnabled = false;
 let geminiApiKey = null;
 
-// DOM elements
-const startRecordingBtn = document.getElementById('start-recording');
-const stopRecordingBtn = document.getElementById('stop-recording');
-const playActionsBtn = document.getElementById('play-actions');
-const clearActionsBtn = document.getElementById('clear-actions');
-const exportActionsBtn = document.getElementById('export-actions');
-const importActionsBtn = document.getElementById('import-actions');
-const importFileInput = document.getElementById('import-file-input');
-const actionsContainer = document.getElementById('actions-container');
-const modeManualBtn = document.getElementById('mode-manual');
-const modeAutoBtn = document.getElementById('mode-auto');
-const manualModeDiv = document.getElementById('manual-mode');
-const autoModeDiv = document.getElementById('auto-mode');
-const startAutoBtn = document.getElementById('start-auto');
-const stopAutoBtn = document.getElementById('stop-auto');
-const aiInstructions = document.getElementById('ai-instructions');
-const statusText = document.getElementById('status-text');
-const statusLog = document.getElementById('status-log');
-const playbackSpeed = document.getElementById('playback-speed');
-const speedLabel = document.getElementById('speed-label');
-const settingsBtn = document.getElementById('settings-btn');
+// Export state for testing
+export const state = {
+  isRecording: false,
+  actions: recordedActions,
+  currentTabId: null
+};
+
+// Export functions for testing
+export function startRecording() {
+  state.isRecording = true;
+  state.actions = [];
+  if (elements.startRecording) elements.startRecording.disabled = true;
+  if (elements.stopRecording) elements.stopRecording.disabled = false;
+  if (elements.playActions) elements.playActions.disabled = true;
+  
+  if (typeof chrome !== 'undefined' && chrome.runtime) {
+    return chrome.runtime.sendMessage({
+      type: 'START_RECORDING'
+    });
+  }
+  return Promise.resolve();
+}
+
+export function stopRecording() {
+  state.isRecording = false;
+  if (elements.startRecording) elements.startRecording.disabled = false;
+  if (elements.stopRecording) elements.stopRecording.disabled = true;
+  if (elements.playActions) elements.playActions.disabled = false;
+  
+  if (typeof chrome !== 'undefined' && chrome.runtime) {
+    return chrome.runtime.sendMessage({
+      type: 'STOP_RECORDING'
+    });
+  }
+  return Promise.resolve();
+}
+
+export function playActions() {
+  if (typeof chrome !== 'undefined' && chrome.runtime) {
+    return chrome.runtime.sendMessage({
+      type: 'PLAY_ACTIONS',
+      actions: state.actions
+    });
+  }
+  return Promise.resolve();
+}
+
+export function clearActions() {
+  state.actions = [];
+  if (elements.playActions) elements.playActions.disabled = true;
+  if (elements.actionsContainer) elements.actionsContainer.innerHTML = '';
+}
+
+export function loadState() {
+  // Handle test environment
+  if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+    return Promise.resolve(state);
+  }
+  
+  return chrome.storage.local.get('popup-state').then(result => {
+    if (result['popup-state']) {
+      Object.assign(state, result['popup-state']);
+      recordedActions = state.actions;
+    }
+    return state;
+  });
+}
+
+// DOM elements - export for testing
+const getElement = (id) => {
+  try {
+    return document ? document.getElementById(id) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const elements = {
+  startRecording: getElement('start-recording'),
+  stopRecording: getElement('stop-recording'),
+  playActions: getElement('play-actions'),
+  clearActions: getElement('clear-actions'),
+  exportActions: getElement('export-actions'),
+  importActions: getElement('import-actions'),
+  importFileInput: getElement('import-file-input'),
+  actionsContainer: getElement('actions-container'),
+  modeManual: getElement('mode-manual'),
+  modeAuto: getElement('mode-auto'),
+  manualMode: getElement('manual-mode'),
+  autoMode: getElement('auto-mode'),
+  startAuto: getElement('start-auto'),
+  stopAuto: getElement('stop-auto'),
+  aiInstructions: getElement('ai-instructions'),
+  statusText: getElement('status-text'),
+  statusLog: getElement('status-log'),
+  playbackSpeed: getElement('playback-speed'),
+  speedLabel: getElement('speed-label'),
+  settingsBtn: getElement('settings-btn'),
+  // Additional elements expected by tests
+  statusMessage: getElement('status-text'),
+  actionsList: getElement('actions-container'),
+  instructionInput: getElement('ai-instructions')
+};
 
 /**
  * Initialize popup
  */
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await loadSettings();
-    await loadSavedActions();
-    setupEventListeners();
-    setupMessageListeners();
-  } catch (error) {
-    console.error('Popup initialization error:', error);
-    addLog('Ошибка инициализации', 'error');
-  }
-});
+// Only initialize DOM when not in test environment
+if (typeof process === 'undefined' || process.env.NODE_ENV !== 'test') {
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await loadSettings();
+      await loadSavedActions();
+      setupEventListeners();
+      setupMessageListeners();
+    } catch (error) {
+      console.error('Popup initialization error:', error);
+      addLog('Ошибка инициализации', 'error');
+    }
+  });
+}
 
 /**
  * Load settings from storage
@@ -80,19 +165,20 @@ async function loadSavedActions() {
  * Setup event listeners
  */
 function setupEventListeners() {
-  modeManualBtn.addEventListener('click', switchToManualMode);
-  modeAutoBtn.addEventListener('click', switchToAutoMode);
-  startRecordingBtn.addEventListener('click', startRecording);
-  stopRecordingBtn.addEventListener('click', stopRecording);
-  playActionsBtn.addEventListener('click', playActions);
-  clearActionsBtn.addEventListener('click', clearActions);
-  exportActionsBtn.addEventListener('click', exportActions);
-  importActionsBtn.addEventListener('click', () => importFileInput.click());
-  importFileInput.addEventListener('change', handleImportFile);
-  startAutoBtn.addEventListener('click', startAutoMode);
-  stopAutoBtn.addEventListener('click', stopAutoMode);
-  playbackSpeed.addEventListener('change', updateSpeedLabel);
-  settingsBtn.addEventListener('click', openSettings);
+  // Add null checks for testing environment
+  if (elements.modeManual) elements.modeManual.addEventListener('click', switchToManualMode);
+  if (elements.modeAuto) elements.modeAuto.addEventListener('click', switchToAutoMode);
+  if (elements.startRecording) elements.startRecording.addEventListener('click', handleStartRecording);
+  if (elements.stopRecording) elements.stopRecording.addEventListener('click', stopRecording);
+  if (elements.playActions) elements.playActions.addEventListener('click', playActions);
+  if (elements.clearActions) elements.clearActions.addEventListener('click', clearActions);
+  if (elements.exportActions) elements.exportActions.addEventListener('click', exportActions);
+  if (elements.importActions) elements.importActions.addEventListener('click', () => elements.importFileInput.click());
+  if (elements.importFileInput) elements.importFileInput.addEventListener('change', handleImportFile);
+  if (elements.startAuto) elements.startAuto.addEventListener('click', startAutoMode);
+  if (elements.stopAuto) elements.stopAuto.addEventListener('click', stopAutoMode);
+  if (elements.playbackSpeed) elements.playbackSpeed.addEventListener('change', updateSpeedLabel);
+  if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', openSettings);
 }
 
 /**
@@ -109,7 +195,7 @@ function setupMessageListeners() {
         break;
 
       case 'aiStatus':
-        statusText.textContent = `${request.status.charAt(0).toUpperCase() + request.status.slice(1)}`;
+        elements.statusText.textContent = `${request.status.charAt(0).toUpperCase() + request.status.slice(1)}`;
         if (request.message) {
           addLog(request.message, request.level || 'info');
         }
@@ -126,31 +212,31 @@ function setupMessageListeners() {
  * Switch to manual mode
  */
 function switchToManualMode() {
-  modeManualBtn.classList.add('active');
-  modeAutoBtn.classList.remove('active');
-  manualModeDiv.classList.add('active');
-  autoModeDiv.classList.remove('active');
+  elements.modeManual.classList.add('active');
+  elements.modeAuto.classList.remove('active');
+  elements.manualMode.classList.add('active');
+  elements.autoMode.classList.remove('active');
 }
 
 /**
  * Switch to auto mode
  */
 function switchToAutoMode() {
-  modeAutoBtn.classList.add('active');
-  modeManualBtn.classList.remove('active');
-  autoModeDiv.classList.add('active');
-  manualModeDiv.classList.remove('active');
+  elements.modeAuto.classList.add('active');
+  elements.modeManual.classList.remove('active');
+  elements.autoMode.classList.add('active');
+  elements.manualMode.classList.remove('active');
 }
 
 /**
  * Start recording
  */
-function startRecording() {
+function handleStartRecording() {
   recordedActions = [];
-  actionsContainer.innerHTML = '';
-  startRecordingBtn.disabled = true;
-  stopRecordingBtn.disabled = false;
-  playActionsBtn.disabled = true;
+  elements.actionsContainer.innerHTML = '';
+  elements.startRecording.disabled = true;
+  elements.stopRecording.disabled = false;
+  elements.playActions.disabled = true;
   addLog('🔴 Запись началась', 'info');
 
   chrome.runtime.sendMessage({ 
@@ -168,8 +254,8 @@ function startRecording() {
  * Stop recording
  */
 function stopRecording() {
-  startRecordingBtn.disabled = false;
-  stopRecordingBtn.disabled = true;
+  elements.startRecording.disabled = false;
+  elements.stopRecording.disabled = true;
   updatePlaybackButton();
   addLog(
     `⏹️ Запись остановлена (${recordedActions.length} действий)`,
@@ -194,11 +280,11 @@ function stopRecording() {
  */
 function updatePlaybackButton() {
   if (recordedActions.length > 0) {
-    playActionsBtn.disabled = false;
-    exportActionsBtn.disabled = false;
+    elements.playActions.disabled = false;
+    elements.exportActions.disabled = false;
   } else {
-    playActionsBtn.disabled = true;
-    exportActionsBtn.disabled = true;
+    elements.playActions.disabled = true;
+    elements.exportActions.disabled = true;
   }
 }
 
@@ -208,9 +294,9 @@ function updatePlaybackButton() {
 function clearActions() {
   if (confirm('Удалить все записанные действия?')) {
     recordedActions = [];
-    actionsContainer.innerHTML = '';
-    playActionsBtn.disabled = true;
-    exportActionsBtn.disabled = true;
+    elements.actionsContainer.innerHTML = '';
+    elements.playActions.disabled = true;
+    elements.exportActions.disabled = true;
     saveActions();
     addLog('🗑️ Действия удалены', 'info');
   }
@@ -220,7 +306,7 @@ function clearActions() {
  * Play actions
  */
 function playActions() {
-  const speed = parseFloat(playbackSpeed.value);
+  const speed = parseFloat(elements.playbackSpeed.value);
   chrome.runtime.sendMessage({
     target: 'content',
     action: 'playActions',
@@ -287,7 +373,7 @@ function handleImportFile(event) {
  * Render actions list
  */
 function renderActionsList() {
-  actionsContainer.innerHTML = '';
+  elements.actionsContainer.innerHTML = '';
   recordedActions.forEach((action, index) => {
     addActionToUI(action, index);
   });
@@ -339,7 +425,7 @@ function addActionToUI(action, index) {
   const removeBtn = actionItem.querySelector('.action-remove');
   removeBtn.addEventListener('click', () => removeAction(index));
 
-  actionsContainer.appendChild(actionItem);
+  elements.actionsContainer.appendChild(actionItem);
 }
 
 /**
@@ -367,17 +453,17 @@ async function saveActions() {
  * Start AI automation mode
  */
 async function startAutoMode() {
-  const instructions = aiInstructions.value.trim();
+  const instructions = elements.aiInstructions.value.trim();
   if (!instructions) {
     addLog('⚠️ Введите инструкции', 'warn');
     return;
   }
 
   try {
-    startAutoBtn.disabled = true;
-    stopAutoBtn.disabled = false;
-    statusText.textContent = '🕐 Анализирую...';
-    statusLog.innerHTML = '';
+    elements.startAuto.disabled = true;
+    elements.stopAuto.disabled = false;
+    elements.statusText.textContent = '🕐 Анализирую...';
+    elements.statusLog.innerHTML = '';
 
     addLog('🤖 Анализирую инструкции...', 'info');
 
@@ -390,15 +476,15 @@ async function startAutoMode() {
       if (chrome.runtime.lastError) {
         console.error('Failed to start AI mode:', chrome.runtime.lastError);
         addLog('✗ Ошибка запуска ИИ режима', 'error');
-        startAutoBtn.disabled = false;
-        stopAutoBtn.disabled = true;
+        elements.startAuto.disabled = false;
+        elements.stopAuto.disabled = true;
       }
     });
   } catch (error) {
     console.error('Failed to start AI mode:', error);
     addLog(`✗ Ошибка: ${error.message}`, 'error');
-    startAutoBtn.disabled = false;
-    stopAutoBtn.disabled = true;
+    elements.startAuto.disabled = false;
+    elements.stopAuto.disabled = true;
   }
 }
 
@@ -406,9 +492,9 @@ async function startAutoMode() {
  * Stop AI automation mode
  */
 function stopAutoMode() {
-  startAutoBtn.disabled = false;
-  stopAutoBtn.disabled = true;
-  statusText.textContent = '🛑 Остановлено';
+  elements.startAuto.disabled = false;
+  elements.stopAuto.disabled = true;
+  elements.statusText.textContent = '🛑 Остановлено';
   addLog('⏸️ Выполнение остановлено', 'warn');
 
   chrome.runtime.sendMessage({ 
@@ -426,7 +512,7 @@ function stopAutoMode() {
  * Update speed label
  */
 function updateSpeedLabel() {
-  speedLabel.textContent = playbackSpeed.value + 'x';
+  elements.speedLabel.textContent = elements.playbackSpeed.value + 'x';
 }
 
 /**
@@ -441,12 +527,12 @@ function addLog(message, level = 'info') {
     second: '2-digit',
   });
   logEntry.innerHTML = `<span style="opacity:0.6;font-size:10px;">[${time}]</span> ${Validator.sanitizeHtml(message)}`;
-  statusLog.appendChild(logEntry);
-  statusLog.scrollTop = statusLog.scrollHeight;
+  elements.statusLog.appendChild(logEntry);
+  elements.statusLog.scrollTop = elements.statusLog.scrollHeight;
 
   // Keep only last 50 entries
-  while (statusLog.children.length > 50) {
-    statusLog.removeChild(statusLog.firstChild);
+  while (elements.statusLog.children.length > 50) {
+    elements.statusLog.removeChild(elements.statusLog.firstChild);
   }
 }
 
@@ -455,4 +541,42 @@ function addLog(message, level = 'info') {
  */
 function openSettings() {
   chrome.runtime.openOptionsPage();
+}
+
+// Export functions for testing
+export function cleanup() {
+  // Cleanup function for tests
+  if (chrome.runtime.onMessage && chrome.runtime.onMessage.removeListener) {
+    // Mock cleanup for tests
+  }
+}
+
+export function sendMessage(message) {
+  return chrome.runtime.sendMessage(message);
+}
+
+export function sendMessageWithRetry(message, maxRetries = 3) {
+  let retries = 0;
+  
+  function attempt() {
+    return chrome.runtime.sendMessage(message).catch(error => {
+      if (retries < maxRetries) {
+        retries++;
+        return new Promise(resolve => setTimeout(resolve, 100)).then(attempt);
+      }
+      throw error;
+    });
+  }
+  
+  return attempt();
+}
+
+export function setRecordingState(isRecording) {
+  // Function to set recording state for tests
+  if (elements.startRecording) {
+    elements.startRecording.disabled = isRecording;
+  }
+  if (elements.stopRecording) {
+    elements.stopRecording.disabled = !isRecording;
+  }
 }
