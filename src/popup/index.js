@@ -9,11 +9,16 @@ let recordedActions = [];
 let geminiEnabled = false;
 let geminiApiKey = null;
 
+// ✅ Live Mode state
+let isLiveModeActive = false;
+let liveModeApiKey = null;
+
 // Export state for testing
 export const state = {
   isRecording: false,
   actions: recordedActions,
   currentTabId: null,
+  isLiveModeActive: false,
 };
 
 // Export functions for testing
@@ -31,9 +36,6 @@ export function startRecording() {
   }
   return Promise.resolve();
 }
-
-
-
 
 export function loadState() {
   // Handle test environment
@@ -80,6 +82,10 @@ export const elements = {
   playbackSpeed: getElement('playback-speed'),
   speedLabel: getElement('speed-label'),
   settingsBtn: getElement('settings-btn'),
+  // ✅ Live Mode elements
+  toggleLiveMode: getElement('toggle-live-mode'),
+  liveApiKey: getElement('live-api-key'),
+  liveStatus: getElement('live-status'),
   // Additional elements expected by tests
   statusMessage: getElement('status-text'),
   actionsList: getElement('actions-container'),
@@ -97,6 +103,8 @@ if (typeof process === 'undefined' || process.env.NODE_ENV !== 'test') {
       await loadSavedActions();
       setupEventListeners();
       setupMessageListeners();
+      // ✅ Load saved Live Mode API key
+      await loadLiveModeSettings();
     } catch (error) {
       console.error('Popup initialization error:', error);
       addLog('Ошибка инициализации', 'error');
@@ -117,6 +125,22 @@ async function loadSettings() {
     geminiApiKey = result.geminiApiKey || null;
   } catch (error) {
     console.error('Failed to load settings:', error);
+  }
+}
+
+/**
+ * ✅ Load Live Mode settings
+ */
+async function loadLiveModeSettings() {
+  try {
+    const result = await StorageManager.get(['liveModeApiKey'], 'sync');
+    liveModeApiKey = result.liveModeApiKey || null;
+    
+    if (liveModeApiKey && elements.liveApiKey) {
+      elements.liveApiKey.value = liveModeApiKey;
+    }
+  } catch (error) {
+    console.error('Failed to load Live Mode settings:', error);
   }
 }
 
@@ -152,6 +176,10 @@ function setupEventListeners() {
   if (elements.stopAuto) elements.stopAuto.addEventListener('click', stopAutoMode);
   if (elements.playbackSpeed) elements.playbackSpeed.addEventListener('change', updateSpeedLabel);
   if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', openSettings);
+  
+  // ✅ Live Mode event listeners
+  if (elements.toggleLiveMode) elements.toggleLiveMode.addEventListener('click', handleToggleLiveMode);
+  if (elements.liveApiKey) elements.liveApiKey.addEventListener('input', handleLiveApiKeyInput);
 }
 
 /**
@@ -177,8 +205,150 @@ function setupMessageListeners() {
       case 'aiLog':
         addLog(request.message, request.level || 'info');
         break;
+      
+      // ✅ Live Mode status updates
+      case 'liveModeStatus':
+        updateLiveModeStatus(request.status, request.message);
+        break;
     }
   });
+}
+
+/**
+ * ✅ Handle Live Mode API key input
+ */
+function handleLiveApiKeyInput() {
+  liveModeApiKey = elements.liveApiKey.value.trim();
+  
+  // Save to storage
+  if (liveModeApiKey) {
+    StorageManager.set({ liveModeApiKey }, 'sync').catch(error => {
+      console.error('Failed to save Live Mode API key:', error);
+    });
+  }
+}
+
+/**
+ * ✅ Handle toggle Live Mode
+ */
+async function handleToggleLiveMode() {
+  try {
+    if (!isLiveModeActive) {
+      // Start Live Mode
+      const apiKey = elements.liveApiKey.value.trim();
+      
+      if (!apiKey) {
+        updateLiveModeStatus('error', '❌ Введите Gemini API ключ');
+        elements.liveApiKey.focus();
+        return;
+      }
+      
+      // Validate API key format (basic check)
+      if (apiKey.length < 20) {
+        updateLiveModeStatus('error', '❌ API ключ слишком короткий');
+        return;
+      }
+      
+      elements.toggleLiveMode.disabled = true;
+      updateLiveModeStatus('connecting', '🔄 Подключение...');
+      
+      // Send to content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]) {
+          updateLiveModeStatus('error', '❌ Нет активной вкладки');
+          elements.toggleLiveMode.disabled = false;
+          return;
+        }
+        
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'toggleLiveMode',
+          apiKey: apiKey,
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to start Live Mode:', chrome.runtime.lastError);
+            updateLiveModeStatus('error', '❌ Ошибка подключения');
+            elements.toggleLiveMode.disabled = false;
+            return;
+          }
+          
+          if (response && response.success) {
+            isLiveModeActive = true;
+            state.isLiveModeActive = true;
+            elements.toggleLiveMode.textContent = '⏹️ Stop Live Mode';
+            elements.toggleLiveMode.classList.remove('btn-live');
+            elements.toggleLiveMode.classList.add('btn-live-stop');
+            updateLiveModeStatus('active', '🟢 Live Mode активен');
+            addLog('🎙️ Live Mode запущен', 'success');
+          }
+          
+          elements.toggleLiveMode.disabled = false;
+        });
+      });
+    } else {
+      // Stop Live Mode
+      elements.toggleLiveMode.disabled = true;
+      updateLiveModeStatus('stopping', '🔄 Остановка...');
+      
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]) {
+          updateLiveModeStatus('error', '❌ Нет активной вкладки');
+          elements.toggleLiveMode.disabled = false;
+          return;
+        }
+        
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'toggleLiveMode',
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to stop Live Mode:', chrome.runtime.lastError);
+          }
+          
+          isLiveModeActive = false;
+          state.isLiveModeActive = false;
+          elements.toggleLiveMode.textContent = '🎙️ Start Live Mode';
+          elements.toggleLiveMode.classList.remove('btn-live-stop');
+          elements.toggleLiveMode.classList.add('btn-live');
+          updateLiveModeStatus('inactive', 'Не активен');
+          addLog('⏹️ Live Mode остановлен', 'info');
+          elements.toggleLiveMode.disabled = false;
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Live Mode toggle error:', error);
+    updateLiveModeStatus('error', `❌ Ошибка: ${error.message}`);
+    elements.toggleLiveMode.disabled = false;
+  }
+}
+
+/**
+ * ✅ Update Live Mode status display
+ */
+function updateLiveModeStatus(status, message) {
+  if (!elements.liveStatus) return;
+  
+  elements.liveStatus.textContent = message;
+  
+  // Remove all status classes
+  elements.liveStatus.className = 'live-status-text';
+  
+  // Add appropriate status class
+  switch (status) {
+    case 'active':
+      elements.liveStatus.classList.add('status-active');
+      break;
+    case 'connecting':
+    case 'stopping':
+      elements.liveStatus.classList.add('status-connecting');
+      break;
+    case 'error':
+      elements.liveStatus.classList.add('status-error');
+      break;
+    case 'inactive':
+    default:
+      elements.liveStatus.classList.add('status-inactive');
+      break;
+  }
 }
 
 /**
@@ -492,6 +662,8 @@ function updateSpeedLabel() {
  * Add log message
  */
 function addLog(message, level = 'info') {
+  if (!elements.statusLog) return;
+  
   const logEntry = document.createElement('div');
   logEntry.className = `log-entry log-${level}`;
   const time = new Date().toLocaleTimeString('ru-RU', {
@@ -552,4 +724,16 @@ export function setRecordingState(isRecording) {
   if (elements.stopRecording) {
     elements.stopRecording.disabled = !isRecording;
   }
+}
+
+/**
+ * ✅ Export Live Mode functions for testing
+ */
+export function toggleLiveMode() {
+  return handleToggleLiveMode();
+}
+
+export function setLiveModeState(active) {
+  isLiveModeActive = active;
+  state.isLiveModeActive = active;
 }
