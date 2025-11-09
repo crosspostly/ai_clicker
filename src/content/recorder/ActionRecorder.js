@@ -310,7 +310,7 @@ export class ActionRecorder {
     return {
       isRecording: this.isRecording,
       actionCount: this.recordedActions.length,
-      actions: [...this.recordedActions]
+      actions: [...this.recordedActions],
     };
   }
 }
