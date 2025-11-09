@@ -158,9 +158,13 @@ function startRecording() {
   playActionsBtn.disabled = true;
   addLog('🔴 Запись началась', 'info');
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'startRecording' });
+  chrome.runtime.sendMessage({ 
+    target: 'content',
+    action: 'startRecording' 
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to start recording:', chrome.runtime.lastError);
+      addLog('✗ Ошибка запуска записи', 'error');
     }
   });
 }
@@ -178,9 +182,13 @@ function stopRecording() {
     'success',
   );
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'stopRecording' });
+  chrome.runtime.sendMessage({ 
+    target: 'content',
+    action: 'stopRecording' 
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to stop recording:', chrome.runtime.lastError);
+      addLog('✗ Ошибка остановки записи', 'error');
     }
   });
 
@@ -219,13 +227,15 @@ function clearActions() {
  */
 function playActions() {
   const speed = parseFloat(playbackSpeed.value);
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'playActions',
-        actions: recordedActions,
-        speed: speed,
-      });
+  chrome.runtime.sendMessage({
+    target: 'content',
+    action: 'playActions',
+    actions: recordedActions,
+    speed: speed,
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to play actions:', chrome.runtime.lastError);
+      addLog('✗ Ошибка воспроизведения', 'error');
     }
   });
   addLog(`▶️ Воспроизведение с скоростью ${speed}x`, 'info');
@@ -377,13 +387,17 @@ async function startAutoMode() {
 
     addLog('🤖 Анализирую инструкции...', 'info');
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'startAIMode',
-          instructions: instructions,
-          geminiApiKey: geminiEnabled ? geminiApiKey : null,
-        });
+    chrome.runtime.sendMessage({
+      target: 'content',
+      action: 'startAIMode',
+      instructions: instructions,
+      geminiApiKey: geminiEnabled ? geminiApiKey : null,
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('Failed to start AI mode:', chrome.runtime.lastError);
+        addLog('✗ Ошибка запуска ИИ режима', 'error');
+        startAutoBtn.disabled = false;
+        stopAutoBtn.disabled = true;
       }
     });
   } catch (error) {
@@ -403,9 +417,13 @@ function stopAutoMode() {
   statusText.textContent = '🛑 Остановлено';
   addLog('⏸️ Выполнение остановлено', 'warn');
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'stopAIMode' });
+  chrome.runtime.sendMessage({ 
+    target: 'content',
+    action: 'stopAIMode' 
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Failed to stop AI mode:', chrome.runtime.lastError);
+      addLog('✗ Ошибка остановки ИИ режима', 'error');
     }
   });
 }

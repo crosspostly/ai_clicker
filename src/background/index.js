@@ -17,7 +17,34 @@ chrome.runtime.onInstalled.addListener(() => {
  * Listen for messages
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('[Background] Received message:', request);
+  
   try {
+    // Relay to content script
+    if (request.target === 'content') {
+      chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, request, (response) => {
+            console.log('[Background] Content response:', response);
+            sendResponse(response);
+          });
+        } else {
+          console.error('[Background] No active tab found');
+          sendResponse({error: 'No active tab'});
+        }
+      });
+      return true; // Keep message channel open for async response
+    }
+    
+    // Relay to popup
+    if (request.target === 'popup') {
+      chrome.runtime.sendMessage(request, (response) => {
+        console.log('[Background] Popup response:', response);
+        sendResponse(response);
+      });
+      return true; // Keep message channel open for async response
+    }
+
     switch (request.type) {
       case 'actionRecorded':
         // Forward to popup if needed
