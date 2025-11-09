@@ -15,11 +15,14 @@ const htmlFiles = [
   { src: 'popup/index.html', dest: 'popup.html' },
   { src: 'popup/voice.html', dest: 'voice.html' },
   { src: 'popup/settings.html', dest: 'settings.html' },
+  { src: 'popup/playback.html', dest: 'playback.html' },
 ];
 
 const cssFiles = [
   { src: 'popup/popup.css', dest: 'popup.css' },
   { src: 'popup/styles/settings.css', dest: 'settings.css' },
+  { src: 'popup/styles/playback.css', dest: 'playback.css' },
+  { src: 'popup/styles/variables.css', dest: 'variables.css' },
   { src: 'content/content.css', dest: 'content.css' },
 ];
 
@@ -137,10 +140,12 @@ function verifyBuild() {
     'popup.js',
     'voice.js',
     'settings.js',
+    'playback.js',
     'background.js',
     'popup.html',
     'voice.html',
     'settings.html',
+    'playback.html',
   ];
 
   let allFilesExist = true;
@@ -154,7 +159,7 @@ function verifyBuild() {
     }
   });
 
-  const optionalFiles = ['content.css', 'popup.css', 'settings.css'];
+  const optionalFiles = ['content.css', 'popup.css', 'settings.css', 'playback.css', 'variables.css'];
   optionalFiles.forEach(file => {
     const filePath = path.join(deployDir, file);
     if (fs.existsSync(filePath)) {
@@ -182,7 +187,7 @@ function verifyBuild() {
 
 function checkBundleSizes() {
   console.log('📊 Checking bundle sizes...');
-  const bundles = ['content.js', 'popup.js', 'voice.js', 'settings.js', 'background.js'];
+  const bundles = ['content.js', 'popup.js', 'voice.js', 'settings.js', 'playback.js', 'background.js'];
 
   bundles.forEach(bundle => {
     const filePath = path.join(deployDir, bundle);

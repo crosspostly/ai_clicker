@@ -62,6 +62,10 @@ const getElement = (id) => {
 };
 
 export const elements = {
+  // Tab elements
+  tabRecord: getElement('tab-record'),
+  tabPlayback: getElement('tab-playback'),
+  tabSettings: getElement('tab-settings'),
   startRecording: getElement('start-recording'),
   stopRecording: getElement('stop-recording'),
   playActions: getElement('play-actions'),
@@ -105,6 +109,8 @@ if (typeof process === 'undefined' || process.env.NODE_ENV !== 'test') {
       setupMessageListeners();
       // ✅ Load saved Live Mode API key
       await loadLiveModeSettings();
+      // Load saved active tab
+      await loadActiveTab();
     } catch (error) {
       console.error('Popup initialization error:', error);
       addLog('Ошибка инициализации', 'error');
@@ -145,6 +151,21 @@ async function loadLiveModeSettings() {
 }
 
 /**
+ * Load saved active tab from storage
+ */
+async function loadActiveTab() {
+  try {
+    const result = await chrome.storage.local.get(['activeTab']);
+    const activeTab = result.activeTab || 'record';
+    switchTab(activeTab);
+  } catch (error) {
+    console.error('Failed to load active tab:', error);
+    // Default to record tab
+    switchTab('record');
+  }
+}
+
+/**
  * Load saved actions from storage
  */
 async function loadSavedActions() {
@@ -163,6 +184,11 @@ async function loadSavedActions() {
  */
 function setupEventListeners() {
   // Add null checks for testing environment
+  // Tab switching listeners
+  if (elements.tabRecord) elements.tabRecord.addEventListener('click', () => switchTab('record'));
+  if (elements.tabPlayback) elements.tabPlayback.addEventListener('click', () => switchTab('playback'));
+  if (elements.tabSettings) elements.tabSettings.addEventListener('click', () => switchTab('settings'));
+  
   if (elements.modeManual) elements.modeManual.addEventListener('click', switchToManualMode);
   if (elements.modeAuto) elements.modeAuto.addEventListener('click', switchToAutoMode);
   if (elements.startRecording) elements.startRecording.addEventListener('click', handleStartRecording);
@@ -180,6 +206,40 @@ function setupEventListeners() {
   // ✅ Live Mode event listeners
   if (elements.toggleLiveMode) elements.toggleLiveMode.addEventListener('click', handleToggleLiveMode);
   if (elements.liveApiKey) elements.liveApiKey.addEventListener('input', handleLiveApiKeyInput);
+}
+
+/**
+ * Switch to a specific tab
+ */
+function switchTab(tabName) {
+  // Hide all tab panes
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  tabPanes.forEach(pane => {
+    pane.classList.remove('active');
+  });
+  
+  // Remove active class from all tab buttons
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Show selected tab pane
+  const selectedPane = document.getElementById(`tab-${tabName}`);
+  if (selectedPane) {
+    selectedPane.classList.add('active');
+  }
+  
+  // Add active class to selected tab button
+  const selectedButton = document.getElementById(`tab-${tabName}`);
+  if (selectedButton) {
+    selectedButton.classList.add('active');
+  }
+  
+  // Save active tab to storage
+  chrome.storage.local.set({ activeTab: tabName }).catch(error => {
+    console.error('Failed to save active tab:', error);
+  });
 }
 
 /**

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playback Control</title>
+  <link rel="stylesheet" href="variables.css">
+  <link rel="stylesheet" href="playback.css">
+</head>
+<body>
+  <div class="playback-container">
+    <!-- Speed Control -->
+    <div class="playback-controls">
+      <label for="speed-selector">Playback Speed:</label>
+      <select id="speed-selector">
+        <option value="0.5">0.5x (Slow)</option>
+        <option value="1" selected>1x (Normal)</option>
+        <option value="2">2x (Fast)</option>
+        <option value="4">4x (Very Fast)</option>
+      </select>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-section">
+      <div class="progress-bar" id="progress-bar"></div>
+      <div class="progress-text">
+        <span id="action-counter">0/0</span>
+        <span id="time-elapsed">00:00</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="playback-buttons">
+      <button id="play-btn" class="btn btn-primary">▶ Play</button>
+      <button id="pause-btn" class="btn btn-secondary" disabled>⏸ Pause</button>
+      <button id="stop-btn" class="btn btn-secondary" disabled>⏹ Stop</button>
+      <button id="frame-next-btn" class="btn btn-tertiary">→ Frame</button>
+    </div>
+
+    <!-- Recorded Actions List -->
+    <div class="actions-list-section">
+      <h3>Recorded Actions</h3>
+      <ul id="actions-list" class="actions-list">
+        <!-- Populated dynamically -->
+      </ul>
+    </div>
+
+    <!-- Status Display -->
+    <div id="playback-status" class="status-box">
+      Ready to play
+    </div>
+  </div>
+
+  <script type="module" src="playback.js"></script>
+</body>
+</html>
