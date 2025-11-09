@@ -4,8 +4,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { InstructionParser } from '../../../ai/InstructionParser.js';
-import { ACTION_TYPES } from '../../../common/constants.js';
+import { InstructionParser } from '../../../ai/InstructionParser';
+import { ACTION_TYPES } from '../../../common/constants';
 
 describe('InstructionParser', () => {
   beforeEach(() => {

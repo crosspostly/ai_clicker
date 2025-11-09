@@ -1,4 +1,5 @@
-import { EventEmitter } from '../../common/events.js';
+import { jest } from '@jest/globals';
+import { EventEmitter } from '../../common/events';
 
 describe('EventEmitter Class', () => {
   let emitter;

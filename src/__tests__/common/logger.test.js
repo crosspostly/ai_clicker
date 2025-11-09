@@ -2,7 +2,8 @@
  * Tests for logger utility
  */
 
-import { Logger, globalLogger } from '../../common/logger.js';
+import { jest } from '@jest/globals';
+import { Logger, globalLogger } from '../../common/logger';
 
 describe('Logger (Static API)', () => {
   let consoleSpy;

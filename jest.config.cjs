@@ -2,7 +2,7 @@
  * Jest configuration for AI-Autoclicker
  */
 
-export default {
+module.exports = {
   // Test environment
   testEnvironment: 'jsdom',
   

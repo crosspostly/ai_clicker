@@ -5,7 +5,7 @@
  */
 
 import { jest } from '@jest/globals';
-import { ElementFinder } from '../../src/content/finder/ElementFinder.js';
+import { ElementFinder } from '../../src/content/finder/ElementFinder';
 
 // Mock DOM methods
 Object.defineProperty(window, 'getComputedStyle', {

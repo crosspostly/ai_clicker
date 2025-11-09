@@ -4,6 +4,8 @@
  * Coverage: popup.js recording flow
  */
 
+import { jest } from '@jest/globals';
+
 describe('Popup Recording Controls', () => {
   beforeEach(() => {
     document.body.innerHTML = `

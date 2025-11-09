@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { Validator } from '../../common/validator.js';
+import { Validator } from '../../common/validator';
 
 global.chrome = {
   storage: {

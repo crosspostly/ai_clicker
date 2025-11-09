@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { Validator } from '../../common/validator.js';
+import { Validator } from '../../common/validator';
 
 describe('Validator', () => {
   describe('validateAction()', () => {

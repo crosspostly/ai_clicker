@@ -5,8 +5,8 @@
  */
 
 import { jest } from '@jest/globals';
-import { ActionExecutor, ExecutionError } from '../../src/content/executor/ActionExecutor.js';
-import { ElementFinder } from '../../src/content/finder/ElementFinder.js';
+import { ActionExecutor, ExecutionError } from '../../src/content/executor/ActionExecutor';
+import { ElementFinder } from '../../src/content/finder/ElementFinder';
 
 // Mock DOM methods
 Object.defineProperty(window, 'getComputedStyle', {

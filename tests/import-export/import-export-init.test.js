@@ -1,4 +1,4 @@
-import { expect, test, describe, beforeEach } from '@jest/globals';
+import { jest, expect, test, describe, beforeEach } from '@jest/globals';
 
 describe('Import/Export Initialization', () => {
   beforeEach(() => {
