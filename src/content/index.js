@@ -3,10 +3,10 @@
  * Initializes and manages all content script functionality
  */
 
-import { ElementFinder } from './finder/ElementFinder.js';
-import { ActionRecorder } from './recorder/ActionRecorder.js';
-import { ActionExecutor } from './executor/ActionExecutor.js';
-import { InstructionParser } from '../ai/InstructionParser.js';
+import { ElementFinder } from './finder/ElementFinder';
+import { ActionRecorder } from './recorder/ActionRecorder';
+import { ActionExecutor } from './executor/ActionExecutor';
+import { InstructionParser } from '../ai/InstructionParser';
 
 // Global instances
 let elementFinder = null;

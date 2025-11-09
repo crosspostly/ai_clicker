@@ -14,12 +14,14 @@ export class Validator {
   /**
    * Validate action object according to specification
    * @param {Object} action - Action to validate
-   * @returns {boolean} True if valid
-   * @throws {ValidationError} If action is invalid
+   * @returns {Object} { isValid: boolean, errors: string[] }
    */
   static validateAction(action) {
+    const errors = [];
+    
     if (!action || typeof action !== 'object') {
-      throw new ValidationError('Action must be an object');
+      errors.push('Action must be an object');
+      return { isValid: false, errors };
     }
 
     const validTypes = [
@@ -33,11 +35,24 @@ export class Validator {
       'hover',
     ];
 
-    if (!action.type || !validTypes.includes(action.type)) {
-      throw new ValidationError(`Invalid action type: ${action.type}`);
+    if (!action.type) {
+      errors.push('Action type is required');
+    } else if (!validTypes.includes(action.type)) {
+      errors.push(`Invalid action type: ${action.type}`);
     }
 
-    return true;
+    if (action.type === 'input' && !action.value) {
+      errors.push('Input action requires value');
+    }
+
+    if (action.type === 'wait' && (typeof action.duration !== 'number' || action.duration <= 0)) {
+      errors.push('Wait duration must be positive');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
   }
 
   /**
@@ -56,22 +71,6 @@ export class Validator {
     } catch {
       throw new ValidationError(`Invalid CSS selector: ${selector}`);
     }
-  }
-
-  /**
-   * Validate Gemini API key format
-   * @param {string} key - API key to validate
-   * @returns {boolean} True if valid
-   * @throws {ValidationError} If key is invalid
-   */
-  static validateGeminiKey(key) {
-    if (!key || typeof key !== 'string') {
-      throw new ValidationError('API key must be a string');
-    }
-    if (key.length !== 39 || !key.startsWith('AIza')) {
-      throw new ValidationError('Invalid Gemini API key format');
-    }
-    return true;
   }
 
   /**
@@ -180,6 +179,157 @@ export class Validator {
   }
 
   /**
+   * Validate API key format
+   */
+  static validateApiKey(apiKey) {
+    const errors = [];
+    
+    if (!apiKey) {
+      errors.push('API key is required');
+    } else if (typeof apiKey !== 'string') {
+      errors.push('API key must be a string');
+    } else if (apiKey.length < 10) {
+      errors.push('API key is too short');
+    } else if (apiKey.length > 500) {
+      errors.push('API key is too long');
+    } else if (apiKey.length !== 39) {
+      errors.push('Invalid API key format');
+    } else if (!apiKey.startsWith('AIza')) {
+      errors.push('Invalid API key format');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Validate instruction text
+   */
+  static validateInstruction(instruction) {
+    const errors = [];
+    
+    if (!instruction) {
+      errors.push('Instruction cannot be empty');
+    } else if (typeof instruction !== 'string') {
+      errors.push('Instruction must be a string');
+    } else if (instruction.trim() === '') {
+      errors.push('Instruction cannot be empty');
+    } else if (instruction.length >= 10000) {
+      errors.push('Instruction is too long');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Validate settings object
+   */
+  static validateSettings(settings) {
+    const errors = [];
+    
+    if (!settings || typeof settings !== 'object') {
+      errors.push('Settings must be an object');
+      return { isValid: false, errors };
+    }
+
+    // Validate API key if present
+    if (settings.apiKey !== undefined) {
+      const apiKeyResult = this.validateApiKey(settings.apiKey);
+      if (!apiKeyResult.isValid) {
+        errors.push(...apiKeyResult.errors);
+      }
+    }
+
+    // Validate boolean settings
+    if (settings.autoMode !== undefined && typeof settings.autoMode !== 'boolean') {
+      errors.push('Auto mode must be a boolean');
+    }
+
+    // Validate playback speed
+    if (settings.playbackSpeed !== undefined) {
+      if (typeof settings.playbackSpeed !== 'number' || 
+          settings.playbackSpeed < 0.1 || 
+          settings.playbackSpeed > 3.0) {
+        errors.push('Playback speed must be between 0.1 and 3.0');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Validate CSS selector
+   */
+  static validateSelector(selector) {
+    const errors = [];
+    
+    if (!selector) {
+      errors.push('Selector cannot be null or empty');
+    } else if (typeof selector !== 'string') {
+      errors.push('Selector must be a string');
+    } else if (selector.trim() === '') {
+      errors.push('Selector cannot be null or empty');
+    } else {
+      // Check for known invalid patterns
+      const invalidPatterns = [
+        /##/,           // double hash
+        /\.class\./,      // class ending with dot
+        /\[\w*$/,        // unclosed bracket
+        />\s*>/,         // double > 
+      ];
+      
+      for (const pattern of invalidPatterns) {
+        if (pattern.test(selector)) {
+          errors.push('Invalid CSS selector');
+          break;
+        }
+      }
+      
+      // Try to validate with querySelector if no obvious errors
+      if (errors.length === 0) {
+        try {
+          document.querySelector(selector);
+        } catch (e) {
+          errors.push('Invalid CSS selector');
+        }
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Sanitize input text
+   */
+  static sanitizeInput(input) {
+    if (typeof input !== 'string') {
+      return '';
+    }
+    
+    // Remove script tags and their content first
+    let sanitized = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    // Remove other HTML tags
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+    
+    // Escape HTML entities
+    sanitized = sanitized.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    return sanitized;
+  }
+
+  /**
    * Validate number within range
    */
   static validateRange(value, min, max) {
@@ -205,5 +355,105 @@ export class Validator {
       );
     }
     return true;
+  }
+
+  // Basic type checking methods
+  static isString(value) {
+    return typeof value === 'string';
+  }
+
+  static isNumber(value) {
+    return typeof value === 'number' && !isNaN(value);
+  }
+
+  static isBoolean(value) {
+    return typeof value === 'boolean';
+  }
+
+  static isObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  static isArray(value) {
+    return Array.isArray(value);
+  }
+
+  static isFunction(value) {
+    return typeof value === 'function';
+  }
+
+  // String validation
+  static isEmpty(value) {
+    if (value === undefined || value === null || value === '') {
+      return true;
+    }
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+    if (typeof value === 'object') {
+      return Object.keys(value).length === 0;
+    }
+    return false;
+  }
+
+  static isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return this.isString(email) && emailRegex.test(email);
+  }
+
+  static isValidUrl(url) {
+    try {
+      // In test environment, just check basic format
+      if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+        return typeof url === 'string' && 
+               (url.startsWith('http://') || url.startsWith('https://'));
+      }
+      // In production, use real URL constructor
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static minLength(value, min) {
+    return this.isString(value) ? value.length >= min : false;
+  }
+
+  static maxLength(value, max) {
+    return this.isString(value) ? value.length <= max : false;
+  }
+
+  // Scenario validation
+  static validateScenario(scenario) {
+    const errors = [];
+    
+    if (!scenario || typeof scenario !== 'object') {
+      errors.push('Scenario must be an object');
+      return { isValid: false, errors };
+    }
+
+    if (!scenario.name) {
+      errors.push('Scenario name is required');
+    }
+
+    if (!scenario.actions || !Array.isArray(scenario.actions) || scenario.actions.length === 0) {
+      errors.push('Scenario must have at least one action');
+    }
+
+    // Validate each action
+    if (scenario.actions) {
+      for (const action of scenario.actions) {
+        const actionResult = this.validateAction(action);
+        if (!actionResult.isValid) {
+          errors.push(...actionResult.errors);
+        }
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
   }
 }

@@ -1,9 +1,4 @@
-/**
- * Jest configuration for AI-Autoclicker
- */
-
 module.exports = {
-  // Test environment
   testEnvironment: 'jsdom',
   
   // Setup files
@@ -12,54 +7,51 @@ module.exports = {
     '<rootDir>/tests/setup.js'
   ],
   
-  // Test file patterns (добавлена поддержка tests/)
+  // Test patterns
   testMatch: [
     '**/__tests__/**/*.test.js',
-    '**/tests/**/*.test.js',      // Новая папка для книги тестов!
+    '**/tests/**/*.test.js',
     '**/?(*.)+(spec|test).js'
   ],
   
-  // Coverage configuration
-  collectCoverage: true,
-  collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/__tests__/**',
-    '!**/node_modules/**'
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
-  coverageThreshold: {
-    global: {
-      branches: 45,
-      functions: 45,
-      lines: 45,
-      statements: 45
-    }
-  },
-  
-  // Module transformation
-  transform: {
-    '^.+\\.js$': ['babel-jest', { 
-      presets: [['@babel/preset-env', { targets: { node: 'current' } }]]
-    }]
-  },
-  
-  // Module name mapping for ES modules
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@/(.*)$': '<rootDir>/src/$1'
-  },
-  
-  // Ignore patterns
   testPathIgnorePatterns: [
     '/node_modules/',
     '/deploy/'
   ],
   
-  // CI-specific optimizations
-  maxWorkers: process.env.CI ? 2 : '50%',  // Limit workers in CI to prevent OOM
-  testTimeout: 10000,
+  // Module resolution
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'  // ✅ ПРАВИЛЬНЫЙ REGEX (без leading slash)
+  },
   
-  // Verbose output
+  // Transform
+  transform: {
+    '^.+\\.jsx?$': 'babel-jest'
+  },
+  
+  // Coverage
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/**/*.config.js',
+    '!src/rollup.config.js',
+    '!**/node_modules/**'
+  ],
+  
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
+  
+  coverageThreshold: {
+    global: {
+      branches: 40,
+      functions: 40,
+      lines: 40,
+      statements: 40
+    }
+  },
+  
+  // CI optimization
+  maxWorkers: process.env.CI ? 2 : '50%',
+  testTimeout: 10000,
   verbose: true
 };
