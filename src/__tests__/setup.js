@@ -58,5 +58,23 @@ global.window = {
 // Mock fetch for API calls
 global.fetch = jest.fn();
 
+// Mock URL constructor
+global.URL = class URL {
+  constructor(url) {
+    // Simple validation for common URL patterns
+    if (typeof url !== 'string') {
+      throw new TypeError('Invalid URL');
+    }
+    
+    // Accept most URLs that start with http:// or https://
+    // This is a simplified mock for testing - accept most valid patterns
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new TypeError('Invalid URL');
+    }
+    
+    this.href = url;
+  }
+};
+
 // Setup test timeout
 jest.setTimeout(10000);

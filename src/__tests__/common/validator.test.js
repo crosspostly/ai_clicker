@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { Validator } from '../../common/validator';
+import { Validator, ValidationError } from '../../common/validator';
 
 describe('Validator', () => {
   describe('validateAction()', () => {
@@ -155,7 +155,7 @@ describe('Validator', () => {
 
   describe('validateApiKey()', () => {
     it('should validate valid Gemini API key', () => {
-      const apiKey = 'AIzaSyDaGmWKa4JsXZ-HjGwBGRSgSxOqN7-8h8';
+      const apiKey = 'AIzaSyDaGmWKa4JsXZ-HjGwBGRSgSxOqN7-8h8A';
       const result = Validator.validateApiKey(apiKey);
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -222,7 +222,7 @@ describe('Validator', () => {
   describe('validateSettings()', () => {
     it('should validate valid settings', () => {
       const settings = {
-        apiKey: 'AIzaSyDaGmWKa4JsXZ-HjGwBGRSgSxOqN7-8h8',
+        apiKey: 'AIzaSyDaGmWKa4JsXZ-HjGwBGRSgSxOqN7-8h8A',
         autoMode: true,
         playbackSpeed: 1.0,
         debugMode: false,
@@ -466,13 +466,13 @@ describe('Validator', () => {
 
   describe('Validation error handling', () => {
     it('should handle ValidationError instances', () => {
-      const error = new Validator.ValidationError('Test error');
+      const error = new ValidationError('Test error');
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toBe('Test error');
     });
 
     it('should create proper error stack traces', () => {
-      const error = new Validator.ValidationError('Error with stack');
+      const error = new ValidationError('Error with stack');
       expect(error.stack).toBeDefined();
       expect(error.stack).toContain('ValidationError');
     });

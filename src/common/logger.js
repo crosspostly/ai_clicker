@@ -184,6 +184,13 @@ export class Logger {
   }
 
   /**
+   * Instance log method (for generic logging)
+   */
+  log(message, data = null) {
+    this.instanceLog('INFO', message, data);
+  }
+
+  /**
    * Get all stored logs
    */
   getLogs(level = null, limit = 100) {

@@ -2,7 +2,7 @@
  * Helper utilities and common functions
  */
 
-import { Logger } from './logger.js';
+import { Logger } from './logger';
 
 export class Helpers {
   /**
@@ -289,5 +289,41 @@ export class Helpers {
           `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
       )
       .join('&');
+  }
+
+  /**
+   * Merge objects
+   */
+  static mergeObjects(...objects) {
+    return objects.reduce((result, obj) => {
+      if (obj && typeof obj === 'object') {
+        return { ...result, ...obj };
+      }
+      return result;
+    }, {});
+  }
+
+  /**
+   * Format date
+   */
+  static formatDate(date, format = 'YYYY-MM-DD') {
+    // Простая реализация
+    if (!(date instanceof Date)) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return format
+      .replace('YYYY', year)
+      .replace('MM', month)
+      .replace('DD', day);
+  }
+
+  /**
+   * Sanitize HTML
+   */
+  static sanitizeHtml(html) {
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
   }
 }

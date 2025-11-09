@@ -3,7 +3,7 @@
  * Provides encrypted and secure storage access
  */
 
-import { Logger } from './logger.js';
+import { Logger } from './logger';
 
 export class StorageError extends Error {
   constructor(message) {

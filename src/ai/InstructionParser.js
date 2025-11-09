@@ -11,6 +11,18 @@ const GEMINI_MODELS = [
   'gemini-1.5-pro',            // Last resort
 ];
 
+// Export action types for external use
+export const ACTION_TYPES = {
+  CLICK: 'click',
+  INPUT: 'input',
+  SELECT: 'select',
+  SCROLL: 'scroll',
+  WAIT: 'wait',
+  HOVER: 'hover',
+  DOUBLE_CLICK: 'double_click',
+  RIGHT_CLICK: 'right_click',
+};
+
 export class InstructionParser {
   /**
    * Parse instructions using AI or fallback method
