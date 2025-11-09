@@ -4,6 +4,7 @@
  */
 
 import { voiceHandler } from './voiceHandler.js';
+import { liveModeManager } from './LiveModeManager.js';
 
 /**
  * Listen for extension installation
@@ -20,6 +21,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('[Background] Received message:', request);
   
   try {
+    // ✅ Handle Live Mode actions
+    if (request.action && request.action.startsWith('startLiveMode')) {
+      handleStartLiveMode(request, sender)
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => sendResponse({ success: false, error: error.message }));
+      return true;
+    }
+
+    if (request.action === 'stopLiveMode') {
+      handleStopLiveMode();
+      sendResponse({ success: true });
+      return true;
+    }
+
+    if (request.action === 'sendUserInput') {
+      handleSendUserInput(request);
+      sendResponse({ success: true });
+      return true;
+    }
+
+    if (request.action === 'toggleScreenCapture') {
+      liveModeManager.toggleScreenCapture();
+      sendResponse({ success: true });
+      return true;
+    }
+    
     // Relay to content script
     if (request.target === 'content') {
       chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -68,6 +95,54 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 /**
+ * ✅ Handle start Live Mode
+ */
+async function handleStartLiveMode(request, sender) {
+  try {
+    const apiKey = request.apiKey;
+    const tabId = sender.tab?.id;
+
+    if (!apiKey) {
+      throw new Error('API key required');
+    }
+
+    if (!tabId) {
+      throw new Error('Tab ID not found');
+    }
+
+    console.log('[Background] Starting Live Mode for tab:', tabId);
+    await liveModeManager.start(apiKey, tabId);
+  } catch (error) {
+    console.error('[Background] Failed to start Live Mode:', error);
+    throw error;
+  }
+}
+
+/**
+ * ✅ Handle stop Live Mode
+ */
+function handleStopLiveMode() {
+  try {
+    console.log('[Background] Stopping Live Mode');
+    liveModeManager.stop();
+  } catch (error) {
+    console.error('[Background] Failed to stop Live Mode:', error);
+  }
+}
+
+/**
+ * ✅ Handle send user input to Gemini
+ */
+function handleSendUserInput(request) {
+  try {
+    const { text, audio } = request;
+    liveModeManager.sendUserInput({ text, audio });
+  } catch (error) {
+    console.error('[Background] Failed to send user input:', error);
+  }
+}
+
+/**
  * Handle recorded action
  */
 function handleActionRecorded(_request) {
@@ -94,6 +169,17 @@ chrome.tabs.onActivated.addListener((_activeInfo) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, _tab) => {
   if (changeInfo.status === 'complete') {
     // Tab completed loading
+  }
+});
+
+/**
+ * ✅ Clean up Live Mode when tab is closed
+ */
+chrome.tabs.onRemoved.addListener((tabId) => {
+  const status = liveModeManager.getStatus();
+  if (status.isActive && liveModeManager.currentTab === tabId) {
+    console.log('[Background] Tab closed, stopping Live Mode');
+    liveModeManager.stop();
   }
 });
 
