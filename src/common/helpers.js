@@ -88,9 +88,14 @@ export class Helpers {
   }
 
   /**
-   * Deep clone object
+   * Deep clone object with circular reference support
    */
-  static deepClone(obj) {
+  static deepClone(obj, visited = new WeakSet()) {
+    // Handle circular references
+    if (visited.has(obj)) {
+      return obj;
+    }
+
     if (obj === null || typeof obj !== 'object') {
       return obj;
     }
@@ -100,18 +105,25 @@ export class Helpers {
     }
 
     if (obj instanceof Array) {
-      return obj.map((item) => this.deepClone(item));
+      visited.add(obj);
+      const cloned = obj.map((item) => this.deepClone(item, visited));
+      visited.delete(obj);
+      return cloned;
     }
 
     if (obj instanceof Object) {
+      visited.add(obj);
       const clone = {};
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          clone[key] = this.deepClone(obj[key]);
+          clone[key] = this.deepClone(obj[key], visited);
         }
       }
+      visited.delete(obj);
       return clone;
     }
+
+    return obj;
   }
 
   /**

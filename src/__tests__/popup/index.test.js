@@ -50,7 +50,7 @@ describe('Popup UI Interactions', () => {
 
   describe('DOM Elements and Initialization', () => {
     test('should find all required DOM elements', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       expect(popup.elements.startRecording).toBeDefined();
       expect(popup.elements.stopRecording).toBeDefined();
@@ -61,7 +61,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should initialize with default state', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       expect(popup.state.isRecording).toBe(false);
       expect(popup.state.actions).toEqual([]);
@@ -77,7 +77,7 @@ describe('Popup UI Interactions', () => {
       
       chrome.storage.local.get.mockResolvedValue({ 'popup-state': mockState });
       
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       expect(popup.state).toEqual(mockState);
       expect(chrome.storage.local.get).toHaveBeenCalledWith('popup-state');
@@ -86,7 +86,7 @@ describe('Popup UI Interactions', () => {
     test('should handle missing storage state', async () => {
       chrome.storage.local.get.mockResolvedValue({});
       
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       expect(popup.state.isRecording).toBe(false);
       expect(popup.state.actions).toEqual([]);
@@ -96,7 +96,7 @@ describe('Popup UI Interactions', () => {
 
   describe('Button Click Handlers', () => {
     test('should handle start recording click', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       // Simulate button click
       popup.elements.startRecording.click();
@@ -110,7 +110,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle stop recording click', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       popup.state.isRecording = true;
       
       // Simulate button click
@@ -125,7 +125,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle play actions click', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       popup.state.actions = [
         { type: 'click', target: 'button1' },
         { type: 'input', target: 'input1', value: 'test' }
@@ -141,7 +141,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle clear actions click', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       popup.state.actions = [
         { type: 'click', target: 'button1' },
         { type: 'input', target: 'input1', value: 'test' }
@@ -158,7 +158,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should disable play button when no actions', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       popup.state.actions = [];
       
       popup.updateUI();
@@ -167,7 +167,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should enable play button when actions exist', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       popup.state.actions = [{ type: 'click', target: 'button' }];
       
       popup.updateUI();
@@ -178,7 +178,7 @@ describe('Popup UI Interactions', () => {
 
   describe('Message Handling', () => {
     test('should handle actions recorded message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = {
         type: 'ACTIONS_RECORDED',
@@ -195,7 +195,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle recording started message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = { type: 'RECORDING_STARTED' };
       
@@ -208,7 +208,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle recording stopped message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = { type: 'RECORDING_STOPPED' };
       
@@ -221,7 +221,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle execution started message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = { type: 'EXECUTION_STARTED' };
       
@@ -232,7 +232,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle execution completed message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = { type: 'EXECUTION_COMPLETED' };
       
@@ -243,7 +243,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle error message', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const message = {
         type: 'ERROR',
@@ -259,7 +259,7 @@ describe('Popup UI Interactions', () => {
 
   describe('Instruction Input and Execution', () => {
     test('should handle instruction input', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.elements.instructionInput.value = 'Click the submit button';
       
@@ -273,7 +273,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should validate instruction input', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.elements.instructionInput.value = '';
       
@@ -284,7 +284,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should clear instruction after submission', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.elements.instructionInput.value = 'Click button';
       popup.handleInstructionSubmit();
@@ -293,7 +293,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle enter key in instruction input', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       const submitSpy = jest.spyOn(popup, 'handleInstructionSubmit');
       
       const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -303,7 +303,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should ignore non-enter keys', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       const submitSpy = jest.spyOn(popup, 'handleInstructionSubmit');
       
       const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
@@ -315,7 +315,7 @@ describe('Popup UI Interactions', () => {
 
   describe('State Persistence', () => {
     test('should save state to storage', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.state.isRecording = true;
       popup.state.actions = [{ type: 'click', target: 'button' }];
@@ -328,7 +328,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should debounce state saving', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.state.isRecording = true;
       
@@ -344,7 +344,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should load current tab ID', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       chrome.tabs.query.mockResolvedValue([{ id: 456 }]);
       
@@ -355,7 +355,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle tab query error', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       chrome.tabs.query.mockRejectedValue(new Error('Tab access denied'));
       
@@ -368,7 +368,7 @@ describe('Popup UI Interactions', () => {
 
   describe('UI Updates and Rendering', () => {
     test('should render actions list', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.state.actions = [
         { type: 'click', target: 'button1', description: 'Click button1' },
@@ -383,7 +383,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should update status message styling', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.updateStatus('Success!', 'success');
       
@@ -397,7 +397,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should show action count', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.state.actions = [
         { type: 'click' },
@@ -411,7 +411,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle empty actions list', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.state.actions = [];
       
@@ -422,7 +422,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should format action descriptions', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const action = {
         type: 'input',
@@ -441,7 +441,7 @@ describe('Popup UI Interactions', () => {
 
   describe('Error Handling and Edge Cases', () => {
     test('should handle chrome runtime errors', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       chrome.runtime.sendMessage.mockImplementation(() => {
         throw new Error('Extension context invalidated');
@@ -453,7 +453,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle storage errors', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       chrome.storage.local.set.mockImplementation(() => {
         throw new Error('Storage quota exceeded');
@@ -465,7 +465,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle malformed message data', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       const malformedMessage = {
         type: 'ACTIONS_RECORDED',
@@ -482,7 +482,7 @@ describe('Popup UI Interactions', () => {
       // Remove a required element
       document.getElementById('start-recording').remove();
       
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       expect(popup.elements.startRecording).toBeUndefined();
       // Should not crash
@@ -490,7 +490,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle rapid state changes', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       // Rapidly change recording state
       popup.setRecordingState(true);
@@ -504,13 +504,13 @@ describe('Popup UI Interactions', () => {
 
   describe('Integration with Background', () => {
     test('should register message listener', async () => {
-      await import('../../src/popup/index.js');
+      await import('../../../src/popup/index.js');
       
       expect(chrome.runtime.onMessage.addListener).toHaveBeenCalled();
     });
 
     test('should unregister message listener on cleanup', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       popup.cleanup();
       
@@ -518,7 +518,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should handle background connection errors', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       chrome.runtime.sendMessage.mockImplementation(() => {
         const error = new Error('Receiving end does not exist');
@@ -532,7 +532,7 @@ describe('Popup UI Interactions', () => {
     });
 
     test('should retry failed messages', async () => {
-      const popup = await import('../../src/popup/index.js');
+      const popup = await import('../../../src/popup/index.js');
       
       let callCount = 0;
       chrome.runtime.sendMessage.mockImplementation(() => {
