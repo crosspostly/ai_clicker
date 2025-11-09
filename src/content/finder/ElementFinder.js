@@ -308,26 +308,8 @@ export class ElementFinder {
   }
 
   /**
-    * Clear all cached elements
+    * Generate CSS selector from element
     */
-  clearCache() {
-    this.selectorCache.clear();
-  }
-
-  /**
-    * Get cache statistics
-    */
-  getCacheStats() {
-    return {
-      size: this.selectorCache.size,
-      maxSize: this.maxCacheSize,
-      usage: `${((this.selectorCache.size / this.maxCacheSize) * 100).toFixed(1)}%`
-    };
-  }
-
-  /**
-   * Generate CSS selector from element
-   */
   generateSelector(element) {
     if (element.id) {
       return `#${element.id}`;
