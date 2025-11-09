@@ -13,6 +13,13 @@
       <button id="settings-btn" class="settings-btn" title="Настройки">⚙️</button>
     </div>
 
+    <div class="live-mode-section">
+      <h3>Live Mode</h3>
+      <input id="live-api-key" type="password" placeholder="Gemini API ключ" style="width: 200px;">
+      <button id="toggle-live-mode" class="btn-live">🎙️ Start Live Mode</button>
+      <span id="live-status" class="live-status-text">Не активен</span>
+    </div>
+
     <div class="mode-selector">
       <button id="mode-manual" class="mode-btn active" data-mode="manual">Ручной</button>
       <button id="mode-auto" class="mode-btn" data-mode="auto">Автоматический</button>
@@ -23,13 +30,11 @@
         <button id="start-recording" class="btn-primary" title="Начать запись действий">🔴 Запись</button>
         <button id="stop-recording" class="btn-secondary" disabled title="Остановить запись">⏹️ Стоп</button>
       </div>
-
       <div class="actions-list">
         <h3>Записанные действия:</h3>
         <div id="actions-container"></div>
         <button id="clear-actions" class="btn-danger" title="Удалить все действия">🗑️ Очистить</button>
       </div>
-
       <div class="playback">
         <h3>Воспроизведение:</h3>
         <div class="playback-controls">
@@ -45,15 +50,12 @@
     <div id="auto-mode" class="mode-content">
       <div class="ai-panel">
         <h3>Инструкции для ИИ</h3>
-        <textarea 
-          id="ai-instructions" 
-          placeholder="Описание действий на русском языке. Пример: 'Кликни на кнопку Войти, введи email, затем пароль, нажми отправить'"></textarea>
+        <textarea id="ai-instructions" placeholder="Описание действий на русском языке. Пример: 'Кликни на кнопку Войти, введи email, затем пароль, нажми отправить'"></textarea>
         <div class="button-group">
           <button id="start-auto" class="btn-primary" title="Запустить автоматизацию">▶️ Запустить</button>
           <button id="stop-auto" class="btn-secondary" disabled title="Остановить автоматизацию">⏹️ Стоп</button>
         </div>
       </div>
-
       <div class="status-section">
         <h3>Статус:</h3>
         <div id="status-text" class="status-text">🕐 Ожидание</div>
@@ -64,6 +66,6 @@
 
   <input type="file" id="import-file-input" accept=".json" class="hidden">
 
-  <script type="module" src="popup.js"></script>
+  <script type="module" src="index.js"></script>
 </body>
 </html>
