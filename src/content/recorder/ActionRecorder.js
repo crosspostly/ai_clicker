@@ -9,6 +9,12 @@ export class ActionRecorder {
     this.recordedActions = [];
     this.lastAction = null;
     this.listeners = [];
+    this.startTime = null;
+    this.scrollTimeout = null;
+    this.lastScrollX = 0;
+    this.lastScrollY = 0;
+    this.lastScrollTime = 0;
+    
     this.handleClick = this.handleClick.bind(this);
     this.handleInput = this.handleInput.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -22,13 +28,17 @@ export class ActionRecorder {
     if (this.isRecording) return;
 
     this.isRecording = true;
+    this.startTime = Date.now();
     this.recordedActions = [];
     this.lastAction = null;
+    this.lastScrollX = window.scrollX || window.pageXOffset || 0;
+    this.lastScrollY = window.scrollY || window.pageYOffset || 0;
+    this.lastScrollTime = 0;
 
     document.addEventListener('click', this.handleClick, true);
     document.addEventListener('input', this.handleInput, true);
     document.addEventListener('change', this.handleChange, true);
-    window.addEventListener('scroll', this.handleScroll);
+    window.addEventListener('scroll', this.handleScroll, false);
 
     this.emit('recording-started');
   }
@@ -44,7 +54,12 @@ export class ActionRecorder {
     document.removeEventListener('click', this.handleClick, true);
     document.removeEventListener('input', this.handleInput, true);
     document.removeEventListener('change', this.handleChange, true);
-    window.removeEventListener('scroll', this.handleScroll);
+    window.removeEventListener('scroll', this.handleScroll, false);
+
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+      this.scrollTimeout = null;
+    }
 
     this.emit('recording-stopped', { actions: this.recordedActions });
   }
@@ -58,14 +73,29 @@ export class ActionRecorder {
     const target = event.target;
     if (this.shouldIgnoreElement(target)) return;
 
+    // Ignore right-clicks
+    if (event.button === 2) return;
+
     const selector = this.elementFinder.generateSelector(target);
-    const text = target.textContent?.trim() || target.value || '';
+    
+    let targetText = '';
+    if (target.textContent?.trim()) {
+      targetText = target.textContent.trim();
+    } else if (target.value) {
+      targetText = target.value;
+    } else if (target.placeholder) {
+      targetText = target.placeholder;
+    } else if (target.id) {
+      targetText = target.id;
+    } else {
+      targetText = selector;
+    }
 
     const action = {
       type: 'click',
-      target: text || selector,
+      target: targetText,
       selector: selector,
-      timestamp: Date.now(),
+      timestamp: event.timeStamp || Date.now(),
     };
 
     this.addAction(action);
@@ -105,7 +135,7 @@ export class ActionRecorder {
       value: value,
       target: placeholder || selector,
       selector: selector,
-      timestamp: Date.now(),
+      timestamp: event.timeStamp || Date.now(),
     };
 
     this.addAction(action);
@@ -116,21 +146,51 @@ export class ActionRecorder {
    */
   handleChange(event) {
     if (!this.isRecording) return;
+    if (!event || !event.target) return;
 
     const target = event.target;
+    const selector = this.elementFinder.generateSelector(target);
+    
+    let action = null;
 
     if (target.tagName.toLowerCase() === 'select') {
       const value = target.value;
-      const selector = this.elementFinder.generateSelector(target);
-
-      const action = {
-        type: 'select',
+      action = {
+        type: 'change',
+        element: selector,
         value: value,
         target: selector,
         selector: selector,
         timestamp: Date.now(),
       };
+    } else if (target.tagName.toLowerCase() === 'input') {
+      const inputType = target.getAttribute ? target.getAttribute('type') : target.type;
+      
+      if (inputType === 'checkbox') {
+        action = {
+          type: 'change',
+          element: selector,
+          value: target.checked,
+          target: selector,
+          selector: selector,
+          timestamp: Date.now(),
+        };
+      } else if (inputType === 'radio') {
+        if (target.checked) {
+          action = {
+            type: 'change',
+            element: selector,
+            value: target.value,
+            target: selector,
+            selector: selector,
+            timestamp: Date.now(),
+          };
+        }
+      }
+    }
 
+    if (action) {
+      action.timestamp = event.timeStamp || Date.now();
       this.addAction(action);
     }
   }
@@ -141,30 +201,50 @@ export class ActionRecorder {
   handleScroll() {
     if (!this.isRecording) return;
 
-    // Debounce scroll events
-    if (this.scrollTimeout) {
-      clearTimeout(this.scrollTimeout);
+    const currentScrollX = window.scrollX || window.pageXOffset || 0;
+    const currentScrollY = window.scrollY || window.pageYOffset || 0;
+    const currentTime = Date.now();
+
+    // Calculate deltas
+    const deltaX = currentScrollX - this.lastScrollX;
+    const deltaY = currentScrollY - this.lastScrollY;
+
+    // Determine direction
+    let direction = 'none';
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+      direction = deltaY > 0 ? 'down' : 'up';
+    } else if (Math.abs(deltaX) > 0) {
+      direction = deltaX > 0 ? 'right' : 'left';
     }
 
-    this.scrollTimeout = setTimeout(() => {
-      const scrollY = window.scrollY || window.pageYOffset;
+    // Skip tiny movements (throttling)
+    const minDelta = 10;
+    if (Math.abs(deltaX) < minDelta && Math.abs(deltaY) < minDelta) {
+      return;
+    }
 
-      // Only record if scroll changed significantly
-      if (
-        this.lastAction?.type === 'scroll' &&
-        Math.abs(this.lastAction.pixels - scrollY) < 50
-      ) {
-        return;
-      }
+    // Skip if too frequent (throttling)
+    const minTimeBetweenScrolls = 100; // ms
+    if (currentTime - this.lastScrollTime < minTimeBetweenScrolls) {
+      return;
+    }
 
-      const action = {
-        type: 'scroll',
-        pixels: Math.round(scrollY),
-        timestamp: Date.now(),
-      };
+    const action = {
+      type: 'scroll',
+      x: currentScrollX,
+      y: currentScrollY,
+      deltaX: deltaX,
+      deltaY: deltaY,
+      direction: direction,
+      timestamp: currentTime,
+    };
 
-      this.addAction(action);
-    }, 250);
+    this.addAction(action);
+
+    // Update tracking state
+    this.lastScrollX = currentScrollX;
+    this.lastScrollY = currentScrollY;
+    this.lastScrollTime = currentTime;
   }
 
   /**
@@ -199,13 +279,13 @@ export class ActionRecorder {
           action1.selector === action2.selector &&
           action1.value === action2.value
         );
-      case 'select':
+      case 'change':
         return (
           action1.selector === action2.selector &&
           action1.value === action2.value
         );
       case 'scroll':
-        return Math.abs(action1.pixels - action2.pixels) < 50;
+        return Math.abs(action1.y - action2.y) < 50;
       default:
         return false;
     }
@@ -310,6 +390,7 @@ export class ActionRecorder {
     return {
       isRecording: this.isRecording,
       actionCount: this.recordedActions.length,
+      duration: this.isRecording && this.startTime ? Date.now() - this.startTime : 0,
       actions: [...this.recordedActions],
     };
   }
