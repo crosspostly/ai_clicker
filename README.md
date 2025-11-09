@@ -1,17 +1,41 @@
-# 🤖 AI-Autoclicker v2.0.0
+# 🤖 AI Clicker - Intelligent Browser Automation Extension
 
-> **Status:** 🟢 Production Ready | Modern ES6 Architecture with Rollup Bundling
+> Transform your browser into an AI-powered automation assistant with voice control and real-time collaboration
 
-Powerful Chrome extension for web automation using Google Gemini AI and manual recording.
+[![Tests](https://github.com/crosspostly/ai_clicker/actions/workflows/ci.yml/badge.svg)](https://github.com/crosspostly/ai_clicker/actions)
+[![Coverage](https://img.shields.io/badge/coverage-63.8%25-yellow)](https://github.com/crosspostly/ai_clicker)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-[![CI Status](https://github.com/crosspostly/ai_clicker/actions/workflows/ci.yml/badge.svg)](https://github.com/crosspostly/ai_clicker/actions)
-[![Coverage](https://img.shields.io/badge/coverage-43%25-yellow)](https://github.com/crosspostly/ai_clicker)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+---
+
+## 🌟 Features
+
+### ✅ Current Features (v2.0)
+- **📝 Action Recording** - Record clicks, typing, and navigation
+- **🎯 Smart Playback** - Replay recorded actions with configurable speed
+- **🤖 AI-Powered** - Uses Google Gemini to understand natural language instructions
+- **📊 Export/Import** - Save and share automation scenarios
+- **🎨 Modern UI** - Clean, intuitive popup interface
+- **🏗️ Modern Architecture** - ES6 modules with Rollup bundling
+
+### 🚧 In Progress
+- **🔧 Critical Bugfixes** - Fixing ActionRecorder core issues ([#35](https://github.com/crosspostly/ai_clicker/issues/35))
+- **🧪 Test Coverage** - Increasing to 45%+ (currently 63.8% passing)
+
+### 🚀 Coming Soon (v3.0 - Live Mode) ([#36](https://github.com/crosspostly/ai_clicker/issues/36))
+- **🎤 Voice Control** - Speak commands naturally
+- **👁️ Visual AI** - AI sees your screen in real-time
+- **🤝 Real-time Collaboration** - Work together with AI
+- **📱 Non-blocking UI** - Sidebar overlay, no screen blocking
+- **💬 Natural Conversations** - Talk to AI like a co-worker
 
 ---
 
 ## 🚀 Quick Start
 
+### Installation
+
+#### From Source
 ```bash
 # 1. Clone repository
 git clone https://github.com/crosspostly/ai_clicker.git
@@ -26,502 +50,340 @@ npm run build
 # 4. Load in Chrome
 # Open chrome://extensions/
 # Enable "Developer mode"
-# Click "Load unpacked extension"
+# Click "Load unpacked"
 # Select deploy/ folder
 
-# 5. Get API key (optional)
+# 5. Get Gemini API key (optional for AI mode)
 # https://makersuite.google.com/app/apikey
 ```
 
----
+### Setup
 
-## ✨ Features
-
-- 🎬 **Action Recording** - Automatic recording of clicks, input, scrolling
-- 🤖 **AI Analysis** - Google Gemini converts text instructions to actions
-- ⚡ **Playback** - Repeat scenarios with adjustable speed
-- 💾 **Import/Export** - Save scenarios in JSON format
-- 🔒 **Security** - Data validation and XSS protection
-- 🏗️ **Modern Architecture** - ES6 modules with Rollup bundling
-- 🧪 **Comprehensive Testing** - Jest test suite with 40%+ coverage
+1. Click the extension icon in your toolbar
+2. Go to Settings
+3. Enter your [Google Gemini API key](https://makersuite.google.com/app/apikey)
+4. Click "Save Settings"
 
 ---
 
-## 📁 Project Structure
+## 📖 Usage
 
-```
-src/
-├── manifest.json           # Extension configuration
-│
-├── images/                 # Extension icons
-│   ├── icon16.png
-│   ├── icon48.png
-│   └── icon128.png
-│
-├── common/                 # Shared utilities (ES6 modules)
-│   ├── constants.js        # Application constants
-│   ├── logger.js           # Centralized logging
-│   ├── validator.js        # Data and action validation
-│   ├── storage.js          # Chrome Storage API wrapper
-│   ├── helpers.js          # Utilities (delay, debounce, throttle)
-│   └── events.js           # Event-driven communication
-│
-├── ai/                     # AI processing
-│   └── InstructionParser.js  # Natural language → actions parsing
-│
-├── popup/                  # Extension popup UI
-│   ├── index.html          # Main interface
-│   ├── index.js            # UI logic (43% test coverage)
-│   └── popup.css           # Styles
-│
-├── settings/               # Settings page
-│   ├── index.html          # Gemini API settings
-│   ├── index.js            # Configuration management
-│   └── settings.css        # Settings styles
-│
-├── background/             # Background Service Worker
-│   └── index.js            # Event listeners, message routing
-│
-├── content/                # Content scripts (page injection)
-│   ├── index.js            # Main entry point
-│   ├── content.css         # Visual indicators (recording, playback)
-│   ├── recorder/
-│   │   └── ActionRecorder.js  # User action recording (60% coverage)
-│   ├── executor/
-│   │   └── ActionExecutor.js  # Action execution (55% coverage)
-│   └── finder/
-│       └── ElementFinder.js   # Smart element selection (70% coverage)
-│
-├── rollup.config.js        # Rollup bundler configuration
-└── __tests__/              # 250+ unit & integration tests
-    ├── setup.js            # Jest + Chrome API mocks
-    ├── common/             # Utility tests
-    ├── ai/                 # AI parser tests
-    └── integration/        # E2E scenarios
+### Manual Mode (Recording & Playback)
 
-deploy/                      # Built extension (output)
-├── content.js              # Bundled content script
-├── popup.js                # Bundled popup script
-├── settings.js             # Bundled settings script
-├── background.js           # Bundled service worker
-└── [static files...]       # HTML, CSS, images, manifest
-```
+**Record Actions:**
+1. Click "Start Recording"
+2. Perform actions on the webpage (click, type, scroll)
+3. Click "Stop Recording"
+4. Actions are automatically saved
 
----
+**Playback:**
+1. Click "Play Actions" to replay your recorded scenario
+2. Adjust playback speed in settings (0.5x - 3x)
 
-## 🎯 Usage
+**Export/Import:**
+- Click "Export" to save scenario as JSON
+- Click "Import" to load saved scenarios
 
-### Manual Mode
+### AI Mode (Natural Language)
 
-1. Click the extension icon
-2. Press **"🔴 Record"**
-3. Perform actions on the page
-4. Press **"⏹️ Stop"**
-5. Press **"▶️ Play"** to replay
-
-### AI Mode (with Gemini)
-
-1. Switch to **"Automatic"** tab
-2. Enter instructions in English or Russian:
+**Give Instructions:**
+1. Switch to "AI Mode"
+2. Enter natural language instruction:
    ```
-   Click the Login button, enter email test@example.com, 
-   enter password 12345, press submit
+   "Find all product links and click the first one"
    ```
-3. Press **"▶️ Run AI"**
+3. Click "Execute with AI"
+4. AI will interpret and execute the action
 
-### Example Instructions
+**Example Instructions:**
+- "Fill out the form with test data"
+- "Click the 'Sign Up' button"
+- "Scroll to the bottom of the page"
+- "Find the search box and type 'AI automation'"
 
-**Login:**
-```
-Find the Email field and enter user@mail.com
-Find the Password field and enter mypassword123
-Click the Login button
-```
+### Live Mode (v3.0 - Coming Soon)
 
-**Form Filling:**
-```
-Enter "John Doe" in the Name field
-Select "United States" from the Country dropdown
-Check the "I agree to terms" checkbox
-Click the Register button
-```
+**Voice Control:**
+1. Click "Enable Live Mode"
+2. Grant microphone and screen capture permissions
+3. Speak your commands:
+   ```
+   "Hey AI, open Gmail and find emails from Pavel"
+   ```
+4. Watch as AI performs actions in real-time
+5. AI responds with voice and shows progress in sidebar
 
-**Navigation:**
+**Real-time Collaboration:**
+- AI sees your screen (screenshots every 2 seconds)
+- AI hears your voice (continuous listening)
+- AI speaks responses (natural voice)
+- AI performs actions (with visual highlights)
+- You remain in control (non-blocking overlay)
+
+---
+
+## 🏗️ Architecture
+
 ```
-Scroll down the page by 500 pixels
-Wait 2 seconds
-Click the Next link
+┌─────────────────────────────────────────────────┐
+│  Chrome Extension (Manifest V3)                 │
+│  ┌─────────────────────────────────────────┐   │
+│  │ Content Script                          │   │
+│  │ - DOM manipulation                      │   │
+│  │ - Event recording                       │   │
+│  │ - Action execution                      │   │
+│  │ - Live Mode overlay (v3.0)              │   │
+│  └─────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────┐   │
+│  │ Background Service Worker               │   │
+│  │ - API communication                     │   │
+│  │ - State management                      │   │
+│  │ - WebSocket (v3.0)                      │   │
+│  └─────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────┐   │
+│  │ Popup UI                                │   │
+│  │ - User controls                         │   │
+│  │ - Settings                              │   │
+│  │ - Action list                           │   │
+│  └─────────────────────────────────────────┘   │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  Google Gemini API                              │
+│  - gemini-2.0-flash-exp (current)               │
+│  - gemini-2.0-flash-live (v3.0)                 │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔧 Development
+## 🛠️ Development
 
-### Commands
+### Prerequisites
+- Node.js 20+ and npm
+- Chrome or Chromium-based browser
+- Google Gemini API key
+
+### Development Commands
 
 ```bash
 # Installation
 npm install              # Install dependencies
 
 # Build
-npm run build            # Development build → deploy/
-npm run build:dev        # Development with Rollup watch
+npm run build            # Development build
 npm run build:prod       # Production build + minification
 npm run build:watch      # Watch mode for development
 
+# Testing
+npm test                 # Run all tests
+npm run test:watch       # Watch mode
+npm run test:coverage    # Generate coverage report
+
 # Code Quality
 npm run lint             # ESLint check
+npm run lint:fix         # Auto-fix linting errors
 npm run format           # Prettier formatting
 
-# Testing
-npm test                 # Run all tests (Jest)
-npm run test:watch       # Watch mode for development
-npm run test:coverage    # Generate coverage report
-npm run test:verbose     # Verbose test output
-
 # Utilities
-npm run clean            # Remove deploy/ and ZIP files
+npm run clean            # Remove build artifacts
 ```
 
-### Architecture
+### Project Structure
 
-**Current State:**
-- ✅ ES6 modules with import/export syntax
-- ✅ Rollup bundling with 4 optimized bundles
-- ✅ Modern build pipeline with minification
-- ✅ Event-driven communication between modules
-- ✅ Feature-based directory structure
-- ✅ Source maps for development
+```
+ai_clicker/
+├── src/
+│   ├── ai/
+│   │   ├── GeminiClient.js          # Gemini API integration
+│   │   ├── GeminiLiveClient.js      # v3.0: Live API
+│   │   └── InstructionParser.js     # NL instruction parsing
+│   ├── background/
+│   │   └── index.js                 # Service worker
+│   ├── common/
+│   │   ├── constants.js             # Shared constants
+│   │   ├── logger.js                # Logging utility
+│   │   ├── storage.js               # Storage manager
+│   │   ├── validator.js             # Input validation
+│   │   ├── helpers.js               # Utility functions
+│   │   ├── ScreenCapture.js         # v3.0: Screen capture
+│   │   └── VoiceInput.js            # v3.0: Voice recording
+│   ├── content/
+│   │   ├── index.js                 # Content script entry
+│   │   ├── executor/
+│   │   │   └── ActionExecutor.js    # Action execution
+│   │   ├── finder/
+│   │   │   └── ElementFinder.js     # Element selection
+│   │   ├── recorder/
+│   │   │   └── ActionRecorder.js    # Action recording
+│   │   └── LiveModeOverlay.js       # v3.0: Live UI
+│   ├── popup/
+│   │   ├── index.js                 # Popup logic
+│   │   ├── popup.html               # Popup UI
+│   │   └── popup.css                # Popup styles
+│   └── __tests__/                   # Unit tests
+├── tests/                           # Integration tests
+├── deploy/                          # Build output
+├── docs/                            # Documentation
+│   ├── bugfix-plan.md               # Critical bugfix plan
+│   ├── gemini-live-plan.md          # Live Mode implementation
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── CONTRIBUTING.md
+│   └── ROADMAP.md
+├── manifest.json                    # Extension manifest
+├── package.json
+├── jest.config.cjs
+├── .babelrc
+├── .eslintrc.cjs
+└── README.md
+```
 
-**Bundle Structure:**
-- `content.js` - Content scripts and page interaction
-- `popup.js` - Extension popup interface
-- `settings.js` - Settings and configuration
-- `background.js` - Service worker and background tasks
+---
 
-**Principles:**
-- ✅ Separation of concerns
-- ✅ Single responsibility per module
-- ✅ CSP compliance (no eval, no inline scripts)
-- ✅ Explicit dependencies (no globals)
-- ✅ Tree-shaking and dead code elimination
+## 🐛 Known Issues & Roadmap
 
-**Modules:**
+### Current Status (v2.0)
+- ✅ Tests: 432/677 passing (63.8%)
+- ✅ ESLint: Passing
+- ✅ Build: Passing
+- ⚠️ Coverage: 36.99% (goal: 45%+)
 
-| Module | Purpose | Test Coverage |
-|--------|---------|---------------|
-| `common/` | Shared utilities | 65% |
-| `ai/` | Gemini integration | 50% |
-| `popup/` | Extension UI | 40% |
-| `settings/` | Configuration | 35% |
-| `background/` | Service Worker | 30% |
-| `content/` | Page scripts | 55% |
+### Critical Issues ([#35](https://github.com/crosspostly/ai_clicker/issues/35))
 
-**Overall coverage:** 43% (target: 65-70%)
+**ActionRecorder Bugs (URGENT):**
+- [ ] Fix event listener binding - recording not starting
+- [ ] Fix handleScroll - scroll events not captured
+- [ ] Fix handleChange - checkbox/radio errors
+- [ ] Fix getRecordingStatus - duration undefined
+- [ ] Update test mocks - add closest(), getAttribute()
+
+**Popup Exports:**
+- [ ] Export handleMessage, updateUI functions
+- [ ] Export getRecordedActions, clearRecordedActions
+- [ ] Fix 40 failing popup tests
+
+**Impact:** After fixes → **550/677 tests passing (81%+)**, coverage **45%+**
+
+### Planned Features (v3.0) ([#36](https://github.com/crosspostly/ai_clicker/issues/36))
+
+**Gemini Live Integration:**
+- [ ] Voice control (speech-to-text + text-to-speech)
+- [ ] Screen capture (2 FPS streaming)
+- [ ] Real-time overlay UI
+- [ ] WebSocket communication
+- [ ] Multimodal AI (audio + vision)
+
+**Timeline:**
+- Week 1: Foundation (8 hours)
+- Week 2: UI + Integration (12 hours)
+- Week 3: Testing & Polish (6 hours)
+- Release: v3.0 with Live Mode
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) and implementation plans in [docs/](docs/) for full details.
 
 ---
 
 ## 🧪 Testing
 
-### Current State
+### Current Test Status
 
 ```bash
 # Statistics
-✅ 250+ unit tests
-✅ 15+ integration tests
-✅ 43% code coverage
-✅ Jest framework with Chrome API mocks
-⚠️ E2E tests planned
+✅ 432/677 tests passing (63.8%)
+❌ 245/677 tests failing (36.2%)
+✅ 22/35 test suites passing
+❌ 13/35 test suites failing
+⚠️ Coverage: 36.99% (threshold: 40%)
 
-# Running tests
+# Run tests
 npm test                  # All tests
 npm run test:watch        # Watch mode
-npm run test:coverage     # With coverage report
-npm run test:verbose      # Verbose output
+npm run test:coverage     # With coverage
 ```
 
-### Coverage Targets
+### Test Categories
 
-**Current:** 43%  
-**Target:** 65-70%  
-**Roadmap:**
-- Month 1: 43% → 55% (+30-40 tests)
-- Month 2: 55% → 65% (+40-50 tests)
-- Month 3: 65% → 70% (+20-30 tests)
-
-### Why Not 100%?
-
-**100% coverage is NOT needed:**
-- Industry standard: 60-80%
-- Last 20% requires 3x more effort
-- Diminishing returns
-- False sense of security
-- Over-specification kills flexibility
-
-**Optimal range: 65-75%**
-
----
-
-## 🏗️ Build System
-
-### How It Works
-
-**Current Implementation:**
-```javascript
-// 1. Clean deploy/
-await fs.remove('deploy/')
-
-// 2. Rollup bundling
-rollup -c src/rollup.config.js
-// Creates 4 optimized bundles:
-// - content.js (page interaction)
-// - popup.js (extension UI)
-// - settings.js (configuration)
-// - background.js (service worker)
-
-// 3. Copy static files
-copy HTML, CSS, images, manifest.json
-
-// 4. Verify build
-check all required files exist
-report bundle sizes
-```
-
-**✅ Features:**
-- ✅ ES6 module bundling with Rollup
-- ✅ Tree-shaking and dead code elimination
-- ✅ Source maps for development
-- ✅ Minification for production
-- ✅ 4 optimized bundles instead of 300+ files
-
-**Results:**
-- 📦 4 optimized bundles
-- ⚡ Fast loading
-- 📏 Small size (~500KB vs 2-3MB)
-- 🗺️ Source maps for debugging
-
-**Bundle Structure:**
-- `content.js` - Page interaction and automation
-- `popup.js` - Extension popup interface
-- `settings.js` - Configuration management
-- `background.js` - Service worker and background tasks
-
----
-
-## 📝 Форматы данных
-
-### Действие (Action)
-
-```json
-{
-  "type": "click",
-  "selector": "button.login",
-  "target": "Кнопка входа",
-  "timestamp": 1699450000000
-}
-```
-
-### Сценарий (JSON Export)
-
-```json
-[
-  {
-    "type": "click",
-    "selector": "button.login",
-    "target": "Войти"
-  },
-  {
-    "type": "input",
-    "selector": "input[name='email']",
-    "value": "user@example.com"
-  },
-  {
-    "type": "wait",
-    "duration": 1000
-  }
-]
-```
-
----
-
-## 🐛 Устранение проблем
-
-### Расширение не загружается
-- Проверьте что загружена папка `deploy/`, а не `src/`
-- Убедитесь что `npm run build` выполнен успешно
-- Проверьте консоль на ошибки в `chrome://extensions/`
-
-### AI не работает
-- Проверьте API ключ в настройках
-- Нажмите "🧪 Тест" для проверки соединения
-- Лимит: 1000 бесплатных запросов в день
-
-### Элементы не находятся
-- Убедитесь что элемент виден на странице
-- Используйте более конкретные описания
-- Откройте консоль (F12) для отладки
-
-### CI/CD падает
-- Jest coverage threshold: 40% (временно)
-- Планируется повышение до 65-70%
-
----
-
-## 🔄 Migration from v1.x
-
-**⚠️ Important:** v2.0 is incompatible with v1.x
-
-**Migration Steps:**
-1. Export scenarios from v1.x (if needed)
-2. Remove old extension
-3. Install v2.0
-4. Re-enter API key
-5. Import scenarios (some errors possible)
-
-**What Changed:**
-- ✅ New modular architecture
-- ✅ ES6+ classes instead of global variables
-- ✅ Event-driven system
-- ✅ Enhanced security (CSP)
-- ✅ New validation system
-- ✅ Rollup bundling for performance
-
----
-
-## 🗺️ Roadmap
-
-### v2.1 (Month 1-2)
-- [ ] Add 40-60 tests (coverage → 55%)
-- [ ] Refactor popup UI
-- [ ] Performance optimizations
-- [ ] Enhanced error handling
-
-### v2.2 (Month 2-3)
-- [ ] Add 50-70 tests (coverage → 65%)
-- [ ] E2E tests (Playwright)
-- [ ] Security audit
-- [ ] User experience improvements
-
-### v2.3 (Month 3-4)
-- [ ] Add 20-30 tests (coverage → 70%)
-- [ ] Beta testing with users
-- [ ] Internationalization (i18n)
-- [ ] Advanced recording features
-
-### v3.0 (Long-term)
-- [ ] TypeScript migration
-- [ ] Advanced AI features (GPT-4)
-- [ ] Chrome Web Store publication
-- [ ] Cross-browser support (Firefox, Edge)
-
----
-
-## 📈 Project Metrics
-
-### Current Metrics
-
-| Metric | Value | Target |
-|--------|-------|--------|
-| **Lines of Code** | ~3,500 | N/A |
-| **Test Coverage** | 43% | 65-70% |
-| **Number of Tests** | 250+ | 400+ |
-| **Build Size** | ~500 KB | <1 MB |
-| **Bundle Count** | 4 files | 4 files |
-| **Load Time** | ~200ms | <200ms |
-
-### Quality Assessment
-
-| Criteria | Score | Status |
+| Category | Tests | Status |
 |----------|-------|--------|
-| Functionality | 9/10 | ✅ Excellent |
-| Code Quality | 8/10 | ✅ Good |
-| Testing | 7/10 | ✅ Good |
-| Performance | 8/10 | ✅ Good |
-| Security | 8/10 | ✅ Good |
-| Documentation | 9/10 | ✅ Excellent |
-| CI/CD | 8/10 | ✅ Good |
-| Scalability | 7/10 | ✅ Good |
-
-**Overall Score:** 8.0/10 (Production Ready)
-
----
-
-## 📄 Documentation
-
-### Core Documentation
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Architecture details and module structure
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** — Development setup and workflows
-- **[CHANGELOG.md](CHANGELOG.md)** — Version history and changes
-
-### User & Developer Guides
-- **[docs/README.md](docs/README.md)** — Complete documentation index
-- **[docs/INSTALLATION.md](docs/INSTALLATION.md)** — Installation and setup guide
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** — Development workflows
-- **[docs/TESTING.md](docs/TESTING.md)** — Testing with Jest
-
-### API & Reference
-- **[docs/GEMINI-API-MIGRATION.md](docs/GEMINI-API-MIGRATION.md)** — Gemini API migration guide
-- **[docs/FINAL-READINESS-CHECK.md](docs/FINAL-READINESS-CHECK.md)** — Release readiness checklist
-
-### Testing Documentation
-- **[tests/README.md](tests/README.md)** — Test suite overview
-- **[tests/docs/](tests/docs/)** — Test planning and batch guides
+| Common utilities | ~100 | ✅ 95% passing |
+| AI parser | ~50 | ✅ 90% passing |
+| ActionRecorder | ~30 | ❌ 40% passing (CRITICAL) |
+| ActionExecutor | ~40 | ✅ 85% passing |
+| Popup | ~80 | ❌ 50% passing (needs exports) |
+| Background | ~20 | ❌ 0% passing (module errors) |
+| Integration | ~15 | ✅ 80% passing |
 
 ---
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+
+### How to Contribute
+
 1. Fork the repository
-2. Create a branch: `git checkout -b feature/amazing-feature`
-3. Commit: `git commit -m 'feat: add amazing feature'`
-4. Push: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`npm test`)
+5. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-**Conventions (Conventional Commits):**
-- `feat:` - new functionality
-- `fix:` - bug fix
-- `docs:` - documentation
-- `refactor:` - refactoring without functionality change
-- `test:` - adding/fixing tests
-- `chore:` - build process changes
+### Development Workflow
 
-**PR Requirements:**
-- ✅ Lint passed (`npm run lint`)
-- ✅ Tests passed (`npm test`)
-- ✅ Coverage not decreased
-- ✅ Build works (`npm run build`)
-- ✅ Documentation updated (if applicable)
+1. Create an issue describing the feature/bug
+2. Get approval from maintainers
+3. Implement the change
+4. Write/update tests
+5. Update documentation
+6. Submit PR with reference to issue
 
 ---
 
-## 📜 License
+## 📄 License
 
-MIT License - see [LICENSE](LICENSE)
-
----
-
-## 📞 Contact
-
-**Author:** [crosspostly](https://github.com/crosspostly)  
-**Repository:** [ai_clicker](https://github.com/crosspostly/ai_clicker)  
-**Issues:** [GitHub Issues](https://github.com/crosspostly/ai_clicker/issues)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Google Gemini API** - AI processing
+- **Google Gemini** - For powerful AI capabilities
+- **Chrome Extensions** - For the platform
 - **Jest** - Testing framework
 - **Rollup** - Module bundling
-- **ESLint** - Code quality
-- **Chrome Extensions** - Platform
+- **Open Source Community** - For inspiration and tools
+
+---
+
+## 📞 Contact & Support
+
+- **Issues:** [GitHub Issues](https://github.com/crosspostly/ai_clicker/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/crosspostly/ai_clicker/discussions)
+- **Author:** [@crosspostly](https://github.com/crosspostly)
+
+---
+
+## 🎯 Quick Links
+
+- **[Critical Bugfixes Plan](docs/bugfix-plan.md)** - ActionRecorder fixes
+- **[Gemini Live Plan](docs/gemini-live-plan.md)** - v3.0 implementation
+- **[Architecture](docs/ARCHITECTURE.md)** - System design
+- **[Contributing](docs/CONTRIBUTING.md)** - How to contribute
+- **[Roadmap](docs/ROADMAP.md)** - Future plans
 
 ---
 
 **Version:** 2.0.0  
-**Updated:** 2025-11-08  
-**Status:** 🟢 Production Ready (8.0/10)  
+**Status:** 🟡 Stable (critical bugs in progress)  
+**Next Release:** v2.1 (bugfixes), v3.0 (Live Mode)  
+**Updated:** 2025-11-09
 
 ---
 
-**⭐ If this project is useful, give it a star on GitHub!**
+**Built with ❤️ by [@crosspostly](https://github.com/crosspostly)**  
+**Powered by AI 🤖**
+
+⭐ **If you find this project useful, please give it a star!**
