@@ -1,4 +1,4 @@
-import { expect, test, describe } from '@jest/globals';
+import { jest, expect, test, describe } from '@jest/globals';
 
 describe('Import/Export JSON Format', () => {
   test('сохранение записанных действий', () => {

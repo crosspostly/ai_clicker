@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import * as Constants from '../../common/constants.js';
+import * as Constants from '../../common/constants';
 
 describe('Constants Module', () => {
   test('LOG_LEVELS should have required properties', () => {

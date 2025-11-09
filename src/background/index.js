@@ -3,8 +3,6 @@
  * Handles background tasks and message routing
  */
 
-import { StorageManager } from '../common/storage.js';
-
 /**
  * Listen for extension installation
  */

@@ -4,6 +4,8 @@
  * Coverage: popup.js action removal and clearing
  */
 
+import { jest } from '@jest/globals';
+
 describe('Popup Action Removal', () => {
   beforeEach(() => {
     document.body.innerHTML = `

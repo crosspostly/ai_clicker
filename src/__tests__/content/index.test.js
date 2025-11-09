@@ -4,7 +4,7 @@
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
-// Mock Chrome APIs
+// Mock Chrome APIs BEFORE importing the content script
 const mockAddListener = jest.fn();
 global.chrome = {
   runtime: {
@@ -15,8 +15,9 @@ global.chrome = {
   }
 };
 
-// Mock DOM APIs
+// Mock DOM APIs BEFORE importing the content script
 global.document = {
+  readyState: 'complete', // Set to complete to prevent immediate init
   addEventListener: jest.fn(),
   createElement: jest.fn(),
   getElementById: jest.fn(),
@@ -28,6 +29,9 @@ global.window = {
   addEventListener: jest.fn(),
   location: { href: 'http://localhost' }
 };
+
+// Now import the content script after mocks are set up
+import '../../content/index.js';
 
 // Mock console methods
 global.console = {

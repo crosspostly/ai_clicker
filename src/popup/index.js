@@ -5,9 +5,9 @@
 import { StorageManager } from '../common/storage.js';
 import { Validator } from '../common/validator.js';
 
-let isRecording = false;
+let _isRecording = false;
 let recordedActions = [];
-let isAutoMode = false;
+let _isAutoMode = false;
 let geminiEnabled = false;
 let geminiApiKey = null;
 
@@ -128,7 +128,7 @@ function setupMessageListeners() {
  * Switch to manual mode
  */
 function switchToManualMode() {
-  isAutoMode = false;
+  _isAutoMode = false;
   modeManualBtn.classList.add('active');
   modeAutoBtn.classList.remove('active');
   manualModeDiv.classList.add('active');
@@ -139,7 +139,7 @@ function switchToManualMode() {
  * Switch to auto mode
  */
 function switchToAutoMode() {
-  isAutoMode = true;
+  _isAutoMode = true;
   modeAutoBtn.classList.add('active');
   modeManualBtn.classList.remove('active');
   autoModeDiv.classList.add('active');
@@ -150,7 +150,7 @@ function switchToAutoMode() {
  * Start recording
  */
 function startRecording() {
-  isRecording = true;
+  _isRecording = true;
   recordedActions = [];
   actionsContainer.innerHTML = '';
   startRecordingBtn.disabled = true;
@@ -160,8 +160,8 @@ function startRecording() {
 
   chrome.runtime.sendMessage({ 
     target: 'content',
-    action: 'startRecording' 
-  }, (response) => {
+    action: 'startRecording', 
+  }, (_response) => {
     if (chrome.runtime.lastError) {
       console.error('Failed to start recording:', chrome.runtime.lastError);
       addLog('✗ Ошибка запуска записи', 'error');
@@ -173,7 +173,7 @@ function startRecording() {
  * Stop recording
  */
 function stopRecording() {
-  isRecording = false;
+  _isRecording = false;
   startRecordingBtn.disabled = false;
   stopRecordingBtn.disabled = true;
   updatePlaybackButton();
@@ -184,8 +184,8 @@ function stopRecording() {
 
   chrome.runtime.sendMessage({ 
     target: 'content',
-    action: 'stopRecording' 
-  }, (response) => {
+    action: 'stopRecording', 
+  }, (_response) => {
     if (chrome.runtime.lastError) {
       console.error('Failed to stop recording:', chrome.runtime.lastError);
       addLog('✗ Ошибка остановки записи', 'error');
@@ -232,7 +232,7 @@ function playActions() {
     action: 'playActions',
     actions: recordedActions,
     speed: speed,
-  }, (response) => {
+  }, (_response) => {
     if (chrome.runtime.lastError) {
       console.error('Failed to play actions:', chrome.runtime.lastError);
       addLog('✗ Ошибка воспроизведения', 'error');
@@ -392,7 +392,7 @@ async function startAutoMode() {
       action: 'startAIMode',
       instructions: instructions,
       geminiApiKey: geminiEnabled ? geminiApiKey : null,
-    }, (response) => {
+    }, (_response) => {
       if (chrome.runtime.lastError) {
         console.error('Failed to start AI mode:', chrome.runtime.lastError);
         addLog('✗ Ошибка запуска ИИ режима', 'error');
@@ -419,8 +419,8 @@ function stopAutoMode() {
 
   chrome.runtime.sendMessage({ 
     target: 'content',
-    action: 'stopAIMode' 
-  }, (response) => {
+    action: 'stopAIMode', 
+  }, (_response) => {
     if (chrome.runtime.lastError) {
       console.error('Failed to stop AI mode:', chrome.runtime.lastError);
       addLog('✗ Ошибка остановки ИИ режима', 'error');

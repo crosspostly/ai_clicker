@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { StorageManager, StorageError } from '../../common/storage.js';
+import { StorageManager, StorageError } from '../../common/storage';
 
 describe('StorageManager Class', () => {
   beforeEach(() => {

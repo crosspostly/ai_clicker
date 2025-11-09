@@ -1,9 +1,9 @@
 import { describe, test, expect, jest } from '@jest/globals';
-import { Logger } from '../../common/logger.js';
-import { Validator, ValidationError } from '../../common/validator.js';
-import { StorageManager } from '../../common/storage.js';
-import { Helpers } from '../../common/helpers.js';
-import { EventEmitter } from '../../common/events.js';
+import { Logger } from '../../common/logger';
+import { Validator, ValidationError } from '../../common/validator';
+import { StorageManager } from '../../common/storage';
+import { Helpers } from '../../common/helpers';
+import { EventEmitter } from '../../common/events';
 
 describe('ES6 Modules Integration', () => {
   test('All modules should be importable', () => {

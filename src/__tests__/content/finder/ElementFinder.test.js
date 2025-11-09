@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { ElementFinder } from '../../../content/finder/ElementFinder.js';
+import { ElementFinder } from '../../../content/finder/ElementFinder';
 
 describe('ElementFinder', () => {
   let finder;

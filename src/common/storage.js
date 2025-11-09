@@ -4,7 +4,6 @@
  */
 
 import { Logger } from './logger.js';
-import { STORAGE_KEYS } from './constants.js';
 
 export class StorageError extends Error {
   constructor(message) {

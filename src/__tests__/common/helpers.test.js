@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { Helpers } from '../../common/helpers.js';
+import { Helpers } from '../../common/helpers';
 
 describe('Helpers Class', () => {
   beforeEach(() => {

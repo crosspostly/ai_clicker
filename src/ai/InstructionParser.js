@@ -3,14 +3,12 @@
  * Updated to use Gemini 2.0/2.5 Flash (Nov 2025)
  */
 
-import { ACTION_TYPES } from '../common/constants.js';
-
 // Gemini model priority: 2.0 Flash Experimental → 2.0 Flash GA → 1.5 Flash → 1.5 Pro
 const GEMINI_MODELS = [
   'gemini-2.0-flash-exp',     // Experimental (best performance)
   'gemini-2.0-flash-001',     // GA (stable)
   'gemini-1.5-flash',         // Fallback
-  'gemini-1.5-pro'            // Last resort
+  'gemini-1.5-pro',            // Last resort
 ];
 
 export class InstructionParser {

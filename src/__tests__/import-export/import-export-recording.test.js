@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { StorageManager } from '../../common/storage.js';
+import { StorageManager } from '../../common/storage';
 
 // Mock DOM and Chrome APIs
 global.Blob = jest.fn(function(content, options) {

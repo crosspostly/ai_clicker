@@ -3,8 +3,6 @@
  * Provides structured logging with levels and timestamps
  */
 
-import { LOG_LEVELS } from './constants.js';
-
 export class Logger {
   static LEVELS = {
     DEBUG: 0,
