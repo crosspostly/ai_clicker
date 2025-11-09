@@ -9,6 +9,8 @@ import { ActionExecutor } from './executor/ActionExecutor';
 import { InstructionParser } from '../ai/InstructionParser';
 import { LiveModeOverlay } from './LiveModeOverlay.js';
 import { VoiceInput } from '../common/VoiceInput.js';
+import { PlaybackRenderer } from './playbackRenderer.js';
+import { PLAYBACK_MESSAGES } from '../common/constants.js';
 
 // Global instances
 let elementFinder = null;
@@ -20,6 +22,9 @@ let liveOverlay = null;
 let voiceInput = null;
 let isLiveModeActive = false;
 
+// ✅ Playback instances
+let playbackRenderer = null;
+
 /**
  * Initialize content script
  */
@@ -28,10 +33,12 @@ function init() {
     elementFinder = new ElementFinder();
     actionRecorder = new ActionRecorder(elementFinder);
     actionExecutor = new ActionExecutor(elementFinder);
+    playbackRenderer = new PlaybackRenderer();
 
     setupMessageListeners();
     setupRecorderListeners();
     setupExecutorListeners();
+    setupPlaybackListeners();
   } catch (error) {
     console.error('[AI-Autoclicker] Initialization error:', error);
   }
@@ -389,7 +396,7 @@ async function startVoiceInput() {
           action: 'sendUserInput',
           audio: audioBase64,
         });
-      }
+      },
     );
 
     if (liveOverlay) {
@@ -525,6 +532,63 @@ function sendMessageToPopup(message) {
   } catch (error) {
     console.warn('[AI-Autoclicker] Failed to send message to popup:', error);
   }
+}
+
+/**
+ * ✅ Setup playback message listeners
+ */
+function setupPlaybackListeners() {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    (async () => {
+      try {
+        switch (request.type) {
+          case PLAYBACK_MESSAGES.EXECUTE: {
+            if (!playbackRenderer) {
+              sendResponse({ success: false, error: 'Playback renderer not initialized' });
+              return;
+            }
+
+            const result = await playbackRenderer.execute(request.action);
+            
+            // Send response back to background
+            chrome.runtime.sendMessage({
+              type: PLAYBACK_MESSAGES.EXECUTE,
+              jobId: request.jobId,
+              actionIndex: request.actionIndex,
+              response: result,
+            });
+
+            sendResponse({ success: true });
+            break;
+          }
+
+          case PLAYBACK_MESSAGES.STOP:
+            if (playbackRenderer) {
+              playbackRenderer.cleanup();
+            }
+            sendResponse({ success: true });
+            break;
+
+          case PLAYBACK_MESSAGES.PAUSE:
+            // Pause is handled at the engine level
+            sendResponse({ success: true });
+            break;
+
+          case PLAYBACK_MESSAGES.RESUME:
+            // Resume is handled at the engine level
+            sendResponse({ success: true });
+            break;
+
+          default:
+            sendResponse({ success: false, error: 'Unknown playback message type' });
+        }
+      } catch (error) {
+        console.error('[Playback] Message handler error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Keep message channel open for async response
+  });
 }
 
 // Initialize when DOM is ready

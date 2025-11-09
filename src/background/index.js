@@ -5,6 +5,10 @@
 
 import { voiceHandler } from './voiceHandler.js';
 import { liveModeManager } from './LiveModeManager.js';
+import { PlaybackHandler } from './playbackHandler.js';
+
+// Initialize playback handler
+const playbackHandler = new PlaybackHandler();
 
 /**
  * Listen for extension installation
