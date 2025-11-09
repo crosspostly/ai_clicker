@@ -27,7 +27,7 @@ export default {
     '!**/node_modules/**'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
     global: {
       branches: 45,
@@ -56,9 +56,10 @@ export default {
     '/deploy/'
   ],
   
-  // Verbose output
-  verbose: true,
+  // CI-specific optimizations
+  maxWorkers: process.env.CI ? 2 : '50%',  // Limit workers in CI to prevent OOM
+  testTimeout: 10000,
   
-  // Test timeout
-  testTimeout: 10000
+  // Verbose output
+  verbose: true
 };
