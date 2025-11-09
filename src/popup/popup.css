@@ -11,8 +11,8 @@
 body {
   width: 420px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #333;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
 }
 
 .popup-container {
@@ -456,4 +456,151 @@ body {
 
 .hidden {
   display: none;
+}
+
+/* Tab Navigation Styles */
+.tab-selector {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  background: var(--color-bg-secondary);
+  padding: var(--space-xs);
+  border-radius: var(--border-radius);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.tab-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.tab-btn.active {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Tab Content Styles */
+.tab-content {
+  position: relative;
+  min-height: 400px;
+}
+
+.tab-pane {
+  display: none;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+/* Iframe Styles for Tabs */
+.tab-pane iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--color-bg-primary);
+}
+
+/* Update existing styles to use variables */
+.popup-container {
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius);
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: var(--space-sm);
+}
+
+.header h1 {
+  font-size: 18px;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: var(--space-xs);
+  color: var(--color-text-primary);
+}
+
+.settings-btn:hover {
+  transform: rotate(20deg);
+}
+
+/* Update button styles to use variables */
+.btn-primary, .btn-secondary, .btn-danger {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:disabled {
+  background: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-border);
+}
+
+.btn-secondary:disabled {
+  background: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #ee5a52;
 }

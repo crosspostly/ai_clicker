@@ -280,9 +280,10 @@ export class SettingsValidator {
       switch (targetType) {
         case 'string':
           return String(value);
-        case 'number':
+        case 'number': {
           const num = Number(value);
           return isNaN(num) ? 0 : num;
+        }
         case 'boolean':
           if (typeof value === 'string') {
             return value.toLowerCase() === 'true' || value === '1';

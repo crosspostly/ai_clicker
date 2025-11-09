@@ -28,7 +28,7 @@ export class ScreenCapture {
           console.log('[ScreenCapture] User selected stream:', streamId);
           this.streamId = streamId;
           resolve(streamId);
-        }
+        },
       );
     });
   }
@@ -48,9 +48,9 @@ export class ScreenCapture {
             chromeMediaSource: 'desktop',
             chromeMediaSourceId: this.streamId,
             maxWidth: 1920,
-            maxHeight: 1080
-          }
-        }
+            maxHeight: 1080,
+          },
+        },
       });
 
       console.log('[ScreenCapture] Stream acquired');
@@ -170,7 +170,7 @@ export class ScreenCapture {
     return {
       isCapturing: this.isCapturing,
       hasStream: !!this.stream,
-      streamId: this.streamId
+      streamId: this.streamId,
     };
   }
 }

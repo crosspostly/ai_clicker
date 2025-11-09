@@ -54,7 +54,17 @@ export default [
     },
     plugins: createPlugins(),
   },
-  // Bundle 5: Service Worker (Background)
+  // Bundle 5: Playback Control
+  {
+    input: 'src/popup/playback.js',
+    output: {
+      file: 'deploy/playback.js',
+      format: 'es',
+      sourcemap: isDev,
+    },
+    plugins: createPlugins(),
+  },
+  // Bundle 6: Service Worker (Background)
   {
     input: 'src/background/index.js',
     output: {

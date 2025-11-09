@@ -389,7 +389,7 @@ async function startVoiceInput() {
           action: 'sendUserInput',
           audio: audioBase64,
         });
-      }
+      },
     );
 
     if (liveOverlay) {

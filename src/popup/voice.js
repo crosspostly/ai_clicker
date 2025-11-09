@@ -361,7 +361,7 @@ class VoiceController {
       this.voiceStatus.textContent = `Команда выполнена: ${this.formatCommand(command)}`;
       this.voiceStatus.classList.add('success');
     } else {
-      this.voiceStatus.textContent = `Ошибка выполнения команды`;
+      this.voiceStatus.textContent = 'Ошибка выполнения команды';
       this.voiceStatus.classList.add('error');
     }
 

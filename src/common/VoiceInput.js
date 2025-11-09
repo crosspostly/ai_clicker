@@ -73,8 +73,8 @@ export class VoiceInput {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000
-        }
+          sampleRate: 16000,
+        },
       });
       
       // ✅ Check MediaRecorder support
@@ -151,7 +151,7 @@ export class VoiceInput {
   getStatus() {
     return {
       isListening: this.isListening,
-      isSupported: this.isSupported()
+      isSupported: this.isSupported(),
     };
   }
 }
