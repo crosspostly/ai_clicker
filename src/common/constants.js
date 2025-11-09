@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   GEMINI_ENABLED: 'geminiEnabled',
   EXECUTION_HISTORY: 'executionHistory',
   USER_PREFERENCES: 'userPreferences',
+  SETTINGS: 'settings',
 };
 
 export const API_CONFIG = {
@@ -33,6 +34,13 @@ export const API_CONFIG = {
     'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
   GEMINI_TIMEOUT: 30000,
   MAX_RETRIES: 3,
+  GEMINI_LIVE_MODELS: [
+    'gemini-2.0-flash-exp',
+    'gemini-2.0-flash-001',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ],
+  VOICE_TIMEOUT: 120000,
 };
 
 export const UI_CONFIG = {
@@ -48,5 +56,52 @@ export const SELECTOR_STRATEGIES = {
   CSS: 'css',
   TEXT: 'text',
   ARIA_LABEL: 'aria-label',
+};
+
+export const VOICE_MESSAGE_TYPES = {
+  VOICE_START: 'VOICE_START',
+  VOICE_STOP: 'VOICE_STOP',
+  VOICE_DATA: 'VOICE_DATA',
+  VOICE_TRANSCRIPTION: 'VOICE_TRANSCRIPTION',
+  VOICE_COMMAND: 'VOICE_COMMAND',
+  VOICE_ERROR: 'VOICE_ERROR',
+};
+
+export const SETTINGS_MESSAGE_TYPES = {
+  SETTINGS_GET: 'SETTINGS_GET',
+  SETTINGS_SET: 'SETTINGS_SET',
+  SETTINGS_UPDATE: 'SETTINGS_UPDATE',
+  SETTINGS_EXPORT: 'SETTINGS_EXPORT',
+  SETTINGS_IMPORT: 'SETTINGS_IMPORT',
+};
+
+export const LANGUAGES = {
+  AUTO: 'auto',
+  ENGLISH: 'en',
+  RUSSIAN: 'ru',
+};
+
+export const THEMES = {
+  LIGHT: 'light',
+  DARK: 'dark',
+  AUTO: 'auto',
+};
+
+export const DEFAULT_SETTINGS = {
+  gemini: {
+    apiKey: '',
+    model: 'auto',
+    timeout: 120000,
+    language: 'auto',
+  },
+  ui: {
+    theme: 'dark',
+    compactMode: false,
+  },
+  shortcuts: {
+    toggleRecording: 'Ctrl+Shift+R',
+    toggleVoice: 'Ctrl+Shift+V',
+    playback: 'Ctrl+Shift+P',
+  },
 };
 

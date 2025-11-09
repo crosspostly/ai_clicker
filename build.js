@@ -13,12 +13,13 @@ const deployDir = path.join(__dirname, 'deploy');
 
 const htmlFiles = [
   { src: 'popup/index.html', dest: 'popup.html' },
-  { src: 'settings/index.html', dest: 'settings.html' },
+  { src: 'popup/voice.html', dest: 'voice.html' },
+  { src: 'popup/settings.html', dest: 'settings.html' },
 ];
 
 const cssFiles = [
   { src: 'popup/popup.css', dest: 'popup.css' },
-  { src: 'settings/settings.css', dest: 'settings.css' },
+  { src: 'popup/styles/settings.css', dest: 'settings.css' },
   { src: 'content/content.css', dest: 'content.css' },
 ];
 
@@ -134,9 +135,11 @@ function verifyBuild() {
     'manifest.json',
     'content.js',
     'popup.js',
+    'voice.js',
     'settings.js',
     'background.js',
     'popup.html',
+    'voice.html',
     'settings.html',
   ];
 
@@ -179,7 +182,7 @@ function verifyBuild() {
 
 function checkBundleSizes() {
   console.log('📊 Checking bundle sizes...');
-  const bundles = ['content.js', 'popup.js', 'settings.js', 'background.js'];
+  const bundles = ['content.js', 'popup.js', 'voice.js', 'settings.js', 'background.js'];
 
   bundles.forEach(bundle => {
     const filePath = path.join(deployDir, bundle);
