@@ -31,7 +31,9 @@ export class LiveModeManager {
 
       // Initialize Gemini Live client
       this.geminiClient = new GeminiLiveClient(apiKey);
-      await this.geminiClient.connect();
+      const { model } = await this.geminiClient.connect();
+      
+      console.log('[LiveModeManager] Connected with model:', model);
 
       // Setup response handlers
       this.geminiClient.on('text', (text) => {
@@ -44,6 +46,12 @@ export class LiveModeManager {
 
       this.geminiClient.on('action', (action) => {
         this.handleActionResponse(action);
+      });
+      
+      // ✅ Handle parsed commands from text
+      this.geminiClient.on('command', (command) => {
+        console.log('[LiveModeManager] Parsed command:', command);
+        this.handleActionResponse(command);
       });
 
       this.geminiClient.on('error', (error) => {
@@ -58,24 +66,18 @@ export class LiveModeManager {
       this.screenCapture = new ScreenCapture();
       await this.screenCapture.start((screenshot) => {
         if (screenshot) {
-          // Update bandwidth tracking
           this.trackBandwidth(screenshot.length);
-          
-          // Send screenshot to Gemini
           this.geminiClient.sendInput({ screenshot });
-          
-          // Send preview to tab
           this.sendToTab({
             type: 'live-screenshot',
             screenshot
           });
         }
-      }, 3000); // Every 3 seconds
+      }, 3000);
 
       this.isActive = true;
       console.log('[LiveModeManager] Started successfully');
 
-      // Notify tab that Live Mode is ready
       this.sendToTab({
         type: 'live-status',
         status: 'listening',
@@ -153,7 +155,6 @@ export class LiveModeManager {
     }
 
     try {
-      // Track bandwidth if audio is sent
       if (audio) {
         this.trackBandwidth(audio.length);
       }
@@ -176,13 +177,12 @@ export class LiveModeManager {
    */
   trackBandwidth(dataSize) {
     const now = Date.now();
-    const elapsed = (now - this.lastBandwidthUpdate) / 1000; // seconds
+    const elapsed = (now - this.lastBandwidthUpdate) / 1000;
     
     if (elapsed > 0) {
-      this.bandwidthUsage = dataSize / elapsed; // bytes per second
+      this.bandwidthUsage = dataSize / elapsed;
       this.lastBandwidthUpdate = now;
       
-      // Send bandwidth update to tab
       this.sendToTab({
         type: 'live-bandwidth',
         bytesPerSecond: this.bandwidthUsage
@@ -205,7 +205,6 @@ export class LiveModeManager {
    * Toggle microphone
    */
   toggleMicrophone() {
-    // This will be handled by VoiceInput in content script
     this.sendToTab({ type: 'live-toggle-mic' });
   }
 
@@ -269,7 +268,8 @@ export class LiveModeManager {
       isActive: this.isActive,
       hasClient: !!this.geminiClient,
       hasScreenCapture: !!this.screenCapture,
-      bandwidthUsage: this.bandwidthUsage
+      bandwidthUsage: this.bandwidthUsage,
+      currentModel: this.geminiClient?.getCurrentModel()
     };
   }
 }
