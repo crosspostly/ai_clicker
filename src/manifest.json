@@ -1,15 +1,16 @@
 {
   "manifest_version": 3,
   "name": "ИИ-Автокликер",
-  "version": "2.0.0",
-  "description": "Автоматизация действий на веб-страницах с поддержкой Google Gemini ИИ",
+  "version": "3.0.0",
+  "description": "Автоматизация действий на веб-страницах с поддержкой Google Gemini Live",
   
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "tabs",
-    "microphone"
+    "tabCapture",
+    "desktopCapture"
   ],
   
   "action": {
