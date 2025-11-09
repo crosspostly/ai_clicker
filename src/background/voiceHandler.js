@@ -76,7 +76,7 @@ export class VoiceHandler {
       // Initialize Gemini Live service
       const result = await geminiLiveService.initialize(
         this.settings.gemini.apiKey,
-        this.settings.gemini
+        this.settings.gemini,
       );
 
       if (!result.success) {
@@ -299,7 +299,7 @@ export class VoiceHandler {
         
         const result = await geminiLiveService.initialize(
           this.settings.gemini.apiKey,
-          this.settings.gemini
+          this.settings.gemini,
         );
 
         if (!result.success) {
@@ -423,7 +423,7 @@ export class VoiceHandler {
 
       const result = await geminiLiveService.testConnection(
         this.settings.gemini.apiKey,
-        this.settings.gemini.model
+        this.settings.gemini.model,
       );
 
       return result;

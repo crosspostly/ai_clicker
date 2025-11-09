@@ -65,12 +65,12 @@ export class GeminiLiveClient {
                 speech_config: {
                   voice_config: {
                     prebuilt_voice_config: {
-                      voice_name: 'en-US-Journey-D'
-                    }
-                  }
-                }
-              }
-            }
+                      voice_name: 'en-US-Journey-D',
+                    },
+                  },
+                },
+              },
+            },
           }));
           
           resolve({ model: this.currentModel });
@@ -151,8 +151,8 @@ export class GeminiLiveClient {
         parts.push({
           inline_data: {
             mime_type: 'audio/pcm',
-            data: audio
-          }
+            data: audio,
+          },
         });
       }
       
@@ -160,8 +160,8 @@ export class GeminiLiveClient {
         parts.push({
           inline_data: {
             mime_type: 'image/jpeg',
-            data: screenshot
-          }
+            data: screenshot,
+          },
         });
       }
       
@@ -170,11 +170,11 @@ export class GeminiLiveClient {
           turns: [
             {
               role: 'user',
-              parts
-            }
+              parts,
+            },
           ],
-          turn_complete: true
-        }
+          turn_complete: true,
+        },
       };
       
       this.ws.send(JSON.stringify(message));
@@ -353,7 +353,7 @@ export class GeminiLiveClient {
       isConnected: this.isConnected,
       currentModel: this.currentModel,
       fallbackIndex: this.fallbackIndex,
-      queuedMessages: this.messageQueue.length
+      queuedMessages: this.messageQueue.length,
     };
   }
 }

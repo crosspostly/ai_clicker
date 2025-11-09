@@ -70,7 +70,7 @@ export class LiveModeManager {
           this.geminiClient.sendInput({ screenshot });
           this.sendToTab({
             type: 'live-screenshot',
-            screenshot
+            screenshot,
           });
         }
       }, 3000);
@@ -81,7 +81,7 @@ export class LiveModeManager {
       this.sendToTab({
         type: 'live-status',
         status: 'listening',
-        message: 'Live Mode active'
+        message: 'Live Mode active',
       });
 
     } catch (error) {
@@ -99,13 +99,13 @@ export class LiveModeManager {
     
     this.sendToTab({
       type: 'live-response-text',
-      text
+      text,
     });
     
     this.sendToTab({
       type: 'live-status',
       status: 'speaking',
-      message: 'AI is responding...'
+      message: 'AI is responding...',
     });
   }
 
@@ -117,7 +117,7 @@ export class LiveModeManager {
     
     this.sendToTab({
       type: 'live-response-audio',
-      audio: audioBase64
+      audio: audioBase64,
     });
   }
 
@@ -129,7 +129,7 @@ export class LiveModeManager {
     
     this.sendToTab({
       type: 'live-action',
-      action
+      action,
     });
   }
 
@@ -141,7 +141,7 @@ export class LiveModeManager {
     
     this.sendToTab({
       type: 'live-error',
-      message: error.message || 'An error occurred'
+      message: error.message || 'An error occurred',
     });
   }
 
@@ -164,7 +164,7 @@ export class LiveModeManager {
       this.sendToTab({
         type: 'live-status',
         status: 'thinking',
-        message: 'AI is thinking...'
+        message: 'AI is thinking...',
       });
     } catch (error) {
       console.error('[LiveModeManager] Error sending input:', error);
@@ -185,7 +185,7 @@ export class LiveModeManager {
       
       this.sendToTab({
         type: 'live-bandwidth',
-        bytesPerSecond: this.bandwidthUsage
+        bytesPerSecond: this.bandwidthUsage,
       });
     }
   }
@@ -219,7 +219,7 @@ export class LiveModeManager {
       this.sendToTab({
         type: 'live-status',
         status: 'listening',
-        message: 'Screen capture paused'
+        message: 'Screen capture paused',
       });
     } else {
       this.screenCapture.start((screenshot) => {
@@ -232,7 +232,7 @@ export class LiveModeManager {
       this.sendToTab({
         type: 'live-status',
         status: 'listening',
-        message: 'Screen capture resumed'
+        message: 'Screen capture resumed',
       });
     }
   }
@@ -269,7 +269,7 @@ export class LiveModeManager {
       hasClient: !!this.geminiClient,
       hasScreenCapture: !!this.screenCapture,
       bandwidthUsage: this.bandwidthUsage,
-      currentModel: this.geminiClient?.getCurrentModel()
+      currentModel: this.geminiClient?.getCurrentModel(),
     };
   }
 }
