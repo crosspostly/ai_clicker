@@ -56,24 +56,6 @@ export class Validator {
   }
 
   /**
-   * Validate CSS selector
-   */
-  static validateSelector(selector) {
-    if (!selector || typeof selector !== 'string') {
-      throw new ValidationError('Selector must be a non-empty string');
-    }
-    if (selector.length > 500) {
-      throw new ValidationError('Selector is too long');
-    }
-    try {
-      document.querySelector(selector);
-      return true;
-    } catch {
-      throw new ValidationError(`Invalid CSS selector: ${selector}`);
-    }
-  }
-
-  /**
    * Validate instructions text
    * @param {string} instructions - Instructions to validate
    * @returns {boolean} True if valid
@@ -85,22 +67,6 @@ export class Validator {
     }
     if (instructions.length > 5000) {
       throw new ValidationError('Instructions are too long');
-    }
-    return true;
-  }
-
-  /**
-   * Validate API key format (alias for validateGeminiKey)
-   */
-  static validateApiKey(key) {
-    if (!key || typeof key !== 'string') {
-      throw new ValidationError('API key must be a non-empty string');
-    }
-    if (key.length < 10) {
-      throw new ValidationError('API key is too short');
-    }
-    if (key.length > 500) {
-      throw new ValidationError('API key is too long');
     }
     return true;
   }
