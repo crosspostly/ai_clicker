@@ -5,9 +5,7 @@
 import { StorageManager } from '../common/storage';
 import { Validator } from '../common/validator';
 
-let _isRecording = false;
 let recordedActions = [];
-let _isAutoMode = false;
 let geminiEnabled = false;
 let geminiApiKey = null;
 
@@ -128,7 +126,6 @@ function setupMessageListeners() {
  * Switch to manual mode
  */
 function switchToManualMode() {
-  _isAutoMode = false;
   modeManualBtn.classList.add('active');
   modeAutoBtn.classList.remove('active');
   manualModeDiv.classList.add('active');
@@ -139,7 +136,6 @@ function switchToManualMode() {
  * Switch to auto mode
  */
 function switchToAutoMode() {
-  _isAutoMode = true;
   modeAutoBtn.classList.add('active');
   modeManualBtn.classList.remove('active');
   autoModeDiv.classList.add('active');
@@ -150,7 +146,6 @@ function switchToAutoMode() {
  * Start recording
  */
 function startRecording() {
-  _isRecording = true;
   recordedActions = [];
   actionsContainer.innerHTML = '';
   startRecordingBtn.disabled = true;
@@ -173,7 +168,6 @@ function startRecording() {
  * Stop recording
  */
 function stopRecording() {
-  _isRecording = false;
   startRecordingBtn.disabled = false;
   stopRecordingBtn.disabled = true;
   updatePlaybackButton();
