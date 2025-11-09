@@ -7,11 +7,18 @@ import { ElementFinder } from './finder/ElementFinder';
 import { ActionRecorder } from './recorder/ActionRecorder';
 import { ActionExecutor } from './executor/ActionExecutor';
 import { InstructionParser } from '../ai/InstructionParser';
+import { LiveModeOverlay } from './LiveModeOverlay.js';
+import { VoiceInput } from '../common/VoiceInput.js';
 
 // Global instances
 let elementFinder = null;
 let actionRecorder = null;
 let actionExecutor = null;
+
+// ✅ Live Mode instances
+let liveOverlay = null;
+let voiceInput = null;
+let isLiveModeActive = false;
 
 /**
  * Initialize content script
@@ -63,8 +70,20 @@ function setupMessageListeners() {
             sendResponse({ success: true });
             break;
 
+          // ✅ Live Mode actions
+          case 'toggleLiveMode':
+            await handleToggleLiveMode(request.apiKey);
+            sendResponse({ success: true });
+            break;
+
           default:
-            sendResponse({ success: false, error: 'Unknown action' });
+            // ✅ Handle Live Mode messages
+            if (request.type && request.type.startsWith('live-')) {
+              handleLiveModeMessage(request);
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ success: false, error: 'Unknown action' });
+            }
         }
       } catch (error) {
         console.error('[AI-Autoclicker] Message handler error:', error);
@@ -258,6 +277,219 @@ function handleStopAIMode() {
     console.log('[AI-Autoclicker] AI mode stopped');
   } catch (error) {
     console.error('[AI-Autoclicker] Failed to stop AI mode:', error);
+  }
+}
+
+/**
+ * ✅ Handle toggle Live Mode
+ */
+async function handleToggleLiveMode(apiKey) {
+  try {
+    if (!isLiveModeActive) {
+      // Start Live Mode
+      console.log('[LiveMode] Starting...');
+
+      // Create overlay
+      liveOverlay = new LiveModeOverlay();
+      liveOverlay.show();
+
+      // Setup overlay event listeners
+      liveOverlay.on('stopAll', () => {
+        handleToggleLiveMode(); // Stop everything
+      });
+
+      liveOverlay.on('toggleMic', () => {
+        if (voiceInput) {
+          if (voiceInput.isListening) {
+            voiceInput.stop();
+            liveOverlay.updateStatus('listening', 'Microphone muted');
+          } else {
+            startVoiceInput();
+          }
+        }
+      });
+
+      liveOverlay.on('toggleScreen', () => {
+        chrome.runtime.sendMessage({ action: 'toggleScreenCapture' });
+      });
+
+      liveOverlay.on('close', () => {
+        handleToggleLiveMode(); // Stop everything
+      });
+
+      // Start voice input
+      await startVoiceInput();
+
+      // Notify background to start
+      chrome.runtime.sendMessage({
+        action: 'startLiveMode',
+        apiKey: apiKey,
+      });
+
+      isLiveModeActive = true;
+      console.log('[LiveMode] Started successfully');
+    } else {
+      // Stop Live Mode
+      console.log('[LiveMode] Stopping...');
+
+      if (voiceInput) {
+        voiceInput.stop();
+        voiceInput = null;
+      }
+
+      if (liveOverlay) {
+        liveOverlay.hide();
+        liveOverlay = null;
+      }
+
+      // Notify background to stop
+      chrome.runtime.sendMessage({ action: 'stopLiveMode' });
+
+      isLiveModeActive = false;
+      console.log('[LiveMode] Stopped');
+    }
+  } catch (error) {
+    console.error('[LiveMode] Error:', error);
+    if (liveOverlay) {
+      liveOverlay.updateStatus('error', `Error: ${error.message}`);
+    }
+  }
+}
+
+/**
+ * ✅ Start voice input
+ */
+async function startVoiceInput() {
+  try {
+    voiceInput = new VoiceInput();
+
+    if (!voiceInput.isSupported()) {
+      throw new Error('Voice input not supported in this browser');
+    }
+
+    await voiceInput.start(
+      // onTranscript
+      (transcript, isFinal) => {
+        if (liveOverlay) {
+          liveOverlay.updateUserTranscript(transcript);
+        }
+
+        if (isFinal) {
+          // Send final transcript to background
+          chrome.runtime.sendMessage({
+            action: 'sendUserInput',
+            text: transcript,
+          });
+        }
+      },
+      // onAudioChunk
+      (audioBase64) => {
+        // Send audio chunk to background
+        chrome.runtime.sendMessage({
+          action: 'sendUserInput',
+          audio: audioBase64,
+        });
+      }
+    );
+
+    if (liveOverlay) {
+      liveOverlay.updateStatus('listening', 'Listening...');
+    }
+  } catch (error) {
+    console.error('[LiveMode] Voice input error:', error);
+    throw error;
+  }
+}
+
+/**
+ * ✅ Handle Live Mode messages from background
+ */
+function handleLiveModeMessage(message) {
+  if (!liveOverlay) return;
+
+  switch (message.type) {
+    case 'live-response-text':
+      liveOverlay.updateAIResponse(message.text);
+      break;
+
+    case 'live-response-audio':
+      playAudio(message.audio);
+      break;
+
+    case 'live-action':
+      executeAIAction(message.action);
+      break;
+
+    case 'live-status':
+      liveOverlay.updateStatus(message.status, message.message);
+      break;
+
+    case 'live-screenshot':
+      liveOverlay.updateScreenPreview(message.screenshot);
+      break;
+
+    case 'live-bandwidth':
+      liveOverlay.updateBandwidth(message.bytesPerSecond);
+      break;
+
+    case 'live-error':
+      liveOverlay.updateStatus('error', message.message);
+      break;
+  }
+}
+
+/**
+ * ✅ Play audio response
+ */
+function playAudio(audioBase64) {
+  try {
+    const audio = new Audio(`data:audio/pcm;base64,${audioBase64}`);
+    audio.play();
+
+    if (liveOverlay) {
+      liveOverlay.updateStatus('speaking', 'AI is speaking...');
+    }
+
+    audio.onended = () => {
+      if (liveOverlay) {
+        liveOverlay.updateStatus('listening', 'Listening...');
+      }
+    };
+  } catch (error) {
+    console.error('[LiveMode] Audio playback error:', error);
+  }
+}
+
+/**
+ * ✅ Execute AI action with visual feedback
+ */
+async function executeAIAction(action) {
+  try {
+    const element = document.querySelector(action.selector);
+    if (!element) {
+      console.error('[LiveMode] Element not found:', action.selector);
+      return;
+    }
+
+    // Visual highlight
+    element.style.outline = '3px solid #4285f4';
+    element.style.outlineOffset = '2px';
+
+    // Wait 500ms for user to see
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Execute action
+    await actionExecutor.executeAction(action);
+
+    // Remove highlight
+    element.style.outline = 'none';
+
+    // Update overlay
+    if (liveOverlay) {
+      liveOverlay.addAction(action);
+    }
+  } catch (error) {
+    console.error('[LiveMode] Action execution error:', error);
   }
 }
 
