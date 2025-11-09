@@ -7,7 +7,10 @@ export default {
   testEnvironment: 'jsdom',
   
   // Setup files
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.js'],
+  setupFilesAfterEnv: [
+    '<rootDir>/src/__tests__/setup.js',
+    '<rootDir>/tests/setup.js'
+  ],
   
   // Test file patterns (добавлена поддержка tests/)
   testMatch: [

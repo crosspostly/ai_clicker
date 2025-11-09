@@ -2,6 +2,7 @@
  * Tests for ActionRecorder utility
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { ActionRecorder } from '../../../content/recorder/ActionRecorder.js';
 import { ElementFinder } from '../../../content/finder/ElementFinder.js';
 

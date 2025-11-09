@@ -3,6 +3,7 @@
  * Tests 81-90: Module loading, DOM setup, event handlers, storage access
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { StorageManager } from '../../common/storage.js';
 import { Validator } from '../../common/validator.js';
 

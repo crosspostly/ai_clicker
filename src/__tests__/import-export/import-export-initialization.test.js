@@ -3,6 +3,7 @@
  * Tests 41-50: Module loading, UI setup, event handlers, empty state handling
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { StorageManager } from '../../common/storage.js';
 import { Validator } from '../../common/validator.js';
 

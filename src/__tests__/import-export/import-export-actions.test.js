@@ -3,6 +3,7 @@
  * Tests 61-70: Importing actions, merging, versioning, error handling
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { StorageManager } from '../../common/storage.js';
 import { Validator } from '../../common/validator.js';
 

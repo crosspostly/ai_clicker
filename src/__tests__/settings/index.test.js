@@ -3,6 +3,8 @@
  * This file provides basic tests for the settings module integration
  */
 
+import { describe, test, expect } from '@jest/globals';
+
 describe('Settings Module', () => {
   test('Settings module should be importable', async () => {
     // Verify that the settings module can be imported

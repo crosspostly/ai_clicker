@@ -3,6 +3,8 @@
  * Tests 91-100: Form display, element visibility, dynamic updates, status messages
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
 // Mock DOM elements for UI rendering
 const mockElements = {
   'settings-form': { 

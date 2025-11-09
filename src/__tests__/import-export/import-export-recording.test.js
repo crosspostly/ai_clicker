@@ -3,6 +3,7 @@
  * Tests 51-60: Recording actions, export formats, data integrity, metadata
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { StorageManager } from '../../common/storage.js';
 
 // Mock DOM and Chrome APIs

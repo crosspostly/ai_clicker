@@ -2,6 +2,7 @@
  * Tests for ActionExecutor utility
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { ActionExecutor, ExecutionError } from '../../../content/executor/ActionExecutor.js';
 import { ElementFinder } from '../../../content/finder/ElementFinder.js';
 

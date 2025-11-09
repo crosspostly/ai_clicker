@@ -3,6 +3,7 @@
  * Tests 71-80: JSON, CSV, XML, format conversion, encoding, validation
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { Validator } from '../../common/validator.js';
 
 global.chrome = {

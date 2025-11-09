@@ -3,6 +3,7 @@
  * Tests manifest validation, module loading, and basic functionality
  */
 
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 
