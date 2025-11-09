@@ -34,9 +34,19 @@ export default [
     },
     plugins: createPlugins(),
   },
-  // Bundle 3: Settings Page
+  // Bundle 3: Voice Control
   {
-    input: 'src/settings/index.js',
+    input: 'src/popup/voice.js',
+    output: {
+      file: 'deploy/voice.js',
+      format: 'es',
+      sourcemap: isDev,
+    },
+    plugins: createPlugins(),
+  },
+  // Bundle 4: Settings Page
+  {
+    input: 'src/popup/settings.js',
     output: {
       file: 'deploy/settings.js',
       format: 'es',
@@ -44,7 +54,7 @@ export default [
     },
     plugins: createPlugins(),
   },
-  // Bundle 4: Service Worker (Background)
+  // Bundle 5: Service Worker (Background)
   {
     input: 'src/background/index.js',
     output: {

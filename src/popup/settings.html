@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - ИИ Автокликер</title>
+    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="styles/settings.css">
+</head>
+<body>
+    <div class="settings-container">
+        <header class="settings-header">
+            <h1>⚙️ Настройки</h1>
+            <div class="header-actions">
+                <button id="exportBtn" class="btn btn-secondary" title="Экспортировать настройки">
+                    📤 Экспорт
+                </button>
+                <button id="importBtn" class="btn btn-secondary" title="Импортировать настройки">
+                    📥 Импорт
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+        </header>
+
+        <div class="settings-tabs">
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="general">🏠 Общие</button>
+                <button class="tab-btn" data-tab="api">🔑 API</button>
+                <button class="tab-btn" data-tab="models">🤖 Модели</button>
+                <button class="tab-btn" data-tab="language">🌐 Язык</button>
+                <button class="tab-btn" data-tab="shortcuts">⌨️ Горячие клавиши</button>
+                <button class="tab-btn" data-tab="theme">🎨 Тема</button>
+            </nav>
+
+            <main class="tab-content">
+                <!-- General Tab -->
+                <div id="general-tab" class="tab-pane active">
+                    <section class="settings-section">
+                        <h2>Общие настройки</h2>
+                        
+                        <div class="form-group">
+                            <label for="compactMode">
+                                <input type="checkbox" id="compactMode">
+                                Компактный режим
+                            </label>
+                            <p class="form-help">Уменьшает размер элементов интерфейса</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autoSave">
+                                <input type="checkbox" id="autoSave" checked>
+                                Автосохранение настроек
+                            </label>
+                            <p class="form-help">Автоматически сохранять изменения</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="showNotifications">
+                                <input type="checkbox" id="showNotifications" checked>
+                                Показывать уведомления
+                            </label>
+                            <p class="form-help">Отображать уведомления о выполненных действиях</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- API Tab -->
+                <div id="api-tab" class="tab-pane">
+                    <section class="settings-section">
+                        <h2>Настройки API</h2>
+                        
+                        <div class="form-group">
+                            <label for="apiKey">API ключ Gemini</label>
+                            <input type="password" id="apiKey" placeholder="AIza..." class="form-control">
+                            <p class="form-help">Получите API ключ на <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+                            <button id="testApiBtn" class="btn btn-secondary">🔍 Проверить ключ</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiTimeout">Таймаут API (секунды)</label>
+                            <input type="number" id="apiTimeout" min="5" max="600" value="120" class="form-control">
+                            <p class="form-help">Максимальное время ожидания ответа API</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="maxRetries">Максимальное количество попыток</label>
+                            <input type="number" id="maxRetries" min="1" max="10" value="3" class="form-control">
+                            <p class="form-help">Количество повторных попыток при ошибке</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Models Tab -->
+                <div id="models-tab" class="tab-pane">
+                    <section class="settings-section">
+                        <h2>Выбор модели</h2>
+                        
+                        <div class="form-group">
+                            <label for="modelSelection">Режим выбора модели</label>
+                            <select id="modelSelection" class="form-control">
+                                <option value="auto">Автоматический выбор</option>
+                                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Experimental</option>
+                                <option value="gemini-2.0-flash-001">Gemini 2.0 Flash 001</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                            </select>
+                            <p class="form-help">Выберите конкретную модель или используйте автоматический выбор</p>
+                        </div>
+
+                        <div class="model-status">
+                            <h3>Статус моделей</h3>
+                            <div id="modelStatusList">
+                                <div class="model-status-item">
+                                    <span class="model-name">Gemini 2.0 Flash Exp</span>
+                                    <span class="model-status-indicator testing">🔄 Проверка...</span>
+                                </div>
+                                <div class="model-status-item">
+                                    <span class="model-name">Gemini 2.0 Flash 001</span>
+                                    <span class="model-status-indicator testing">🔄 Проверка...</span>
+                                </div>
+                                <div class="model-status-item">
+                                    <span class="model-name">Gemini 1.5 Flash</span>
+                                    <span class="model-status-indicator testing">🔄 Проверка...</span>
+                                </div>
+                                <div class="model-status-item">
+                                    <span class="model-name">Gemini 1.5 Pro</span>
+                                    <span class="model-status-indicator testing">🔄 Проверка...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Language Tab -->
+                <div id="language-tab" class="tab-pane">
+                    <section class="settings-section">
+                        <h2>Языковые настройки</h2>
+                        
+                        <div class="form-group">
+                            <label for="language">Язык распознавания</label>
+                            <select id="language" class="form-control">
+                                <option value="auto">Автоопределение</option>
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                            </select>
+                            <p class="form-help">Язык для голосовых команд и распознавания</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confidenceThreshold">Порог уверенности</label>
+                            <input type="range" id="confidenceThreshold" min="0" max="100" value="70" class="form-control">
+                            <div class="range-value">70%</div>
+                            <p class="form-help">Минимальный уровень уверенности для выполнения команды</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Shortcuts Tab -->
+                <div id="shortcuts-tab" class="tab-pane">
+                    <section class="settings-section">
+                        <h2>Горячие клавиши</h2>
+                        
+                        <div class="form-group">
+                            <label for="toggleRecording">Переключение записи</label>
+                            <div class="shortcut-input">
+                                <input type="text" id="toggleRecording" value="Ctrl+Shift+R" readonly class="form-control">
+                                <button class="btn btn-secondary" data-shortcut="toggleRecording">Изменить</button>
+                            </div>
+                            <p class="form-help">Начать/остановить запись действий</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="toggleVoice">Переключение голоса</label>
+                            <div class="shortcut-input">
+                                <input type="text" id="toggleVoice" value="Ctrl+Shift+V" readonly class="form-control">
+                                <button class="btn btn-secondary" data-shortcut="toggleVoice">Изменить</button>
+                            </div>
+                            <p class="form-help">Начать/остановить голосовое управление</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="playback">Воспроизведение</label>
+                            <div class="shortcut-input">
+                                <input type="text" id="playback" value="Ctrl+Shift+P" readonly class="form-control">
+                                <button class="btn btn-secondary" data-shortcut="playback">Изменить</button>
+                            </div>
+                            <p class="form-help">Запустить воспроизведение записанных действий</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Theme Tab -->
+                <div id="theme-tab" class="tab-pane">
+                    <section class="settings-section">
+                        <h2>Настройки темы</h2>
+                        
+                        <div class="form-group">
+                            <label for="theme">Тема интерфейса</label>
+                            <select id="theme" class="form-control">
+                                <option value="auto">Автоматическая</option>
+                                <option value="light">Светлая</option>
+                                <option value="dark">Тёмная</option>
+                            </select>
+                            <p class="form-help">Выберите цветовую схему интерфейса</p>
+                        </div>
+
+                        <div class="theme-preview">
+                            <h3>Предпросмотр</h3>
+                            <div class="preview-container">
+                                <div class="preview-card">
+                                    <h4>Пример карточки</h4>
+                                    <p>Это пример того, как будет выглядеть интерфейс с выбранной темой.</p>
+                                    <button class="btn btn-primary">Пример кнопки</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+
+        <footer class="settings-footer">
+            <div class="footer-actions">
+                <button id="resetBtn" class="btn btn-danger">🔄 Сбросить настройки</button>
+                <button id="saveBtn" class="btn btn-primary">💾 Сохранить</button>
+            </div>
+            <div class="status-message" id="statusMessage"></div>
+        </footer>
+    </div>
+
+    <!-- Import confirmation dialog -->
+    <div id="importDialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog">
+            <h3>Импорт настроек</h3>
+            <p>Это заменит все текущие настройки. Продолжить?</p>
+            <div class="dialog-actions">
+                <button id="importCancelBtn" class="btn btn-secondary">Отмена</button>
+                <button id="importConfirmBtn" class="btn btn-primary">Импортировать</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="settings.js"></script>
+</body>
+</html>

@@ -3,6 +3,8 @@
  * Handles background tasks and message routing
  */
 
+import { voiceHandler } from './voiceHandler.js';
+
 /**
  * Listen for extension installation
  */
