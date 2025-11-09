@@ -1,0 +1,360 @@
+name: Release v3.0.0
+
+on:
+  push:
+    branches: [ release-v3.0.0-phase-2c-3c-integration-tests-ci-cd-docs ]
+    tags: [ 'v3.0.0' ]
+  pull_request:
+    branches: [ release-v3.0.0-phase-2c-3c-integration-tests-ci-cd-docs ]
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests with coverage
+        run: npm run test:ci
+      
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == 18
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  build:
+    name: Build Extension
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build extension
+        run: npm run build
+      
+      - name: Validate manifest.json
+        run: |
+          node -e "
+            const manifest = JSON.parse(require('fs').readFileSync('deploy/manifest.json', 'utf8'));
+            if (manifest.version !== '3.0.0') {
+              console.error('Manifest version is not 3.0.0');
+              process.exit(1);
+            }
+            console.log('Manifest validation passed');
+          "
+      
+      - name: Check build output
+        run: |
+          echo "Build output:"
+          ls -la deploy/
+          
+          # Verify essential files exist
+          test -f deploy/manifest.json || (echo "manifest.json missing" && exit 1)
+          test -f deploy/background.js || (echo "background.js missing" && exit 1)
+          test -f deploy/content.js || (echo "content.js missing" && exit 1)
+          test -f deploy/popup.html || (echo "popup.html missing" && exit 1)
+          test -f deploy/settings.html || (echo "settings.html missing" && exit 1)
+          test -f deploy/voice.html || (echo "voice.html missing" && exit 1)
+          
+          echo "All essential files present"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run security audit
+        run: npm audit --audit-level=high
+      
+      - name: Check for exposed API keys
+        run: |
+          echo "Checking for potential API key exposure..."
+          
+          # Check for common API key patterns
+          if grep -r -i "AIzaSy" src/ --exclude-dir=node_modules; then
+            echo "WARNING: Potential Google API key found in source code"
+            exit 1
+          fi
+          
+          if grep -r -i "sk-" src/ --exclude-dir=node_modules; then
+            echo "WARNING: Potential OpenAI API key found in source code"
+            exit 1
+          fi
+          
+          if grep -r -i "password.*=" src/ --exclude-dir=node_modules; then
+            echo "WARNING: Potential hardcoded password found"
+            exit 1
+          fi
+          
+          echo "No obvious API keys or passwords found"
+
+  test-coverage:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests with coverage
+        run: npm run test:coverage
+      
+      - name: Check coverage threshold
+        run: |
+          echo "Checking test coverage..."
+          
+          # Parse coverage summary and check for 75%+ coverage on new code
+          node -e "
+            const fs = require('fs');
+            try {
+              const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              console.log('Coverage Summary:', JSON.stringify(coverage, null, 2));
+              
+              const total = coverage.total;
+              if (total.lines.pct < 75) {
+                console.error(\`Line coverage \${total.lines.pct}% is below 75%\`);
+                process.exit(1);
+              }
+              
+              if (total.functions.pct < 75) {
+                console.error(\`Function coverage \${total.functions.pct}% is below 75%\`);
+                process.exit(1);
+              }
+              
+              if (total.branches.pct < 75) {
+                console.error(\`Branch coverage \${total.branches.pct}% is below 75%\`);
+                process.exit(1);
+              }
+              
+              if (total.statements.pct < 75) {
+                console.error(\`Statement coverage \${total.statements.pct}% is below 75%\`);
+                process.exit(1);
+              }
+              
+              console.log('✅ Coverage thresholds passed!');
+            } catch (error) {
+              console.error('Error reading coverage data:', error.message);
+              process.exit(1);
+            }
+          "
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run integration tests
+        run: |
+          echo "Running integration tests..."
+          npm test -- --testPathPattern=integration
+          echo "Integration tests completed"
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security, test-coverage, integration-tests]
+    if: startsWith(github.ref, 'refs/tags/v3.0.0')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build extension
+        run: npm run build
+      
+      - name: Create release zip
+        run: |
+          cd deploy
+          zip -r ../ai-autoclicker-v3.0.0.zip .
+          cd ..
+          
+          echo "Created release zip:"
+          ls -la ai-autoclicker-v3.0.0.zip
+      
+      - name: Generate release notes
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # AI Autoclicker v3.0.0 Release
+          
+          ## 🎉 Major Release: Voice Control + Playback Engine + Settings System
+          
+          This release introduces three major new systems that transform the extension into a comprehensive automation platform:
+          
+          ### 🎤 Voice Control System
+          - **Real-time voice commands** via Google Gemini Live API
+          - **Multi-language support** (English, Russian, auto-detection)
+          - **Fallback chain** for maximum reliability
+          - **Command parsing**: click, double-click, right-click, input, scroll, wait
+          - **Audio streaming** with Web Audio API
+          
+          ### 🎬 Playback Engine
+          - **Deterministic replay** of recorded actions
+          - **Audio feedback** and visual animations
+          - **State management** with pause/resume/stop controls
+          - **Error recovery** with retry logic
+          - **Variable playback speeds** and timing control
+          
+          ### ⚙️ Settings System
+          - **5-tab interface**: General, Voice, Playback, Advanced, About
+          - **Chrome storage sync** with local backup
+          - **Comprehensive validation** and error handling
+          - **Import/export** functionality
+          - **Theme support** (light/dark/auto)
+          
+          ### 🔧 Integration & Architecture
+          - **Message passing** system: Popup ↔ Background ↔ Content ↔ Voice
+          - **Voice-to-playback integration** for seamless command execution
+          - **Real-time feedback loops** and state consistency
+          - **78 comprehensive tests** with 75%+ coverage
+          
+          ### 🛠️ Technical Improvements
+          - **Manifest V3 compliance** with updated permissions
+          - **ES6 modules** and modern JavaScript patterns
+          - **CI/CD pipeline** with automated testing and releases
+          - **Comprehensive documentation** and user guides
+          
+          ## 📦 Installation
+          
+          1. Download `ai-autoclicker-v3.0.0.zip`
+          2. Extract to a folder
+          3. Load in Chrome Extensions (Developer mode)
+          4. Configure your Gemini API key in Settings
+          
+          ## 🚀 Quick Start
+          
+          1. **Voice Control**: Click "Start Voice" and speak commands like "click the submit button"
+          2. **Recording**: Record actions manually then replay them with the Playback Engine
+          3. **Settings**: Customize themes, languages, and behavior in the 5-tab settings panel
+          
+          ## 📚 Documentation
+          
+          - [VOICE_CONTROL.md](docs/VOICE_CONTROL.md) - Voice command reference
+          - [PLAYBACK_ENGINE.md](docs/PLAYBACK_ENGINE.md) - Playback system guide
+          - [SETTINGS_SYSTEM.md](docs/SETTINGS_SYSTEM.md) - Settings documentation
+          - [TESTING.md](docs/TESTING.md) - Testing guide
+          
+          ## 🔗 Links
+          
+          - Repository: https://github.com/crosspostly/ai-autoclicker
+          - Issues: https://github.com/crosspostly/ai-autoclicker/issues
+          - Discussions: https://github.com/crosspostly/ai-autoclicker/discussions
+          
+          ---
+          
+          **Thank you for using AI Autoclicker!** 🙏
+          EOF
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v3.0.0
+          name: AI Autoclicker v3.0.0
+          body_path: RELEASE_NOTES.md
+          files: |
+            ai-autoclicker-v3.0.0.zip
+            deploy/manifest.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always()
+    steps:
+      - name: Notify Success
+        if: needs.create-release.result == 'success'
+        run: |
+          echo "✅ v3.0.0 release completed successfully!"
+          echo "📦 Release assets are available on GitHub"
+          echo "🚀 Extension is ready for distribution"
+      
+      - name: Notify Failure
+        if: needs.create-release.result == 'failure'
+        run: |
+          echo "❌ v3.0.0 release failed"
+          echo "🔍 Check the workflow logs for details"
+          exit 1
