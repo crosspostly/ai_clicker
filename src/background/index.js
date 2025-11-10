@@ -13,6 +13,32 @@ const playbackHandler = new PlaybackHandler();
 const voicePlaybackIntegration = new VoicePlaybackIntegration(playbackHandler);
 
 /**
+ * Send status message to popup and settings
+ */
+function sendStatusToUI(message, detail = '', type = 'info') {
+  const timestamp = new Date().toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  const statusData = {
+    type: 'statusUpdate',
+    message,
+    detail,
+    type,
+    timestamp
+  };
+  
+  // Send to popup
+  chrome.runtime.sendMessage(statusData).catch(() => {
+    // Ignore errors if popup is not open
+  });
+  
+  console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}${detail ? ': ' + detail : ''}`);
+}
+
+/**
  * Listen for extension installation
  */
 chrome.runtime.onInstalled.addListener(() => {
@@ -128,17 +154,22 @@ async function handleStartLiveMode(request, sender) {
     const tabId = sender.tab?.id;
 
     if (!apiKey) {
+      sendStatusToUI('❌ Ошибка Live Mode', 'API ключ не указан', 'error');
       throw new Error('API key required');
     }
 
     if (!tabId) {
+      sendStatusToUI('❌ Ошибка Live Mode', 'ID вкладки не найден', 'error');
       throw new Error('Tab ID not found');
     }
 
     console.log('[Background] Starting Live Mode for tab:', tabId);
+    sendStatusToUI('🎙️ Запуск Live Mode', 'Инициализация...', 'info');
     await liveModeManager.start(apiKey, tabId);
+    sendStatusToUI('✅ Live Mode активен', 'Готов к приему команд', 'success');
   } catch (error) {
     console.error('[Background] Failed to start Live Mode:', error);
+    sendStatusToUI('❌ Ошибка запуска', error.message, 'error');
     throw error;
   }
 }
@@ -149,9 +180,12 @@ async function handleStartLiveMode(request, sender) {
 function handleStopLiveMode() {
   try {
     console.log('[Background] Stopping Live Mode');
+    sendStatusToUI('⏹️ Остановка Live Mode', 'Завершение...', 'info');
     liveModeManager.stop();
+    sendStatusToUI('✅ Live Mode остановлен', 'Режим завершен', 'success');
   } catch (error) {
     console.error('[Background] Failed to stop Live Mode:', error);
+    sendStatusToUI('❌ Ошибка остановки', error.message, 'error');
   }
 }
 
