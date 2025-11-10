@@ -65,23 +65,23 @@ export class SettingsValidator {
         toggleRecording: {
           type: 'string',
           required: true,
-          pattern: /^(Ctrl|Alt|Shift|Meta)\+([A-Z]|[0-9]|\w)(\+([A-Z]|[0-9]|\w))*$/,
+          pattern: /^(Ctrl|Alt|Shift|Meta)(\+(Ctrl|Alt|Shift|Meta))*\+[A-Z0-9]$/,
           default: 'Ctrl+Shift+R',
-          message: 'Shortcut must be in format: Ctrl+Shift+R, Alt+F, Ctrl+1, etc.',
+          message: 'Shortcut must be in format: Ctrl+Shift+R, Alt+F, etc.',
         },
         toggleVoice: {
           type: 'string',
           required: true,
-          pattern: /^(Ctrl|Alt|Shift|Meta)\+([A-Z]|[0-9]|\w)(\+([A-Z]|[0-9]|\w))*$/,
+          pattern: /^(Ctrl|Alt|Shift|Meta)(\+(Ctrl|Alt|Shift|Meta))*\+[A-Z0-9]$/,
           default: 'Ctrl+Shift+V',
-          message: 'Shortcut must be in format: Ctrl+Shift+V, Alt+F, Ctrl+1, etc.',
+          message: 'Shortcut must be in format: Ctrl+Shift+V, Alt+F, etc.',
         },
         playback: {
           type: 'string',
           required: true,
-          pattern: /^(Ctrl|Alt|Shift|Meta)\+([A-Z]|[0-9]|\w)(\+([A-Z]|[0-9]|\w))*$/,
+          pattern: /^(Ctrl|Alt|Shift|Meta)(\+(Ctrl|Alt|Shift|Meta))*\+[A-Z0-9]$/,
           default: 'Ctrl+Shift+P',
-          message: 'Shortcut must be in format: Ctrl+Shift+P, Alt+F, Ctrl+1, etc.',
+          message: 'Shortcut must be in format: Ctrl+Shift+P, Alt+F, etc.',
         },
       },
     };
@@ -418,7 +418,7 @@ export class SettingsValidator {
     const rules = {
       type: 'string',
       required: true,
-      pattern: /^(Ctrl|Alt|Shift|Meta)\+\w( \+ (Ctrl|Alt|Shift|Meta)\+\w)*$/,
+      pattern: /^(Ctrl|Alt|Shift|Meta)(\+(Ctrl|Alt|Shift|Meta))*\+[A-Z0-9]$/,
       message: 'Shortcut must be in format: Ctrl+Shift+R, Alt+F, etc.',
     };
     
