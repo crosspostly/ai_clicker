@@ -6,6 +6,35 @@ import { storageService } from '../services/storageService.js';
 import { settingsValidator } from '../services/settingsValidator.js';
 import { DEFAULT_SETTINGS, THEMES, LANGUAGES, API_CONFIG } from '../common/constants.js';
 
+// Status logging function
+function logStatus(message, detail = '', type = 'info') {
+  const timestamp = new Date().toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  const statusMsg = document.getElementById('status-message');
+  const statusDetail = document.getElementById('status-detail');
+  const statusTime = document.getElementById('status-timestamp');
+  
+  if (statusMsg) {
+    statusMsg.textContent = message;
+    statusMsg.className = `status-message status-${type}`;
+  }
+  
+  if (statusDetail) {
+    statusDetail.textContent = detail;
+  }
+  
+  if (statusTime) {
+    statusTime.textContent = timestamp;
+  }
+  
+  // Also log to console for debugging
+  console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}${detail ? ': ' + detail : ''}`);
+}
+
 class SettingsController {
   constructor() {
     this.settings = null;
@@ -120,6 +149,9 @@ class SettingsController {
     this.autoSaveCheckbox?.addEventListener('change', (e) => {
       this.autoSave = e.target.checked;
     });
+    
+    // Setup message listeners for background status updates
+    this.setupMessageListeners();
   }
 
   /**
@@ -249,11 +281,14 @@ class SettingsController {
     try {
       const newSettings = this.collectSettings();
       
+      logStatus('💾 Сохранение...', 'Проверка настроек...', 'info');
+      
       // Validate settings
       const validation = settingsValidator.validateAndSanitize(newSettings);
       
       if (!validation.success) {
         this.showStatus(`Ошибка валидации: ${validation.errors.join(', ')}`, 'error');
+        logStatus('❌ Ошибка валидации', validation.errors.join(', '), 'error');
         return;
       }
       
@@ -268,10 +303,12 @@ class SettingsController {
       this.applyTheme(this.settings.ui.theme);
       
       this.showStatus('Настройки сохранены', 'success');
+      logStatus('✅ Сохранено', 'Все настройки применены', 'success');
       
     } catch (error) {
       console.error('Failed to save settings:', error);
       this.showStatus('Ошибка сохранения настроек', 'error');
+      logStatus('❌ Ошибка сохранения', 'Не удалось сохранить настройки', 'error');
     }
   }
 
@@ -281,6 +318,8 @@ class SettingsController {
   async resetSettings() {
     if (confirm('Вы уверены, что хотите сбросить все настройки к значениям по умолчанию?')) {
       try {
+        logStatus('🔄 Сброс...', 'Восстановление настроек по умолчанию', 'info');
+        
         await storageService.setSync('settings', DEFAULT_SETTINGS);
         this.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         this.originalSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -290,10 +329,12 @@ class SettingsController {
         this.applyTheme(DEFAULT_SETTINGS.ui.theme);
         
         this.showStatus('Настройки сброшены', 'success');
+        logStatus('✅ Сброс завершено', 'Настройки восстановлены по умолчанию', 'success');
         
       } catch (error) {
         console.error('Failed to reset settings:', error);
         this.showStatus('Ошибка сброса настроек', 'error');
+        logStatus('❌ Ошибка сброса', 'Не удалось сбросить настройки', 'error');
       }
     }
   }
@@ -389,11 +430,13 @@ class SettingsController {
     const apiKey = this.apiKeyInput?.value;
     if (!apiKey) {
       this.showStatus('Введите API ключ для проверки', 'error');
+      logStatus('❌ Ошибка ключа', 'API ключ не введен', 'error');
       return;
     }
     
     this.testApiBtn.disabled = true;
     this.testApiBtn.textContent = '🔄 Проверка...';
+    logStatus('⏳ Проверка API ключа...', 'Валидация...', 'info');
     
     try {
       // Mock API key validation (replace with actual API call)
@@ -401,13 +444,16 @@ class SettingsController {
       
       if (validation.valid) {
         this.showStatus('API ключ действителен', 'success');
+        logStatus('✅ Ключ валиден', 'Можно отправлять данные', 'success');
       } else {
         this.showStatus(`Недействительный API ключ: ${validation.message}`, 'error');
+        logStatus('❌ Ошибка ключа', validation.message, 'error');
       }
       
     } catch (error) {
       console.error('API key test failed:', error);
       this.showStatus('Ошибка проверки API ключа', 'error');
+      logStatus('❌ Ошибка проверки', 'Не удалось проверить API ключ', 'error');
     }
     
     this.testApiBtn.disabled = false;
@@ -553,6 +599,17 @@ class SettingsController {
         this.statusMessage.style.display = 'none';
       }, 3000);
     }
+  }
+
+  /**
+   * Setup message listeners for background status updates
+   */
+  setupMessageListeners() {
+    chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+      if (request.type === 'statusUpdate') {
+        logStatus(request.message, request.detail, request.type);
+      }
+    });
   }
 
   /**

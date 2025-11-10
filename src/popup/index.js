@@ -13,6 +13,35 @@ let geminiApiKey = null;
 let isLiveModeActive = false;
 let liveModeApiKey = null;
 
+// Status logging function
+export function logStatus(message, detail = '', type = 'info') {
+  const timestamp = new Date().toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  const statusMsg = document.getElementById('status-message');
+  const statusDetail = document.getElementById('status-detail');
+  const statusTime = document.getElementById('status-timestamp');
+  
+  if (statusMsg) {
+    statusMsg.textContent = message;
+    statusMsg.className = `status-message status-${type}`;
+  }
+  
+  if (statusDetail) {
+    statusDetail.textContent = detail;
+  }
+  
+  if (statusTime) {
+    statusTime.textContent = timestamp;
+  }
+  
+  // Also log to console for debugging
+  console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}${detail ? ': ' + detail : ''}`);
+}
+
 // Export state for testing
 export const state = {
   isRecording: false,
@@ -270,6 +299,11 @@ function setupMessageListeners() {
       case 'liveModeStatus':
         updateLiveModeStatus(request.status, request.message);
         break;
+      
+      // ✅ Status updates from background
+      case 'statusUpdate':
+        logStatus(request.message, request.detail, request.type);
+        break;
     }
   });
 }
@@ -441,6 +475,7 @@ function handleStartRecording() {
   elements.stopRecording.disabled = false;
   elements.playActions.disabled = true;
   addLog('🔴 Запись началась', 'info');
+  logStatus('🟢 Запись началась', 'Ожидаю действий...', 'success');
 
   chrome.runtime.sendMessage({ 
     target: 'content',
@@ -449,6 +484,7 @@ function handleStartRecording() {
     if (chrome.runtime.lastError) {
       console.error('Failed to start recording:', chrome.runtime.lastError);
       addLog('✗ Ошибка запуска записи', 'error');
+      logStatus('❌ Ошибка записи', 'Не удалось начать запись', 'error');
     }
   });
 }
@@ -464,6 +500,7 @@ function stopRecording() {
     `⏹️ Запись остановлена (${recordedActions.length} действий)`,
     'success',
   );
+  logStatus('⏹️ Запись остановлена', `${recordedActions.length} действий записано`, 'success');
 
   chrome.runtime.sendMessage({ 
     target: 'content',
@@ -472,6 +509,7 @@ function stopRecording() {
     if (chrome.runtime.lastError) {
       console.error('Failed to stop recording:', chrome.runtime.lastError);
       addLog('✗ Ошибка остановки записи', 'error');
+      logStatus('❌ Ошибка остановки', 'Не удалось остановить запись', 'error');
     }
   });
 
@@ -502,6 +540,7 @@ function clearActions() {
     elements.exportActions.disabled = true;
     saveActions();
     addLog('🗑️ Действия удалены', 'info');
+    logStatus('🗑️ Очистка', 'Все действия удалены', 'info');
   }
 }
 
@@ -510,6 +549,8 @@ function clearActions() {
  */
 function playActions() {
   const speed = parseFloat(elements.playbackSpeed.value);
+  logStatus('▶️ Воспроизведение', `Запуск ${recordedActions.length} действий со скоростью ${speed}x`, 'info');
+  
   chrome.runtime.sendMessage({
     target: 'content',
     action: 'playActions',
@@ -519,6 +560,9 @@ function playActions() {
     if (chrome.runtime.lastError) {
       console.error('Failed to play actions:', chrome.runtime.lastError);
       addLog('✗ Ошибка воспроизведения', 'error');
+      logStatus('❌ Ошибка воспроизведения', 'Не удалось воспроизвести действия', 'error');
+    } else {
+      logStatus('✅ Воспроизведение завершено', 'Действия выполнены успешно', 'success');
     }
   });
   addLog(`▶️ Воспроизведение с скоростью ${speed}x`, 'info');
@@ -530,6 +574,7 @@ function playActions() {
 function exportActions() {
   if (recordedActions.length === 0) {
     addLog('⚠️ Нет действий для экспорта', 'warn');
+    logStatus('⚠️ Нет действий', 'Нет записанных действий для экспорта', 'info');
     return;
   }
 
@@ -542,6 +587,7 @@ function exportActions() {
   link.click();
   URL.revokeObjectURL(url);
   addLog('📥 Действия экспортированы', 'success');
+  logStatus('📥 Экспорт завершен', `${recordedActions.length} действий экспортировано`, 'success');
 }
 
 /**
@@ -550,6 +596,8 @@ function exportActions() {
 function handleImportFile(event) {
   const file = event.target.files[0];
   if (!file) return;
+
+  logStatus('📤 Импорт', 'Загрузка файла...', 'info');
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -564,8 +612,10 @@ function handleImportFile(event) {
       saveActions();
       updatePlaybackButton();
       addLog(`📤 Загружено ${json.length} действий`, 'success');
+      logStatus('✅ Импорт завершен', `${json.length} действий загружено`, 'success');
     } catch (error) {
       addLog(`✗ Ошибка импорта: ${error.message}`, 'error');
+      logStatus('❌ Ошибка импорта', error.message, 'error');
     }
   };
   reader.readAsText(file);
