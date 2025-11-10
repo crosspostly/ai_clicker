@@ -236,16 +236,29 @@ export class VoiceHandler {
         this.commandHistory.shift();
       }
 
-      // Send command to content script for execution
-      if (this.currentSession?.tabId) {
-        await this.sendToContentScript(this.currentSession.tabId, {
-          type: 'EXECUTE_ACTION',
-          action: data.command,
-          source: 'voice',
-          transcription: data.transcription,
-          timestamp: data.timestamp,
-        });
-      }
+      // Execute command through voice-playback integration
+      const voiceCommand = {
+        type: VOICE_MESSAGE_TYPES.VOICE_COMMAND,
+        command: data.command,
+        timestamp: data.timestamp,
+        model: data.model,
+        transcription: data.transcription,
+      };
+
+      // Send to background for voice-playback integration
+      const result = await chrome.runtime.sendMessage({
+        type: 'voiceCommand',
+        voiceCommand,
+        options: {
+          voiceSessionId: this.currentSession?.tabId,
+          sequential: true,
+          stopOnError: false,
+          commandDelay: 500
+        }
+      });
+
+      // Log execution result
+      console.log('[VoiceHandler] Command execution result:', result);
 
       // Send command confirmation to popup
       this.sendMessageToPopup({

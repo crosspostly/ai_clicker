@@ -1,424 +1,228 @@
-# 🧪 Testing Guide
+# Testing Guide
 
-Complete guide to testing AI-Autoclicker v2.0 with Jest framework.
+This guide covers the comprehensive testing strategy for AI Autoclicker v3.0.0, including unit tests, integration tests, E2E tests, and CI/CD automation.
 
----
+## Overview
 
-## 🎯 Testing Overview
+The testing suite ensures reliability, performance, and maintainability of the AI Autoclicker extension. With 78+ tests and 75%+ coverage, we verify functionality across all major components.
 
-### Test Stack
-- **Jest** - Test framework with ES6 module support
-- **JSDOM** - DOM manipulation testing
-- **Chrome API Mocks** - Extension API simulation
-- **Coverage Reporting** - Code coverage analysis
-
-### Test Structure
+## Test Structure
 
 ```
 tests/
-├── content/           # Content script tests
-│   ├── element-finder.test.js      # Element location
-│   ├── action-executor.test.js     # Action execution
-│   └── action-recorder.test.js     # Action recording
-├── popup/            # Popup UI tests
-│   ├── popup-initialization.test.js  # Popup setup
-│   ├── popup-recording.test.js      # Recording UI
-│   └── popup-actions-display.test.js # Action list
-├── settings/         # Settings tests
-├── background/       # Background service tests
-├── common/           # Utility tests
-│   ├── logger.test.js               # Logging system
-│   ├── storage.test.js              # Storage manager
-│   ├── validator.test.js            # Input validation
-│   └── helpers.test.js             # Utility functions
-├── ai/               # AI processing tests
-│   └── instruction-parser.test.js   # Gemini integration
-└── integration/      # End-to-end tests
-    ├── recording-flow.test.js        # Full recording workflow
-    └── ai-execution.test.js         # AI-powered workflow
+├── services/              # Service layer tests
+│   ├── voiceControl.test.js
+│   ├── playbackEngine.test.js
+│   ├── settingsSystem.test.js
+│   ├── geminiLive.test.js
+│   ├── settingsValidator.test.js
+│   └── storageService.test.js
+├── integration/           # Integration tests
+│   ├── voicePlaybackIntegration.test.js
+│   ├── endToEndVoicePlayback.test.js
+│   └── messageArchitecture.test.js
+├── ui/                   # UI tests
+│   └── settingsPanels.test.js
+├── content/              # Content script tests
+│   ├── element-finder.test.js
+│   ├── action-executor.test.js
+│   └── playbackRenderer.test.js
+├── popup/                # Popup tests
+│   └── popup-initialization.test.js
+├── background/           # Background script tests
+│   └── background-handler.test.js
+└── __tests__/           # Additional component tests
+    ├── settings/
+    ├── import-export/
+    └── content/
 ```
 
----
+## Test Categories
 
-## 🚀 Running Tests
+### 1. Unit Tests (45 tests)
+Test individual components and functions in isolation.
 
-### Basic Test Commands
+#### Voice Control Tests (15 tests)
+- **File**: `tests/services/voiceControl.test.js`
+- **Coverage**: Web Audio API, Gemini Live streaming, command parsing, fallback chains, multi-language
 
+```javascript
+describe('Voice Control', () => {
+  test('should initialize with API key', async () => {
+    const result = await geminiLiveService.initialize('test-api-key');
+    expect(result.success).toBe(true);
+  });
+  
+  test('should handle streaming audio data', async () => {
+    const audioData = new Uint8Array([1, 2, 3, 4]);
+    const result = await geminiLiveService.streamAudio(audioData);
+    expect(result.transcription).toBeDefined();
+  });
+});
+```
+
+#### Settings Tests (12 tests)
+- **File**: `tests/services/settingsSystem.test.js`
+- **Coverage**: Chrome storage sync, validation, import/export, theme support, persistence
+
+```javascript
+describe('Settings System', () => {
+  test('should save settings to sync storage', async () => {
+    const settings = { theme: 'dark' };
+    const result = await storageService.saveSettings(settings);
+    expect(result.success).toBe(true);
+  });
+  
+  test('should validate API key format', () => {
+    const result = settingsValidator.validateApiKey('AIzaSyValidKey');
+    expect(result.isValid).toBe(true);
+  });
+});
+```
+
+#### Playback Tests (18 tests)
+- **File**: `tests/services/playbackEngine.test.js`
+- **Coverage**: Audio playback, UI animations, state management, error recovery, cleanup
+
+```javascript
+describe('Playback Engine', () => {
+  test('should execute click action successfully', async () => {
+    const actions = [{ type: 'click', selector: '#button' }];
+    const result = await playbackEngine.replay(actions);
+    expect(result.success).toBe(true);
+  });
+  
+  test('should handle pause and resume', async () => {
+    const actions = [{ type: 'click', selector: '#button' }];
+    const promise = playbackEngine.replay(actions);
+    await playbackEngine.pause();
+    await playbackEngine.resume();
+    const result = await promise;
+    expect(result.success).toBe(true);
+  });
+});
+```
+
+### 2. Integration Tests (27 tests)
+Test interactions between components and systems.
+
+#### Message Architecture Tests (12 tests)
+- **File**: `tests/integration/messageArchitecture.test.js`
+- **Coverage**: Popup ↔ Background ↔ Content relay, async handling, error propagation
+
+```javascript
+describe('Message Architecture', () => {
+  test('should relay messages from popup to content script', async () => {
+    const message = { target: 'content', type: 'GET_ELEMENT_INFO' };
+    const response = await backgroundHandler(message);
+    expect(response.success).toBe(true);
+  });
+});
+```
+
+#### Voice-Playback Integration Tests (15 tests)
+- **File**: `tests/integration/voicePlaybackIntegration.test.js`
+- **Coverage**: End-to-end voice → command → action → playback flows, state consistency, cleanup
+
+```javascript
+describe('Voice-Playback Integration', () => {
+  test('should convert voice command to action', () => {
+    const voiceCommand = { command: { type: 'click', target: 'button' } };
+    const action = integration.voiceCommandToAction(voiceCommand);
+    expect(action.type).toBe('click');
+  });
+  
+  test('should execute voice command through playback', async () => {
+    const result = await integration.executeVoiceCommand(voiceCommand);
+    expect(result.success).toBe(true);
+  });
+});
+```
+
+### 3. UI Tests (6 tests)
+Test user interface interactions and visual feedback.
+
+#### Settings Panels Tests (6 tests)
+- **File**: `tests/ui/settingsPanels.test.js`
+- **Coverage**: Settings panels, tabs, modal interactions, keyboard shortcuts
+
+```javascript
+describe('Settings Panels UI', () => {
+  test('should switch tabs when clicking tab buttons', () => {
+    const voiceTab = document.querySelector('[data-tab="voice"]');
+    voiceTab.click();
+    expect(document.getElementById('voice-tab').classList.contains('active')).toBe(true);
+  });
+});
+```
+
+## Running Tests
+
+### Local Development
+
+#### Install Dependencies
 ```bash
-# Run all tests
+npm install
+```
+
+#### Run All Tests
+```bash
 npm test
+```
 
-# Run specific test file
-npm test -- content/element-finder.test.js
+#### Run Tests with Coverage
+```bash
+npm run test:coverage
+```
 
-# Run tests in watch mode
+#### Run Tests in Watch Mode
+```bash
 npm run test:watch
-
-# Run with verbose output
-npm run test:verbose
-
-# Generate coverage report
-npm run test:coverage
 ```
 
-### Expected Output
-
+#### Run Specific Test File
 ```bash
-> ai-autoclicker@2.0.0 test
-> NODE_OPTIONS='--experimental-vm-modules' jest
-
- PASS tests/content/element-finder.test.js
-  ElementFinder
-    ✓ should find element by ID (5 ms)
-    ✓ should find element by class (3 ms)
-    ✓ should find element by text (4 ms)
-    ✓ should handle element not found (2 ms)
-    ✓ should generate unique selectors (6 ms)
-
- PASS tests/popup/popup-initialization.test.js
-  Popup Initialization
-    ✓ should initialize popup UI (8 ms)
-    ✓ should load saved actions (4 ms)
-    ✓ should setup event listeners (3 ms)
-
-... (more test results) ...
-
-Test Suites: 15 passed, 15 total
-Tests:       85 passed, 85 total
-Snapshots:   0 total
-Time:        2.345 s
+npm test -- tests/services/voiceControl.test.js
 ```
 
-### Coverage Report
-
+#### Run Tests by Pattern
 ```bash
-npm run test:coverage
-
-# Output:
-----------------------|---------|----------|---------|---------|-------------------
-File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
-----------------------|---------|----------|---------|---------|-------------------
-All files             |   43.12 |    38.45 |   45.67 |   43.12 |                   
- common/               |   65.23 |    60.12 |   68.45 |   65.23 |                   
- content/              |   55.67 |    50.23 |   58.90 |   55.67 |                   
- popup/                |   40.12 |    35.45 |   42.78 |   40.12 |                   
- ai/                   |   50.34 |    45.23 |   52.67 |   50.34 |                   
-----------------------|---------|----------|---------|---------|-------------------
+npm test -- --testNamePattern="Voice Control"
 ```
 
----
+### CI/CD Testing
 
-## 📝 Writing Tests
+#### GitHub Actions
+Tests run automatically on:
+- Pull requests to release branch
+- Pushes to release branch
+- Tag creation for releases
 
-### Test File Template
+#### Test Matrix
+- Node.js versions: 18, 20
+- Operating systems: Ubuntu, Windows, macOS
+- Browsers: Chrome (headless)
 
+#### Test Stages
+1. **Lint**: ESLint validation
+2. **Test**: Unit and integration tests
+3. **Build**: Extension build verification
+4. **Security**: Security audit and API key check
+5. **Coverage**: Coverage threshold validation
+6. **Integration**: End-to-end integration tests
+
+## Test Configuration
+
+### Jest Configuration
 ```javascript
-/**
- * Component/Feature Name Tests
- * Tests: [number] tests covering [functionality]
- * Coverage: [specific areas]
- */
-
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { JSDOM } from 'jsdom';
-
-// Import the module being tested
-import ComponentName from '../../../src/path/to/ComponentName.js';
-
-describe('ComponentName', () => {
-  let component;
-  let dom;
-
-  beforeEach(() => {
-    // Setup DOM environment
-    dom = new JSDOM(`
-      <div>
-        <button id="test-button">Click me</button>
-        <input name="email" type="email" />
-        <div class="container">Content</div>
-      </div>
-    `);
-    
-    global.document = dom.window.document;
-    global.window = dom.window;
-    
-    // Initialize component
-    component = new ComponentName();
-  });
-
-  afterEach(() => {
-    // Clean up
-    jest.clearAllMocks();
-    dom.window.close();
-  });
-
-  describe('basic functionality', () => {
-    it('should initialize correctly', () => {
-      // Test initialization
-      expect(component).toBeDefined();
-      expect(component.isInitialized).toBe(true);
-    });
-
-    it('should handle user interaction', () => {
-      // Test user interaction
-      const button = document.getElementById('test-button');
-      button.click();
-      
-      expect(component.handleClick).toHaveBeenCalled();
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle missing elements gracefully', () => {
-      // Test error handling
-      const result = component.findNonExistentElement();
-      expect(result).toBeNull();
-    });
-
-    it('should handle invalid input', () => {
-      // Test validation
-      expect(() => component.processInvalidInput(null))
-        .toThrow('Invalid input provided');
-    });
-  });
-});
-```
-
-### Testing Patterns
-
-#### DOM Manipulation Tests
-
-```javascript
-it('should find and interact with DOM elements', () => {
-  // Setup DOM
-  document.body.innerHTML = `
-    <form>
-      <input id="email" type="email" />
-      <button id="submit">Submit</button>
-    </form>
-  `;
-
-  // Test element finding
-  const emailInput = document.getElementById('email');
-  const submitButton = document.getElementById('submit');
-  
-  expect(emailInput).toBeTruthy();
-  expect(submitButton).toBeTruthy();
-
-  // Test interaction
-  emailInput.value = 'test@example.com';
-  submitButton.click();
-  
-  expect(emailInput.value).toBe('test@example.com');
-});
-```
-
-#### Event Handling Tests
-
-```javascript
-it('should emit events correctly', () => {
-  const mockEventBus = {
-    emit: jest.fn()
-  };
-
-  const component = new Component(mockEventBus);
-  
-  // Trigger event
-  component.doSomething();
-  
-  // Verify event emission
-  expect(mockEventBus.emit).toHaveBeenCalledWith(
-    'action:completed',
-    expect.objectContaining({
-      type: 'click',
-      target: 'button'
-    })
-  );
-});
-```
-
-#### Async Operation Tests
-
-```javascript
-it('should handle async operations', async () => {
-  const mockData = { result: 'success' };
-  
-  // Mock async operation
-  jest.spyOn(component, 'fetchData')
-    .mockResolvedValue(mockData);
-
-  // Test async behavior
-  const result = await component.loadData();
-  
-  expect(result).toEqual(mockData);
-  expect(component.fetchData).toHaveBeenCalledTimes(1);
-});
-```
-
-#### Error Handling Tests
-
-```javascript
-it('should handle errors gracefully', async () => {
-  // Mock error
-  jest.spyOn(component, 'riskyOperation')
-    .mockRejectedValue(new Error('Network error'));
-
-  // Test error handling
-  await expect(component.executeWithErrorHandling())
-    .rejects.toThrow('Network error');
-
-  // Verify error logging
-  expect(component.logger.error).toHaveBeenCalledWith(
-    'Operation failed',
-    expect.any(Error)
-  );
-});
-```
-
----
-
-## 🎭 Chrome API Mocking
-
-### Chrome Storage Mock
-
-```javascript
-// src/__tests__/setup.js
-global.chrome = {
-  storage: {
-    local: {
-      data: {},
-      
-      get: jest.fn((keys, callback) => {
-        const result = {};
-        keys.forEach(key => {
-          if (key in chrome.storage.local.data) {
-            result[key] = chrome.storage.local.data[key];
-          }
-        });
-        callback(result);
-      }),
-      
-      set: jest.fn((items, callback) => {
-        Object.assign(chrome.storage.local.data, items);
-        callback();
-      }),
-      
-      remove: jest.fn((keys, callback) => {
-        keys.forEach(key => {
-          delete chrome.storage.local.data[key];
-        });
-        callback();
-      })
-    }
-  }
-};
-```
-
-### Chrome Runtime Mock
-
-```javascript
-global.chrome = {
-  runtime: {
-    sendMessage: jest.fn(),
-    onMessage: {
-      addListener: jest.fn(),
-      removeListener: jest.fn()
-    },
-    getURL: jest.fn((path) => `chrome-extension://test/${path}`)
-  }
-};
-```
-
-### Chrome Tabs Mock
-
-```javascript
-global.chrome = {
-  tabs: {
-    query: jest.fn((query, callback) => {
-      callback([{
-        id: 1,
-        url: 'https://example.com',
-        active: true
-      }]);
-    }),
-    
-    sendMessage: jest.fn()
-  }
-};
-```
-
----
-
-## 🧪 Test Categories
-
-### Unit Tests
-
-**Purpose:** Test individual functions and classes in isolation
-
-**Examples:**
-- Utility functions from `common/helpers.js`
-- Individual methods in `ElementFinder`
-- Validation logic in `validator.js`
-- Storage operations in `storage.js`
-
-**Characteristics:**
-- Fast execution (<100ms per test)
-- No external dependencies
-- Mocked dependencies
-- High coverage of edge cases
-
-### Integration Tests
-
-**Purpose:** Test interaction between components
-
-**Examples:**
-- Popup UI with storage backend
-- Content script with event bus
-- AI parser with API calls
-- Background service with message routing
-
-**Characteristics:**
-- Multiple components involved
-- Real dependencies (with some mocks)
-- Event flow testing
-- API integration testing
-
-### End-to-End Tests
-
-**Purpose:** Test complete user workflows
-
-**Examples:**
-- Full recording → playback cycle
-- AI instruction → action execution
-- Settings save → application reload
-- Import → export functionality
-
-**Characteristics:**
-- Complete user scenarios
-- Minimal mocking
-- Real Chrome APIs (when possible)
-- Performance consideration
-
----
-
-## 📊 Coverage Targets
-
-### Current Goals
-
-| Component | Target | Current | Priority |
-|-----------|---------|----------|----------|
-| Common utilities | 80% | 65% | High |
-| Content scripts | 70% | 55% | High |
-| Popup UI | 60% | 40% | Medium |
-| Settings | 60% | 35% | Medium |
-| Background | 50% | 30% | Medium |
-| AI processing | 70% | 50% | High |
-
-### Coverage Strategy
-
-```javascript
-// jest.config.js
-export default {
+// jest.config.cjs
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  testMatch: [
+    '<rootDir>/tests/**/*.test.js',
+    '<rootDir>/src/**/__tests__/**/*.test.js'
+  ],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/**/*.test.js',
@@ -426,118 +230,18 @@ export default {
   ],
   coverageThreshold: {
     global: {
-      branches: 40,    // Minimum threshold
-      functions: 40,
-      lines: 40,
-      statements: 40
-    },
-    './src/common/': {      // High priority
-      branches: 70,
+      branches: 75,
       functions: 75,
-      lines: 70,
-      statements: 70
-    },
-    './src/content/': {       // High priority
-      branches: 65,
-      functions: 70,
-      lines: 65,
-      statements: 65
+      lines: 75,
+      statements: 75
     }
   },
-  coverageReporters: ['text', 'lcov', 'html']
-};
-```
-
----
-
-## 🛠️ Test Utilities
-
-### Custom Test Helpers
-
-```javascript
-// tests/helpers/test-utils.js
-export function createMockEvent(type, target) {
-  return {
-    type,
-    target,
-    preventDefault: jest.fn(),
-    stopPropagation: jest.fn()
-  };
-}
-
-export function createMockAction(type, selector) {
-  return {
-    type,
-    selector,
-    timestamp: Date.now(),
-    target: 'Test element'
-  };
-}
-
-export function setupDOM(html) {
-  const dom = new JSDOM(html);
-  global.document = dom.window.document;
-  global.window = dom.window;
-  return dom;
-}
-
-export function cleanupDOM() {
-  delete global.document;
-  delete global.window;
-}
-```
-
-### Mock Factories
-
-```javascript
-// tests/mocks/factories.js
-export function createMockEventBus() {
-  return {
-    emit: jest.fn(),
-    on: jest.fn(),
-    off: jest.fn()
-  };
-}
-
-export function createMockLogger() {
-  return {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn()
-  };
-}
-
-export function createMockStorage() {
-  const data = {};
-  return {
-    get: jest.fn((keys) => Promise.resolve(keys.reduce((obj, key) => {
-      obj[key] = data[key];
-      return obj;
-    }, {}))),
-    set: jest.fn((items) => {
-      Object.assign(data, items);
-      return Promise.resolve();
-    })
-  };
-}
-```
-
----
-
-## 🐛 Troubleshooting Tests
-
-### Common Issues
-
-#### ES6 Module Import Errors
-
-**Problem:** `Cannot use import statement outside a module`
-
-**Solution:**
-```javascript
-// jest.config.js
-export default {
-  preset: 'ts-jest',  // or 'babel-preset-jest'
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/src/$1'
+  },
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
   extensionsToTreatAsEsm: ['.js'],
   globals: {
     'ts-jest': {
@@ -547,149 +251,437 @@ export default {
 };
 ```
 
-#### Chrome API Not Defined
-
-**Problem:** `chrome is not defined`
-
-**Solution:**
+### Test Setup
 ```javascript
-// src/__tests__/setup.js
+// tests/setup.js
+import { TextEncoder, TextDecoder } from 'util';
+import { JSDOM } from 'jsdom';
+
+// Setup DOM
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Mock Chrome APIs
 global.chrome = {
-  storage: { /* mock implementation */ },
-  runtime: { /* mock implementation */ },
-  tabs: { /* mock implementation */ }
+  runtime: {
+    sendMessage: jest.fn(),
+    onMessage: { addListener: jest.fn() },
+    getManifest: jest.fn()
+  },
+  storage: {
+    sync: { get: jest.fn(), set: jest.fn() },
+    local: { get: jest.fn(), set: jest.fn() }
+  },
+  tabs: {
+    query: jest.fn(),
+    sendMessage: jest.fn()
+  }
+};
+
+// Setup JSDOM
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+global.window = dom.window;
+global.document = dom.window.document;
+global.Element = dom.window.Element;
+global.HTMLElement = dom.window.HTMLElement;
+```
+
+## Mocking Strategy
+
+### Chrome APIs
+```javascript
+// Mock Chrome runtime
+const mockChrome = {
+  runtime: {
+    sendMessage: jest.fn().mockResolvedValue({ success: true }),
+    onMessage: {
+      addListener: jest.fn()
+    }
+  }
+};
+
+global.chrome = mockChrome;
+```
+
+### Web Audio API
+```javascript
+// Mock AudioContext
+global.AudioContext = jest.fn().mockImplementation(() => ({
+  createMediaStreamSource: jest.fn(),
+  createScriptProcessor: jest.fn(),
+  sampleRate: 44100
+}));
+
+global.Audio = jest.fn().mockImplementation(() => ({
+  play: jest.fn().mockResolvedValue(),
+  pause: jest.fn()
+}));
+```
+
+### DOM APIs
+```javascript
+// Mock DOM elements
+global.document.createElement = jest.fn().mockReturnValue({
+  style: {},
+  classList: { add: jest.fn(), remove: jest.fn() },
+  addEventListener: jest.fn()
+});
+```
+
+## Coverage Requirements
+
+### Thresholds
+- **Branches**: 75%
+- **Functions**: 75%
+- **Lines**: 75%
+- **Statements**: 75%
+
+### Coverage Reports
+Coverage reports are generated in multiple formats:
+- HTML: `coverage/lcov-report/index.html`
+- JSON: `coverage/coverage-final.json`
+- LCOV: `coverage/lcov.info`
+
+### Coverage Exclusions
+```javascript
+// jest.config.cjs
+collectCoverageFrom: [
+  'src/**/*.js',
+  '!src/**/*.test.js',
+  '!src/**/__tests__/**',
+  '!src/rollup.config.js',
+  '!src/build.js'
+]
+```
+
+## Test Data Management
+
+### Fixtures
+Test data is organized in fixtures:
+
+```javascript
+// tests/fixtures/voiceCommands.js
+export const voiceCommands = {
+  click: {
+    text: 'click the submit button',
+    command: { type: 'click', target: 'submit button' }
+  },
+  input: {
+    text: 'type hello world',
+    command: { type: 'input', text: 'hello world' }
+  }
 };
 ```
 
-#### DOM Not Available
+### Test Utilities
+Common test utilities:
 
-**Problem:** `document is not defined`
-
-**Solution:**
 ```javascript
-import { JSDOM } from 'jsdom';
+// tests/utils/testHelpers.js
+export function createMockAction(type, options = {}) {
+  return {
+    type,
+    selector: '#test-element',
+    delay: 100,
+    ...options
+  };
+}
 
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-global.document = dom.window.document;
-global.window = dom.window;
+export function createMockVoiceCommand(command) {
+  return {
+    type: 'VOICE_COMMAND',
+    command,
+    timestamp: Date.now(),
+    model: 'gemini-2.0-flash-exp'
+  };
+}
 ```
 
-#### Async Test Timeouts
+## Performance Testing
 
-**Problem:** Tests timeout waiting for async operations
-
-**Solution:**
+### Load Testing
 ```javascript
-// Use fake timers
-jest.useFakeTimers();
-
-// Test async behavior
-const promise = component.asyncOperation();
-jest.advanceTimersByTime(1000);
-
-await expect(promise).resolves.toBe(expectedResult);
-
-// Clean up
-jest.useRealTimers();
+describe('Performance Tests', () => {
+  test('should handle large action sequences efficiently', async () => {
+    const actions = Array(1000).fill().map((_, i) => ({
+      type: 'click',
+      selector: `#button${i}`,
+      delay: 1
+    }));
+    
+    const startTime = Date.now();
+    const result = await playbackEngine.replay(actions);
+    const endTime = Date.now();
+    
+    expect(result.success).toBe(true);
+    expect(endTime - startTime).toBeLessThan(5000);
+  });
+});
 ```
 
----
+### Memory Testing
+```javascript
+test('should not leak memory during extended usage', async () => {
+  const initialMemory = process.memoryUsage().heapUsed;
+  
+  // Run many operations
+  for (let i = 0; i < 1000; i++) {
+    await playbackEngine.replay([{ type: 'click', selector: '#button' }]);
+  }
+  
+  // Force garbage collection
+  if (global.gc) global.gc();
+  
+  const finalMemory = process.memoryUsage().heapUsed;
+  const memoryIncrease = finalMemory - initialMemory;
+  
+  expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024); // 10MB
+});
+```
 
-## 🔄 Continuous Testing
+## E2E Testing
 
-### Watch Mode Development
+### Playwright Setup
+```javascript
+// tests/e2e/config.js
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: {
+    command: 'npm run start',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+### E2E Test Example
+```javascript
+// tests/e2e/voiceControl.spec.js
+import { test, expect } from '@playwright/test';
+
+test('should control extension with voice commands', async ({ page }) => {
+  // Navigate to test page
+  await page.goto('https://example.com');
+  
+  // Open extension popup
+  await page.click('#extension-icon');
+  
+  // Start voice control
+  await page.click('#start-voice');
+  
+  // Simulate voice command
+  await page.evaluate(() => {
+    window.testVoiceCommand('click the submit button');
+  });
+  
+  // Verify action executed
+  await expect(page.locator('#submit-button')).toHaveBeenClicked();
+});
+```
+
+## Debugging Tests
+
+### Debug Mode
+Run tests with debugging:
 
 ```bash
-# Terminal 1: Test watch
-npm run test:watch
+# Node.js debugging
+node --inspect-brk node_modules/.bin/jest --runInBand
 
-# Terminal 2: Development watch
-npm run build:watch
-
-# Terminal 3: Lint watch
-npx eslint src/ --fix --watch
+# VS Code debugging
+# Add to .vscode/launch.json:
+{
+  "type": "node",
+  "request": "launch",
+  "name": "Jest Debug",
+  "program": "${workspaceFolder}/node_modules/.bin/jest",
+  "args": ["--runInBand"],
+  "console": "integratedTerminal",
+  "internalConsoleOptions": "neverOpen"
+}
 ```
 
-### Pre-commit Testing
+### Test Logging
+Enable detailed logging:
 
-```bash
-# .husky/pre-commit
-#!/bin/sh
-npm run lint && npm test -- --passWithNoTests
+```javascript
+// In test file
+test('should log detailed information', () => {
+  console.log('Starting test execution...');
+  // Test logic
+  console.log('Test completed successfully');
+});
 ```
 
-### CI/CD Integration
+### Browser Testing
+Test in real browser:
 
+```javascript
+// tests/browser/manual.test.js
+describe('Manual Browser Tests', () => {
+  test('should work in real browser environment', async () => {
+    // Open browser manually and navigate to test page
+    // Run test steps manually
+    // Verify results
+  });
+});
+```
+
+## Continuous Integration
+
+### GitHub Actions Workflow
 ```yaml
 # .github/workflows/test.yml
 name: Tests
+
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm test
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v1
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm run test:ci
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
 ```
 
+### Quality Gates
+Tests must pass before merge:
+- All tests passing
+- Coverage threshold met
+- No linting errors
+- Build successful
+- Security scan passed
+
+## Best Practices
+
+### Test Organization
+1. **Arrange, Act, Assert** pattern
+2. Descriptive test names
+3. Isolated test cases
+4. Proper cleanup in `afterEach`
+5. Mock external dependencies
+
+### Test Data
+1. Use fixtures for complex data
+2. Generate dynamic test data
+3. Avoid hardcoded values
+4. Test edge cases
+5. Include error scenarios
+
+### Mock Strategy
+1. Mock only external dependencies
+2. Keep mocks simple
+3. Verify mock interactions
+4. Reset mocks between tests
+5. Use realistic mock data
+
+### Performance
+1. Use `test.each` for similar tests
+2. Avoid expensive setup operations
+3. Run tests in parallel when possible
+4. Use appropriate timeouts
+5. Monitor test execution time
+
+## Troubleshooting
+
+### Common Issues
+
+#### Tests Timing Out
+```javascript
+// Increase timeout for slow tests
+test('slow test', async () => {
+  // test logic
+}, 10000); // 10 second timeout
+```
+
+#### Chrome API Mocks Not Working
+```javascript
+// Reset mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
+  global.chrome = createMockChrome();
+});
+```
+
+#### DOM Tests Failing
+```javascript
+// Ensure DOM is properly set up
+beforeEach(() => {
+  document.body.innerHTML = '';
+  // Setup DOM elements
+});
+```
+
+#### Async Tests Not Completing
+```javascript
+// Use async/await properly
+test('async test', async () => {
+  const result = await asyncFunction();
+  expect(result).toBeDefined();
+});
+```
+
+### Debug Commands
+```bash
+# Run specific test with debugging
+npm test -- --testNamePattern="specific test" --verbose
+
+# Check coverage for specific file
+npm run test:coverage -- tests/services/voiceControl.test.js
+
+# Run tests in single thread (easier debugging)
+npm test -- --runInBand
+```
+
+## Future Enhancements
+
+### Planned Improvements
+- Visual regression testing
+- Accessibility testing
+- Performance benchmarking
+- Cross-browser compatibility testing
+- Mobile browser testing
+
+### Technical Improvements
+- Parallel test execution
+- Smart test selection based on changes
+- Test result caching
+- Enhanced mocking framework
+- Better error reporting
+
 ---
 
-## 📈 Test Metrics
-
-### Performance Benchmarks
-
-| Metric | Target | Current |
-|---------|---------|----------|
-| Test execution time | <30s total | ~25s |
-| Individual test time | <100ms | ~50ms |
-| Coverage generation | <10s | ~8s |
-| Memory usage | <512MB | ~256MB |
-
-### Quality Indicators
-
-- **Test count:** 250+ tests
-- **Coverage:** 43% (target: 65%)
-- **Flakiness:** <1% unstable tests
-- **Performance:** All tests under 100ms
-
----
-
-## 🔗 Cross-References
-
-- **[Development Guide](DEVELOPMENT.md)** - Setup and workflow
-- **[Architecture Overview](../ARCHITECTURE.md)** - System design
-- **[Installation Guide](INSTALLATION.md)** - Project setup
-- **[Contributing Guide](../CONTRIBUTING.md)** - Testing standards
-
----
-
-## 📞 Getting Help
-
-### Test-Specific Issues
-
-1. **Check Jest configuration** - Review `jest.config.js`
-2. **Verify mocks** - Ensure Chrome APIs are properly mocked
-3. **Review test setup** - Check `src/__tests__/setup.js`
-4. **Run specific test** - Isolate failing tests
-
-### Community Support
-
-- **GitHub Issues** - [Report test bugs](https://github.com/crosspostly/ai_clicker/issues)
-- **GitHub Discussions** - [Ask testing questions](https://github.com/crosspostly/ai_clicker/discussions)
-
----
-
-**Last Updated:** 2025-11-08  
-**Version:** 2.0.0  
-**Status:** 🟢 Current Testing Guide
-
----
-
-*Keep those tests green! 🟢*
+**Testing Guide v3.0.0** - Comprehensive testing for reliable automation! 🧪

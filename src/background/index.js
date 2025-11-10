@@ -6,9 +6,11 @@
 import { voiceHandler } from './voiceHandler.js';
 import { liveModeManager } from './LiveModeManager.js';
 import { PlaybackHandler } from './playbackHandler.js';
+import { VoicePlaybackIntegration } from '../services/voicePlaybackIntegration.js';
 
-// Initialize playback handler
+// Initialize handlers
 const playbackHandler = new PlaybackHandler();
+const voicePlaybackIntegration = new VoicePlaybackIntegration(playbackHandler);
 
 /**
  * Listen for extension installation
@@ -87,6 +89,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         handleExecuteActions(request);
         break;
 
+      // Voice-Playback Integration handlers
+      case 'voiceCommand':
+        handleVoiceCommand(request, sender)
+          .then(result => sendResponse(result))
+          .catch(error => sendResponse({ success: false, error: error.message }));
+        return true; // Keep message channel open for async response
+
+      case 'stopVoiceJobs':
+        handleStopVoiceJobs(request)
+          .then(result => sendResponse(result))
+          .catch(error => sendResponse({ success: false, error: error.message }));
+        return true; // Keep message channel open for async response
+
+      case 'getVoiceJobStatus':
+        handleGetVoiceJobStatus(request)
+          .then(result => sendResponse(result))
+          .catch(error => sendResponse({ success: false, error: error.message }));
+        return true; // Keep message channel open for async response
+
       default:
         // Pass through unknown messages
         break;
@@ -158,6 +179,69 @@ function handleActionRecorded(_request) {
  */
 function handleExecuteActions(_request) {
   // Could be used to execute actions from background or other tabs
+}
+
+/**
+ * Handle voice command execution
+ */
+async function handleVoiceCommand(request, sender) {
+  try {
+    const { voiceCommand, options } = request;
+    const voiceSessionId = options?.voiceSessionId || sender.tab?.id;
+    
+    console.log('[Background] Executing voice command:', voiceCommand);
+    
+    const result = await voicePlaybackIntegration.executeVoiceCommand(voiceCommand, {
+      ...options,
+      voiceSessionId
+    });
+    
+    console.log('[Background] Voice command result:', result);
+    return result;
+    
+  } catch (error) {
+    console.error('[Background] Voice command execution failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle stop voice jobs
+ */
+async function handleStopVoiceJobs(request) {
+  try {
+    const { voiceSessionId } = request;
+    console.log('[Background] Stopping voice jobs for session:', voiceSessionId);
+    
+    const result = await voicePlaybackIntegration.stopVoiceJobs(voiceSessionId);
+    console.log('[Background] Voice jobs stopped:', result);
+    
+    return result;
+    
+  } catch (error) {
+    console.error('[Background] Failed to stop voice jobs:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle get voice job status
+ */
+async function handleGetVoiceJobStatus(request) {
+  try {
+    const { voiceSessionId } = request;
+    const status = voicePlaybackIntegration.getVoiceJobStatus(voiceSessionId);
+    
+    return {
+      success: true,
+      status,
+      queueStatus: voicePlaybackIntegration.getQueueStatus()
+    };
+    
+  } catch (error) {
+    console.error('[Background] Failed to get voice job status:', error);
+    throw error;
+  }
 }
 
 /**
