@@ -15,10 +15,23 @@
     </div>
 
     <div class="live-mode-section">
-      <h3>Live Mode</h3>
-      <input id="live-api-key" type="password" placeholder="Gemini API ключ" style="width: 200px;">
-      <button id="toggle-live-mode" class="btn-live">🎙️ Start Live Mode</button>
-      <span id="live-status" class="live-status-text">Не активен</span>
+      <div class="live-mode-header">
+        <h3>🎙️ Live Mode</h3>
+        <button id="live-mode-help" class="help-btn" title="Что это?">?</button>
+      </div>
+      <p class="live-mode-description">
+        Голосовое управление браузером в реальном времени через Gemini Live API
+      </p>
+      <button id="toggle-live-mode" class="btn-live">
+        <span class="btn-icon">🎙️</span>
+        <span class="btn-text">START LIVE MODE</span>
+      </button>
+      <div id="live-status-container" class="live-status-container">
+        <span id="live-status" class="live-status-text status-inactive">Не активен</span>
+        <a href="#" id="open-settings-link" class="settings-link" style="display: none;">
+          ⚙️ Настроить API ключ
+        </a>
+      </div>
     </div>
 
     <!-- Tab Navigation -->

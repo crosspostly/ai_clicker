@@ -50,94 +50,124 @@ body {
   transform: rotate(20deg);
 }
 
-/* ✅ Live Mode Section */
+/* Live Mode Section - Updated */
 .live-mode-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 12px;
+  padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 12px;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+.live-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
 .live-mode-section h3 {
   font-size: 14px;
   color: white;
-  margin-bottom: 8px;
+  margin: 0;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.live-mode-section h3::before {
-  content: '🎙️';
-}
-
-#live-api-key {
-  width: 100%;
-  padding: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+.help-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
   font-size: 12px;
-  margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.9);
+  color: white;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
-#live-api-key:focus {
-  outline: none;
-  border-color: white;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+.help-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-#live-api-key::placeholder {
-  color: #999;
+.live-mode-description {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
 }
 
-.btn-live, .btn-live-stop {
+.btn-live {
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-live {
   background: #4ade80;
   color: white;
-  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .btn-live:hover:not(:disabled) {
   background: #22c55e;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(74, 222, 128, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.5);
 }
 
-.btn-live-stop {
-  background: #ef4444;
-  color: white;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-  animation: pulse 2s infinite;
-}
-
-.btn-live-stop:hover:not(:disabled) {
-  background: #dc2626;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
-}
-
-.btn-live:disabled, .btn-live-stop:disabled {
+.btn-live:disabled {
   background: #9ca3af;
   cursor: not-allowed;
   animation: none;
+}
+
+.btn-live.active {
+  background: #ef4444;
+  animation: pulse 2s infinite;
+}
+
+.btn-live.active .btn-text::before {
+  content: '⏹️ ';
+}
+
+.live-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-status-text {
+  display: block;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.settings-link {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.settings-link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+/* Убрать старые стили для input (его больше нет) */
+#live-api-key {
+  display: none !important;
 }
 
 @keyframes pulse {

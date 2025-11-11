@@ -11,7 +11,6 @@ let geminiApiKey = null;
 
 // ✅ Live Mode state
 let isLiveModeActive = false;
-let liveModeApiKey = null;
 
 // Status logging function
 export function logStatus(message, detail = '', type = 'info') {
@@ -117,7 +116,6 @@ export const elements = {
   settingsBtn: getElement('settings-btn'),
   // ✅ Live Mode elements
   toggleLiveMode: getElement('toggle-live-mode'),
-  liveApiKey: getElement('live-api-key'),
   liveStatus: getElement('live-status'),
   // Additional elements expected by tests
   statusMessage: getElement('status-text'),
@@ -136,8 +134,6 @@ if (typeof process === 'undefined' || process.env.NODE_ENV !== 'test') {
       await loadSavedActions();
       setupEventListeners();
       setupMessageListeners();
-      // ✅ Load saved Live Mode API key
-      await loadLiveModeSettings();
       // Load saved active tab
       await loadActiveTab();
     } catch (error) {
@@ -160,22 +156,6 @@ async function loadSettings() {
     geminiApiKey = result.geminiApiKey || null;
   } catch (error) {
     console.error('Failed to load settings:', error);
-  }
-}
-
-/**
- * ✅ Load Live Mode settings
- */
-async function loadLiveModeSettings() {
-  try {
-    const result = await StorageManager.get(['liveModeApiKey'], 'sync');
-    liveModeApiKey = result.liveModeApiKey || null;
-    
-    if (liveModeApiKey && elements.liveApiKey) {
-      elements.liveApiKey.value = liveModeApiKey;
-    }
-  } catch (error) {
-    console.error('Failed to load Live Mode settings:', error);
   }
 }
 
@@ -234,7 +214,30 @@ function setupEventListeners() {
   
   // ✅ Live Mode event listeners
   if (elements.toggleLiveMode) elements.toggleLiveMode.addEventListener('click', handleToggleLiveMode);
-  if (elements.liveApiKey) elements.liveApiKey.addEventListener('input', handleLiveApiKeyInput);
+  
+  // ✅ Ссылка "Настроить API ключ"
+  const settingsLink = document.getElementById('open-settings-link');
+  if (settingsLink) {
+    settingsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchTab('settings');
+    });
+  }
+  
+  // ✅ Кнопка помощи
+  const helpBtn = document.getElementById('live-mode-help');
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      alert(
+        'Live Mode — это голосовое управление браузером в реальном времени.\n\n' +
+        'Для работы требуется:\n' +
+        '1. Gemini API ключ (настройте в разделе Настройки)\n' +
+        '2. Разрешение на использование микрофона\n' +
+        '3. Разрешение на захват экрана\n\n' +
+        'После запуска вы сможете управлять браузером голосом!'
+      );
+    });
+  }
 }
 
 /**
@@ -309,44 +312,56 @@ function setupMessageListeners() {
 }
 
 /**
- * ✅ Handle Live Mode API key input
- */
-function handleLiveApiKeyInput() {
-  liveModeApiKey = elements.liveApiKey.value.trim();
-  
-  // Save to storage
-  if (liveModeApiKey) {
-    StorageManager.set({ liveModeApiKey }, 'sync').catch(error => {
-      console.error('Failed to save Live Mode API key:', error);
-    });
-  }
-}
-
-/**
- * ✅ Handle toggle Live Mode
+ * ✅ Handle toggle Live Mode with REAL API key validation
  */
 async function handleToggleLiveMode() {
   try {
     if (!isLiveModeActive) {
-      // Start Live Mode
-      const apiKey = elements.liveApiKey.value.trim();
-      
-      if (!apiKey) {
-        updateLiveModeStatus('error', '❌ Введите Gemini API ключ');
-        elements.liveApiKey.focus();
-        return;
-      }
-      
-      // Validate API key format (basic check)
-      if (apiKey.length < 20) {
-        updateLiveModeStatus('error', '❌ API ключ слишком короткий');
-        return;
-      }
-      
+      // ===== ШАГ 1: Получить API ключ из настроек =====
       elements.toggleLiveMode.disabled = true;
-      updateLiveModeStatus('connecting', '🔄 Подключение...');
+      updateLiveModeStatus('connecting', '🔄 Проверка настроек...');
       
-      // Send to content script
+      const settings = await StorageManager.get(['geminiApiKey', 'geminiModel'], 'sync');
+      const apiKey = settings.geminiApiKey;
+      const model = settings.geminiModel || 'gemini-2.0-flash-exp';
+      
+      // ===== ШАГ 2: Проверка наличия ключа =====
+      if (!apiKey || apiKey.trim().length === 0) {
+        updateLiveModeStatus('error', '❌ API ключ не настроен');
+        showSettingsLink(true);
+        elements.toggleLiveMode.disabled = false;
+        
+        addLog('⚠️ Пожалуйста, настройте Gemini API ключ в разделе Настройки', 'warn');
+        return;
+      }
+      
+      // ===== ШАГ 3: Валидация формата ключа =====
+      const keyPattern = /^AIza[0-9A-Za-z_-]{35}$/;
+      if (!keyPattern.test(apiKey)) {
+        updateLiveModeStatus('error', '❌ Неверный формат API ключа');
+        showSettingsLink(true);
+        elements.toggleLiveMode.disabled = false;
+        addLog('❌ API ключ должен начинаться с "AIza" и иметь 39 символов', 'error');
+        return;
+      }
+      
+      // ===== ШАГ 4: РЕАЛЬНАЯ ПРОВЕРКА API ключа через Gemini API =====
+      updateLiveModeStatus('connecting', '🔄 Проверка API ключа...');
+      
+      const isValid = await validateGeminiApiKey(apiKey, model);
+      
+      if (!isValid.valid) {
+        updateLiveModeStatus('error', '❌ API ключ недействителен');
+        showSettingsLink(true);
+        elements.toggleLiveMode.disabled = false;
+        addLog(`❌ Ошибка проверки: ${isValid.error}`, 'error');
+        return;
+      }
+      
+      // ===== ШАГ 5: Запуск Live Mode =====
+      updateLiveModeStatus('connecting', '🔄 Подключение к Gemini Live...');
+      showSettingsLink(false);
+      
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (!tabs[0]) {
           updateLiveModeStatus('error', '❌ Нет активной вкладки');
@@ -357,6 +372,7 @@ async function handleToggleLiveMode() {
         chrome.tabs.sendMessage(tabs[0].id, {
           action: 'toggleLiveMode',
           apiKey: apiKey,
+          model: model,
         }, (response) => {
           if (chrome.runtime.lastError) {
             console.error('Failed to start Live Mode:', chrome.runtime.lastError);
@@ -368,18 +384,18 @@ async function handleToggleLiveMode() {
           if (response && response.success) {
             isLiveModeActive = true;
             state.isLiveModeActive = true;
-            elements.toggleLiveMode.textContent = '⏹️ Stop Live Mode';
-            elements.toggleLiveMode.classList.remove('btn-live');
-            elements.toggleLiveMode.classList.add('btn-live-stop');
+            elements.toggleLiveMode.classList.add('active');
+            elements.toggleLiveMode.querySelector('.btn-text').textContent = 'STOP LIVE MODE';
             updateLiveModeStatus('active', '🟢 Live Mode активен');
-            addLog('🎙️ Live Mode запущен', 'success');
+            addLog('🎙️ Live Mode запущен успешно', 'success');
           }
           
           elements.toggleLiveMode.disabled = false;
         });
       });
+      
     } else {
-      // Stop Live Mode
+      // ===== ОСТАНОВКА Live Mode =====
       elements.toggleLiveMode.disabled = true;
       updateLiveModeStatus('stopping', '🔄 Остановка...');
       
@@ -399,9 +415,8 @@ async function handleToggleLiveMode() {
           
           isLiveModeActive = false;
           state.isLiveModeActive = false;
-          elements.toggleLiveMode.textContent = '🎙️ Start Live Mode';
-          elements.toggleLiveMode.classList.remove('btn-live-stop');
-          elements.toggleLiveMode.classList.add('btn-live');
+          elements.toggleLiveMode.classList.remove('active');
+          elements.toggleLiveMode.querySelector('.btn-text').textContent = 'START LIVE MODE';
           updateLiveModeStatus('inactive', 'Не активен');
           addLog('⏹️ Live Mode остановлен', 'info');
           elements.toggleLiveMode.disabled = false;
@@ -412,6 +427,53 @@ async function handleToggleLiveMode() {
     console.error('Live Mode toggle error:', error);
     updateLiveModeStatus('error', `❌ Ошибка: ${error.message}`);
     elements.toggleLiveMode.disabled = false;
+  }
+}
+
+/**
+ * ✅ РЕАЛЬНАЯ проверка API ключа через Gemini API
+ */
+async function validateGeminiApiKey(apiKey, model) {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}?key=${apiKey}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        valid: true,
+        model: data.name,
+        supportedMethods: data.supportedGenerationMethods || [],
+      };
+    } else {
+      const error = await response.json();
+      return {
+        valid: false,
+        error: error.error?.message || `HTTP ${response.status}`,
+      };
+    }
+  } catch (error) {
+    return {
+      valid: false,
+      error: error.message || 'Network error',
+    };
+  }
+}
+
+/**
+ * ✅ Показать/скрыть ссылку на настройки
+ */
+function showSettingsLink(show) {
+  const link = document.getElementById('open-settings-link');
+  if (link) {
+    link.style.display = show ? 'block' : 'none';
   }
 }
 
